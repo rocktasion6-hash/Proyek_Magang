@@ -10,6 +10,8 @@ use App\Http\Controllers\Hrd\AssessmentController as HrdAssessmentController;
 use App\Http\Controllers\Hrd\HasilAssessmentController;
 use App\Http\Controllers\Hrd\KenaikanJabatanController;
 use App\Http\Controllers\Hrd\PemindahanJabatanController;
+use App\Http\Controllers\Hrd\PeningkatanSkillController;
+use App\Http\Controllers\Hrd\RiwayatController;
 /*
 |--------------------------------------------------------------------------
 | Authentication
@@ -61,6 +63,15 @@ Route::middleware(['auth', 'role:hrd'])->group(function () {
     Route::post('/hrd/pemindahan-jabatan/{pengajuan}/proses', [PemindahanJabatanController::class,'process'])->name('hrd.pemindahan-jabatan.process');
     Route::post('/hrd/pemindahan-jabatan/{pengajuan}/setujui', [PemindahanJabatanController::class,'approve'])->name('hrd.pemindahan-jabatan.approve');
     Route::post('/hrd/pemindahan-jabatan/{pengajuan}/tolak', [PemindahanJabatanController::class,'reject'])->name('hrd.pemindahan-jabatan.reject');
+    Route::get('/hrd/peningkatan-skill', [PeningkatanSkillController::class,'index'])->name('hrd.peningkatan-skill.index');
+    Route::get('/hrd/peningkatan-skill/tambah', [PeningkatanSkillController::class,'create'])->name('hrd.peningkatan-skill.create');
+    Route::post('/hrd/peningkatan-skill', [PeningkatanSkillController::class,'store'])->name('hrd.peningkatan-skill.store');
+    Route::get('/hrd/peningkatan-skill/{pengajuan}', [PeningkatanSkillController::class,'show'])->name('hrd.peningkatan-skill.show');
+    Route::post('/hrd/peningkatan-skill/{pengajuan}/proses', [PeningkatanSkillController::class,'process'])->name('hrd.peningkatan-skill.process');
+    Route::post('/hrd/peningkatan-skill/{pengajuan}/setujui', [PeningkatanSkillController::class,'approve'])->name('hrd.peningkatan-skill.approve');
+    Route::post('/hrd/peningkatan-skill/{pengajuan}/tolak', [PeningkatanSkillController::class,'reject'])->name('hrd.peningkatan-skill.reject');
+    Route::get('/hrd/riwayat', [RiwayatController::class,'index'])->name('hrd.riwayat.index');
+    Route::get('/hrd/riwayat/{karyawan}', [RiwayatController::class,'show'])->name('hrd.riwayat.show');
 });
 
 /*
