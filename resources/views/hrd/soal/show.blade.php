@@ -15,7 +15,10 @@
 </head>
 
 <body class="bg-gray-100 min-h-screen">
-
+@extends('layouts.hrd')
+@section('title', 'Detail Soal')
+@section('page_title', 'Detail Soal')
+@section('content')
     <main class="max-w-4xl mx-auto px-6 py-10">
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
@@ -198,5 +201,6 @@
             </div>
         </div>
     </main>
+    @endsection
 </body>
 </html>

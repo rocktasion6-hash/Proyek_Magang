@@ -136,7 +136,10 @@
 </head>
 
 <body>
-
+@extends('layouts.hrd')
+@section('title', 'Kenaikan Jabatan')
+@section('page_title', 'Kenaikan Jabatan')
+@section('content')
 <div class="container">
 
     <div class="header">
@@ -309,6 +312,6 @@
     </div>
 
 </div>
-
+@endsection
 </body>
 </html>

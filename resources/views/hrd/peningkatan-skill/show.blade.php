@@ -139,7 +139,10 @@
 </head>
 
 <body>
-
+@extends('layouts.hrd')
+@section('title', 'Detail Peningkatan Skill')
+@section('page_title', 'Detail Peningkatan Skill')
+@section('content')
 <div class="container">
 
     <div style="margin-bottom:20px;">
@@ -509,7 +512,7 @@
     @endif
 
 </div>
-
+@endsection
 </body>
 
 </html>

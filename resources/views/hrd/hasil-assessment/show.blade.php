@@ -21,8 +21,10 @@
 
 
 <body class="bg-gray-100 min-h-screen">
-
-
+@extends('layouts.hrd')
+@section('title', 'Detail Hasil Penilaian')
+@section('page_title', 'Detail Hasil Penilaian')
+@section('content')
     <main class="max-w-5xl mx-auto px-6 py-10">
 
 
@@ -360,7 +362,7 @@
         </div>
 
     </main>
-
+@endsection
 </body>
 
 </html>

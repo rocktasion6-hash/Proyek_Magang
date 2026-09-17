@@ -18,7 +18,10 @@
 </head>
 
 <body class="bg-gray-100 min-h-screen">
-
+@extends('layouts.hrd')
+@section('title', 'Tambah Assessment')
+@section('page_title', 'Tambah Assessment')
+@section('content')
     <main class="max-w-6xl mx-auto px-6 py-10">
 
         <div class="mb-6">
@@ -418,7 +421,6 @@
         </form>
 
     </main>
-
+@endsection
 </body>
-
 </html>

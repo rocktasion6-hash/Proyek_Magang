@@ -18,7 +18,10 @@
 </head>
 
 <body class="bg-gray-100 min-h-screen">
-
+@extends('layouts.hrd')
+@section('title', 'Assessment')
+@section('page_title', 'Assessment')
+@section('content')
     <nav class="bg-white border-b border-gray-200">
 
         <div class="max-w-7xl mx-auto px-6 py-4">
@@ -273,7 +276,6 @@
         </div>
 
     </main>
-
+@endsection
 </body>
-
 </html>

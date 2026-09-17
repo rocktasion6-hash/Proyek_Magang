@@ -15,7 +15,10 @@
 </head>
 
 <body class="bg-gray-100 min-h-screen">
-
+@extends('layouts.hrd')
+@section('title', 'Edit Soal')
+@section('page_title', 'Edit Soal')
+@section('content')
     <main class="max-w-4xl mx-auto px-6 py-10">
 
         <div class="mb-6">
@@ -471,7 +474,6 @@
         // tampilkan data pilihan yang sudah ada.
         buatPilihan(true);
     </script>
-
+@endsection
 </body>
-
 </html>

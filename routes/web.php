@@ -12,6 +12,10 @@ use App\Http\Controllers\Hrd\KenaikanJabatanController;
 use App\Http\Controllers\Hrd\PemindahanJabatanController;
 use App\Http\Controllers\Hrd\PeningkatanSkillController;
 use App\Http\Controllers\Hrd\RiwayatController;
+use App\Http\Controllers\Hrd\KaryawanController;
+use App\Http\Controllers\Hrd\DepartemenController;
+use App\Http\Controllers\Hrd\JabatanController;
+use App\Http\Controllers\Hrd\SkillController;
 /*
 |--------------------------------------------------------------------------
 | Authentication
@@ -72,6 +76,34 @@ Route::middleware(['auth', 'role:hrd'])->group(function () {
     Route::post('/hrd/peningkatan-skill/{pengajuan}/tolak', [PeningkatanSkillController::class,'reject'])->name('hrd.peningkatan-skill.reject');
     Route::get('/hrd/riwayat', [RiwayatController::class,'index'])->name('hrd.riwayat.index');
     Route::get('/hrd/riwayat/{karyawan}', [RiwayatController::class,'show'])->name('hrd.riwayat.show');
+    Route::get('/hrd/karyawan', [KaryawanController::class,'index'])->name('hrd.karyawan.index');
+    Route::get('/hrd/karyawan/tambah', [KaryawanController::class,'create'])->name('hrd.karyawan.create');
+    Route::post('/hrd/karyawan', [KaryawanController::class,'store'])->name('hrd.karyawan.store');
+    Route::get('/hrd/karyawan/{karyawan}', [KaryawanController::class,'show'])->name('hrd.karyawan.show');
+    Route::get('/hrd/karyawan/{karyawan}/edit', [KaryawanController::class,'edit'])->name('hrd.karyawan.edit');
+    Route::put('/hrd/karyawan/{karyawan}', [KaryawanController::class,'update'])->name('hrd.karyawan.update');
+    Route::delete('/hrd/karyawan/{karyawan}', [KaryawanController::class,'destroy'])->name('hrd.karyawan.destroy');
+    Route::get('/hrd/departemen', [DepartemenController::class,'index'])->name('hrd.departemen.index');
+    Route::get('/hrd/departemen/tambah', [DepartemenController::class,'create'])->name('hrd.departemen.create');
+    Route::post('/hrd/departemen', [DepartemenController::class,'store'])->name('hrd.departemen.store');
+    Route::get('/hrd/departemen/{departemen}', [DepartemenController::class,'show'])->name('hrd.departemen.show');
+    Route::get('/hrd/departemen/{departemen}/edit', [DepartemenController::class,'edit'])->name('hrd.departemen.edit');
+    Route::put('/hrd/departemen/{departemen}', [DepartemenController::class,'update'])->name('hrd.departemen.update');
+    Route::delete('/hrd/departemen/{departemen}', [DepartemenController::class,'destroy'])->name('hrd.departemen.destroy');
+    Route::get('/hrd/jabatan', [JabatanController::class,'index'])->name('hrd.jabatan.index');
+    Route::get('/hrd/jabatan/tambah', [JabatanController::class,'create'])->name('hrd.jabatan.create');
+    Route::post('/hrd/jabatan', [JabatanController::class,'store'])->name('hrd.jabatan.store');
+    Route::get('/hrd/jabatan/{jabatan}', [JabatanController::class,'show'])->name('hrd.jabatan.show');
+    Route::get('/hrd/jabatan/{jabatan}/edit', [JabatanController::class,'edit'])->name('hrd.jabatan.edit');
+    Route::put('/hrd/jabatan/{jabatan}', [JabatanController::class,'update'])->name('hrd.jabatan.update');
+    Route::delete('/hrd/jabatan/{jabatan}', [JabatanController::class,'destroy'])->name('hrd.jabatan.destroy');
+    Route::get('/hrd/skill', [SkillController::class,'index'])->name('hrd.skill.index');
+    Route::get('/hrd/skill/tambah', [SkillController::class,'create'])->name('hrd.skill.create');
+    Route::post('/hrd/skill', [SkillController::class,'store'])->name('hrd.skill.store');
+    Route::get('/hrd/skill/{skill}', [SkillController::class,'show'])->name('hrd.skill.show');
+    Route::get('/hrd/skill/{skill}/edit', [SkillController::class,'edit'])->name('hrd.skill.edit');
+    Route::put('/hrd/skill/{skill}', [SkillController::class,'update'])->name('hrd.skill.update');
+    Route::delete('/hrd/skill/{skill}', [SkillController::class,'destroy'])->name('hrd.skill.destroy');
 });
 
 /*

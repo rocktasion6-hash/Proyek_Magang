@@ -141,7 +141,10 @@
 </head>
 
 <body>
-
+@extends('layouts.hrd')
+@section('title', 'Peningkatan Skill')
+@section('page_title', 'Peningkatan Skill')
+@section('content')
 <div class="container">
 
     <div class="header">
@@ -337,5 +340,6 @@
     </div>
 
 </div>
+@endsection
 </body>
 </html>

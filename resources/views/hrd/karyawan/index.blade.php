@@ -2,7 +2,6 @@
 <html lang="id">
 
 <head>
-
     <meta charset="UTF-8">
 
     <meta
@@ -10,7 +9,7 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Riwayat Karyawan</title>
+    <title>Manajemen Karyawan</title>
 
     <style>
 
@@ -27,11 +26,38 @@
         }
 
         .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 25px;
         }
 
         h1 {
             margin-bottom: 5px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 6px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-detail {
+            background: #111827;
+            color: white;
+        }
+
+        .btn-edit {
+            background: #f59e0b;
+            color: white;
         }
 
         .filter {
@@ -47,30 +73,15 @@
             flex-wrap: wrap;
         }
 
-        input {
+        input,
+        select {
             padding: 10px;
             border: 1px solid #d1d5db;
             border-radius: 6px;
-            min-width: 280px;
         }
 
-        .btn {
-            display: inline-block;
-            padding: 10px 15px;
-            text-decoration: none;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-
-        .btn-primary {
-            background: #2563eb;
-            color: white;
-        }
-
-        .btn-detail {
-            background: #111827;
-            color: white;
+        input {
+            min-width: 250px;
         }
 
         table {
@@ -92,11 +103,31 @@
             background: #f9fafb;
         }
 
-        .status {
+        .badge {
+            display: inline-block;
             padding: 5px 10px;
             border-radius: 20px;
             font-size: 12px;
             font-weight: bold;
+        }
+
+        .aktif {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .nonaktif {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+
+        .success {
             background: #dcfce7;
             color: #166534;
         }
@@ -107,20 +138,39 @@
 
 <body>
 @extends('layouts.hrd')
-@section('title', 'Riwayat Karyawan')
-@section('page_title', 'Riwayat Karyawan')
+@section('title', 'Manajemen Karyawan')
+@section('page_title', 'Manajemen Karyawan')
 @section('content')
 <div class="container">
 
     <div class="header">
 
-        <h1>Riwayat Karyawan</h1>
+        <div>
 
-        <p>
-            Melihat riwayat perubahan jabatan dan perkembangan skill karyawan.
-        </p>
+            <h1>Manajemen Karyawan</h1>
+
+            <p>
+                Mengelola data karyawan perusahaan.
+            </p>
+
+        </div>
+
+        <a
+            href="{{ route('hrd.karyawan.create') }}"
+            class="btn btn-primary"
+        >
+            + Tambah Karyawan
+        </a>
 
     </div>
+
+    @if(session('success'))
+
+        <div class="alert success">
+            {{ session('success') }}
+        </div>
+
+    @endif
 
     <div class="filter">
 
@@ -133,11 +183,52 @@
                 value="{{ request('search') }}"
             >
 
+            <select name="departemen_id">
+
+                <option value="">
+                    Semua Departemen
+                </option>
+
+                @foreach($departemens as $departemen)
+
+                    <option
+                        value="{{ $departemen->id }}"
+                        {{ request('departemen_id') == $departemen->id ? 'selected' : '' }}
+                    >
+                        {{ $departemen->nama_departemen }}
+                    </option>
+
+                @endforeach
+
+            </select>
+
+            <select name="status">
+
+                <option value="">
+                    Semua Status
+                </option>
+
+                <option
+                    value="aktif"
+                    {{ request('status') === 'aktif' ? 'selected' : '' }}
+                >
+                    Aktif
+                </option>
+
+                <option
+                    value="nonaktif"
+                    {{ request('status') === 'nonaktif' ? 'selected' : '' }}
+                >
+                    Nonaktif
+                </option>
+
+            </select>
+
             <button
                 type="submit"
                 class="btn btn-primary"
             >
-                Cari
+                Filter
             </button>
 
         </form>
@@ -151,9 +242,9 @@
             <tr>
                 <th>No</th>
                 <th>NIK</th>
-                <th>Nama Karyawan</th>
+                <th>Nama</th>
                 <th>Departemen</th>
-                <th>Jabatan Saat Ini</th>
+                <th>Jabatan</th>
                 <th>Status</th>
                 <th>Aksi</th>
             </tr>
@@ -190,7 +281,7 @@
 
                 <td>
 
-                    <span class="status">
+                    <span class="badge {{ $karyawan->status }}">
                         {{ ucfirst($karyawan->status) }}
                     </span>
 
@@ -200,12 +291,22 @@
 
                     <a
                         href="{{ route(
-                            'hrd.riwayat.show',
+                            'hrd.karyawan.show',
                             $karyawan
                         ) }}"
                         class="btn btn-detail"
                     >
-                        Lihat Riwayat
+                        Detail
+                    </a>
+
+                    <a
+                        href="{{ route(
+                            'hrd.karyawan.edit',
+                            $karyawan
+                        ) }}"
+                        class="btn btn-edit"
+                    >
+                        Edit
                     </a>
 
                 </td>
@@ -220,7 +321,7 @@
                     colspan="7"
                     style="text-align:center;"
                 >
-                    Data karyawan tidak ditemukan.
+                    Belum ada data karyawan.
                 </td>
 
             </tr>
@@ -236,7 +337,7 @@
     </div>
 
 </div>
+
 @endsection
 </body>
-
 </html>

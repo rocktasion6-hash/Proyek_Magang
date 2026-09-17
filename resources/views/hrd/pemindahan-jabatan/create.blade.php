@@ -97,7 +97,10 @@
 </head>
 
 <body>
-
+@extends('layouts.hrd')
+@section('title', 'Tambah Pemindahan Jabatan')
+@section('page_title', 'Tambah Pemindahan Jabatan')
+@section('content')
 <div class="container">
 
     <div style="margin-bottom:20px;">
@@ -289,7 +292,7 @@
     </div>
 
 </div>
-
+@endsection
 </body>
 
 </html>

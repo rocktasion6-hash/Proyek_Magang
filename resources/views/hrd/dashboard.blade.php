@@ -12,7 +12,10 @@
 </head>
 
 <body class="bg-gray-100 min-h-screen">
-
+@extends('layouts.hrd')
+@section('title', 'Dashboard HRD')
+@section('page_title', 'Dashboard')
+@section('content')
     <!-- Navbar -->
     <nav class="bg-white border-b border-gray-200">
 
@@ -313,6 +316,6 @@
         </div>
 
     </main>
-
+@endsection
 </body>
 </html>

@@ -122,7 +122,10 @@
 </head>
 
 <body>
-
+@extends('layouts.hrd')
+@section('title', 'Detail Riwayat')
+@section('page_title', 'Detail Riwayat')
+@section('content')
 <div class="container">
 
     <div style="margin-bottom:20px;">
@@ -436,7 +439,7 @@
     </div>
 
 </div>
-
+@endsection
 </body>
 
 </html>
