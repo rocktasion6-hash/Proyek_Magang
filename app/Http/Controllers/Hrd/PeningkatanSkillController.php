@@ -79,20 +79,24 @@ class PeningkatanSkillController extends Controller
                 'required',
                 'exists:hasil_assessments,id',
             ],
+
             'skill_id' => [
                 'required',
                 'exists:skills,id',
             ],
+
             'level_sesudah' => [
                 'required',
                 'integer',
                 'min:1',
                 'max:5',
             ],
+
             'tanggal_pengajuan' => [
                 'required',
                 'date',
             ],
+
             'catatan' => [
                 'nullable',
                 'string',
@@ -146,8 +150,10 @@ class PeningkatanSkillController extends Controller
             ->first();
 
         $levelSebelum = $karyawanSkill
-            ? $karyawanSkill->level_skill
+            ? (int) $karyawanSkill->level_skill
             : 0;
+
+        $levelSesudah = (int) $validated['level_sesudah'];
 
         /*
         |--------------------------------------------------------------------------
@@ -155,11 +161,7 @@ class PeningkatanSkillController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        if (
-            (int) $validated['level_sesudah']
-            <=
-            (int) $levelSebelum
-        ) {
+        if ($levelSesudah <= $levelSebelum) {
             return back()
                 ->withErrors([
                     'level_sesudah' =>
@@ -170,8 +172,8 @@ class PeningkatanSkillController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Jika assessment punya skill tertentu,
-        | skill pengembangan harus sama dengan skill assessment
+        | Jika assessment memiliki skill tertentu,
+        | skill peningkatan harus sama.
         |--------------------------------------------------------------------------
         */
 
@@ -239,34 +241,14 @@ class PeningkatanSkillController extends Controller
             'jabatan_asal_id' => null,
             'jabatan_tujuan_id' => null,
             'skill_id' => $skill->id,
+
+            'level_sebelum' => $levelSebelum,
+            'level_sesudah' => $levelSesudah,
+
             'status' => 'diajukan',
             'tanggal_pengajuan' => $validated['tanggal_pengajuan'],
             'tanggal_keputusan' => null,
-            'catatan' =>
-                ($validated['catatan'] ?? null),
-        ]);
-
-        /*
-        |--------------------------------------------------------------------------
-        | Kita simpan target level sementara di catatan
-        |--------------------------------------------------------------------------
-        |
-        | Karena tabel pengajuan_pengembangans saat ini belum memiliki
-        | kolom level_sesudah.
-        |
-        */
-
-        $pengajuan = PengajuanPengembangan::latest('id')->first();
-
-        $catatanLama = $pengajuan->catatan;
-
-        $catatanLevel = 'Target level skill: ' .
-            $validated['level_sesudah'];
-
-        $pengajuan->update([
-            'catatan' => $catatanLama
-                ? $catatanLama . "\n" . $catatanLevel
-                : $catatanLevel,
+            'catatan' => $validated['catatan'] ?? null,
         ]);
 
         return redirect()
@@ -287,27 +269,15 @@ class PeningkatanSkillController extends Controller
         $pengajuan->load([
             'karyawan.departemen',
             'karyawan.jabatan',
+            'karyawan.skills',
             'skill',
             'hasilAssessment.assessmentPeserta.assessment.skill',
             'hasilAssessment.assessmentPeserta.assessment.jabatan',
         ]);
 
-        /*
-        |--------------------------------------------------------------------------
-        | Ambil target level dari catatan
-        |--------------------------------------------------------------------------
-        */
-
-        $targetLevel = $this->getTargetLevel(
-            $pengajuan
-        );
-
         return view(
             'hrd.peningkatan-skill.show',
-            compact(
-                'pengajuan',
-                'targetLevel'
-            )
+            compact('pengajuan')
         );
     }
 
@@ -352,15 +322,15 @@ class PeningkatanSkillController extends Controller
             );
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Cek hasil assessment
+        |--------------------------------------------------------------------------
+        */
+
         $hasilAssessment = HasilAssessment::findOrFail(
             $pengajuan->hasil_assessment_id
         );
-
-        /*
-        |--------------------------------------------------------------------------
-        | Cek ulang hasil assessment
-        |--------------------------------------------------------------------------
-        */
 
         if ($hasilAssessment->status !== 'lulus') {
             return back()->with(
@@ -369,113 +339,109 @@ class PeningkatanSkillController extends Controller
             );
         }
 
-        $targetLevel = $this->getTargetLevel(
-            $pengajuan
-        );
+        $levelSebelum = (int) $pengajuan->level_sebelum;
+        $levelSesudah = (int) $pengajuan->level_sesudah;
 
-        if ($targetLevel === null) {
+        if ($levelSesudah <= $levelSebelum) {
             return back()->with(
                 'error',
-                'Target level skill tidak ditemukan.'
+                'Level skill baru harus lebih tinggi dari level sebelumnya.'
             );
         }
 
         DB::transaction(function () use (
             $pengajuan,
-            $targetLevel
+            $levelSebelum,
+            $levelSesudah
         ) {
 
-            /*
-            |--------------------------------------------------------------------------
-            | Ambil skill karyawan
-            |--------------------------------------------------------------------------
-            */
+        /*
+        |--------------------------------------------------------------------------
+        | Ambil skill karyawan
+        |--------------------------------------------------------------------------
+        */
 
-            $karyawanSkill = KaryawanSkill::where(
-                'karyawan_id',
-                $pengajuan->karyawan_id
+        $karyawanSkill = KaryawanSkill::where(
+            'karyawan_id',
+            $pengajuan->karyawan_id
+        )
+            ->where(
+                'skill_id',
+                $pengajuan->skill_id
             )
-                ->where(
-                    'skill_id',
-                    $pengajuan->skill_id
-                )
-                ->lockForUpdate()
-                ->first();
+            ->lockForUpdate()
+            ->first();
 
-            $levelSebelum = $karyawanSkill
-                ? $karyawanSkill->level_skill
-                : 0;
+        $levelAktual = $karyawanSkill
+            ? (int) $karyawanSkill->level_skill
+            : 0;
 
-            /*
-            |--------------------------------------------------------------------------
-            | Pastikan level baru lebih tinggi
-            |--------------------------------------------------------------------------
-            */
+        /*
+        |--------------------------------------------------------------------------
+        | Pastikan kondisi database belum berubah
+        |--------------------------------------------------------------------------
+        */
 
-            if (
-                (int) $targetLevel
-                <=
-                (int) $levelSebelum
-            ) {
-                throw new \Exception(
-                    'Level baru harus lebih tinggi dari level skill saat ini.'
-                );
-            }
+        if ($levelAktual !== $levelSebelum) {
+            throw new \Exception(
+                'Level skill karyawan telah berubah sejak pengajuan dibuat. Periksa kembali pengajuan ini.'
+            );
+        }
 
-            $tanggal = Carbon::now()->toDateString();
+        $tanggal = Carbon::now()->toDateString();
 
-            /*
-            |--------------------------------------------------------------------------
-            | Update / create karyawan_skill
-            |--------------------------------------------------------------------------
-            */
+        /*
+        |--------------------------------------------------------------------------
+        | Update / buat karyawan_skill
+        |--------------------------------------------------------------------------
+        */
 
-            if ($karyawanSkill) {
+        if ($karyawanSkill) {
 
-                $karyawanSkill->update([
-                    'level_skill' => $targetLevel,
-                    'tanggal_penilaian' => $tanggal,
-                ]);
+            $karyawanSkill->update([
+                'level_skill' => $levelSesudah,
+                'tanggal_penilaian' => $tanggal,
+            ]);
 
-            } else {
+        } else {
 
-                $karyawanSkill = KaryawanSkill::create([
-                    'karyawan_id' => $pengajuan->karyawan_id,
-                    'skill_id' => $pengajuan->skill_id,
-                    'level_skill' => $targetLevel,
-                    'tanggal_penilaian' => $tanggal,
-                ]);
-            }
-
-            /*
-            |--------------------------------------------------------------------------
-            | Simpan riwayat skill
-            |--------------------------------------------------------------------------
-            */
-
-            RiwayatSkill::create([
+            $karyawanSkill = KaryawanSkill::create([
                 'karyawan_id' => $pengajuan->karyawan_id,
                 'skill_id' => $pengajuan->skill_id,
-                'level_sebelum' => $levelSebelum,
-                'level_sesudah' => $targetLevel,
-                'pengajuan_pengembangan_id' => $pengajuan->id,
-                'hasil_assessment_id' => $pengajuan->hasil_assessment_id,
-                'tanggal_perubahan' => $tanggal,
-                'keterangan' =>
-                    'Peningkatan skill berdasarkan hasil assessment.',
+                'level_skill' => $levelSesudah,
+                'tanggal_penilaian' => $tanggal,
             ]);
+        }
 
-            /*
-            |--------------------------------------------------------------------------
-            | Update status pengajuan
-            |--------------------------------------------------------------------------
-            */
+        /*
+        |--------------------------------------------------------------------------
+        | Simpan riwayat skill
+        |--------------------------------------------------------------------------
+        */
 
-            $pengajuan->update([
-                'status' => 'disetujui',
-                'tanggal_keputusan' => $tanggal,
-            ]);
-        });
+        RiwayatSkill::create([
+            'karyawan_id' => $pengajuan->karyawan_id,
+            'skill_id' => $pengajuan->skill_id,
+            'level_sebelum' => $levelSebelum,
+            'level_sesudah' => $levelSesudah,
+            'pengajuan_pengembangan_id' => $pengajuan->id,
+            'hasil_assessment_id' => $pengajuan->hasil_assessment_id,
+            'tanggal_perubahan' => $tanggal,
+            'keterangan' =>
+                'Peningkatan skill berdasarkan hasil assessment.',
+        ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Update status pengajuan
+        |--------------------------------------------------------------------------
+        */
+
+        $pengajuan->update([
+            'status' => 'disetujui',
+            'tanggal_keputusan' => $tanggal,
+        ]);
+    });
 
         return back()->with(
             'success',
@@ -519,25 +485,5 @@ class PeningkatanSkillController extends Controller
             'success',
             'Pengajuan peningkatan skill telah ditolak.'
         );
-    }
-
-    private function getTargetLevel(
-        PengajuanPengembangan $pengajuan
-    ): ?int {
-        if (!$pengajuan->catatan) {
-            return null;
-        }
-
-        if (
-            preg_match(
-                '/Target level skill:\s*(\d+)/i',
-                $pengajuan->catatan,
-                $matches
-            )
-        ) {
-            return (int) $matches[1];
-        }
-
-        return null;
     }
 }

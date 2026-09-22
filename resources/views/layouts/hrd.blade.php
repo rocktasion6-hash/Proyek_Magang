@@ -404,8 +404,14 @@
                 Riwayat
             </a>
 
-            <a href="#">
-                Laporan & Analitik
+            <a
+                href="{{ route('hrd.laporan.index') }}"
+                class="{{ request()->routeIs('hrd.laporan.*')
+                ? 'active'
+                : '' }}"
+            >
+                
+            Laporan & Analitik
             </a>
 
         </div>

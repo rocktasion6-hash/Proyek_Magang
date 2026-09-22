@@ -273,82 +273,301 @@
     {{-- SKILL SAAT INI --}}
     {{-- ===================================================== --}}
 
-    <div class="card">
+<div class="card">
 
-        <h2>Skill Saat Ini</h2>
+    <div>
 
-        <table>
+        <h2>
+            Skill Saat Ini
+        </h2>
 
-            <thead>
-
-                <tr>
-                    <th>No</th>
-                    <th>Skill</th>
-                    <th>Level</th>
-                    <th>Tanggal Penilaian</th>
-                </tr>
-
-            </thead>
-
-            <tbody>
-
-            @forelse($karyawan->skills as $skill)
-
-                <tr>
-
-                    <td>
-                        {{ $loop->iteration }}
-                    </td>
-
-                    <td>
-                        <strong>
-                            {{ $skill->nama_skill }}
-                        </strong>
-                    </td>
-
-                    <td>
-                        Level {{ $skill->pivot->level_skill }}
-                    </td>
-
-                    <td>
-
-                        @if($skill->pivot->tanggal_penilaian)
-
-                            {{ \Carbon\Carbon::parse(
-                                $skill->pivot->tanggal_penilaian
-                            )->format('d-m-Y') }}
-
-                        @else
-
-                            -
-
-                        @endif
-
-                    </td>
-
-                </tr>
-
-            @empty
-
-                <tr>
-
-                    <td
-                        colspan="4"
-                        class="empty"
-                    >
-                        Karyawan belum memiliki skill.
-
-                    </td>
-
-                </tr>
-
-            @endforelse
-
-            </tbody>
-
-        </table>
+        <p>
+            Kelola skill yang dimiliki karyawan
+            beserta level kompetensinya.
+        </p>
 
     </div>
+
+
+    <form
+        method="POST"
+        action="{{ route(
+            'hrd.karyawan.skill.store',
+            $karyawan
+        ) }}"
+        style="
+            background:#f9fafb;
+            padding:20px;
+            border-radius:8px;
+            margin-bottom:20px;
+        "
+    >
+
+        @csrf
+
+        <div
+            style="
+                display:grid;
+                grid-template-columns:1fr 180px 180px auto;
+                gap:10px;
+                align-items:end;
+            "
+        >
+
+            <div>
+
+                <label
+                    style="
+                        display:block;
+                        margin-bottom:7px;
+                        font-weight:bold;
+                    "
+                >
+                    Skill
+                </label>
+
+                <select
+                    name="skill_id"
+                    required
+                    style="
+                        width:100%;
+                        padding:10px;
+                        border:1px solid #d1d5db;
+                        border-radius:6px;
+                    "
+                >
+
+                    <option value="">
+                        -- Pilih Skill --
+                    </option>
+
+                    @foreach($availableSkills as $skill)
+
+                        <option
+                            value="{{ $skill->id }}"
+                        >
+                            {{ $skill->nama_skill }}
+                        </option>
+
+                    @endforeach
+
+                </select>
+
+            </div>
+
+
+            <div>
+
+                <label
+                    style="
+                        display:block;
+                        margin-bottom:7px;
+                        font-weight:bold;
+                    "
+                >
+                    Level Skill
+                </label>
+
+                <select
+                    name="level_skill"
+                    required
+                    style="
+                        width:100%;
+                        padding:10px;
+                        border:1px solid #d1d5db;
+                        border-radius:6px;
+                    "
+                >
+
+                    @for($level = 1; $level <= 5; $level++)
+
+                        <option
+                            value="{{ $level }}"
+                        >
+                            Level {{ $level }}
+                        </option>
+
+                    @endfor
+
+                </select>
+
+            </div>
+
+
+            <div>
+
+                <label
+                    style="
+                        display:block;
+                        margin-bottom:7px;
+                        font-weight:bold;
+                    "
+                >
+                    Tanggal Penilaian
+                </label>
+
+                <input
+                    type="date"
+                    name="tanggal_penilaian"
+                    value="{{ now()->toDateString() }}"
+                    required
+                    style="
+                        width:100%;
+                        padding:10px;
+                        border:1px solid #d1d5db;
+                        border-radius:6px;
+                    "
+                >
+
+            </div>
+
+
+            <button
+                type="submit"
+                class="btn"
+                style="
+                    background:#2563eb;
+                    color:white;
+                "
+            >
+                + Simpan
+            </button>
+
+        </div>
+
+    </form>
+
+
+    <table
+        style="
+            width:100%;
+            border-collapse:collapse;
+        "
+    >
+
+        <thead>
+
+            <tr>
+
+                <th style="padding:12px;text-align:left;border-bottom:1px solid #e5e7eb;">
+                    No
+                </th>
+
+                <th style="padding:12px;text-align:left;border-bottom:1px solid #e5e7eb;">
+                    Skill
+                </th>
+
+                <th style="padding:12px;text-align:left;border-bottom:1px solid #e5e7eb;">
+                    Level
+                </th>
+
+                <th style="padding:12px;text-align:left;border-bottom:1px solid #e5e7eb;">
+                    Tanggal Penilaian
+                </th>
+
+                <th style="padding:12px;text-align:left;border-bottom:1px solid #e5e7eb;">
+                    Aksi
+                </th>
+
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+        @forelse($karyawan->karyawanSkills as $karyawanSkill)
+
+            <tr>
+
+                <td style="padding:12px;border-bottom:1px solid #e5e7eb;">
+                    {{ $loop->iteration }}
+                </td>
+
+                <td style="padding:12px;border-bottom:1px solid #e5e7eb;">
+
+                    <strong>
+                        {{ $karyawanSkill->skill->nama_skill }}
+                    </strong>
+
+                </td>
+
+                <td style="padding:12px;border-bottom:1px solid #e5e7eb;">
+
+                    Level
+                    {{ $karyawanSkill->level_skill }}
+
+                </td>
+
+                <td style="padding:12px;border-bottom:1px solid #e5e7eb;">
+
+                    {{ $karyawanSkill->tanggal_penilaian
+                        ? \Carbon\Carbon::parse(
+                            $karyawanSkill->tanggal_penilaian
+                        )->format('d-m-Y')
+                        : '-' }}
+
+                </td>
+
+                <td style="padding:12px;border-bottom:1px solid #e5e7eb;">
+
+                    <form
+                        method="POST"
+                        action="{{ route(
+                            'hrd.karyawan.skill.destroy',
+                            [
+                                'karyawan' => $karyawan,
+                                'karyawanSkill' => $karyawanSkill
+                            ]
+                        ) }}"
+                        onsubmit="return confirm(
+                            'Hapus skill ini dari karyawan?'
+                        )"
+                    >
+
+                        @csrf
+
+                        @method('DELETE')
+
+                        <button
+                            type="submit"
+                            class="btn"
+                            style="
+                                background:#dc2626;
+                                color:white;
+                            "
+                        >
+                            Hapus
+                        </button>
+
+                    </form>
+
+                </td>
+
+            </tr>
+
+        @empty
+
+            <tr>
+
+                <td
+                    colspan="5"
+                    style="
+                        padding:25px;
+                        text-align:center;
+                    "
+                >
+                    Karyawan belum memiliki skill.
+                </td>
+
+            </tr>
+
+        @endforelse
+
+        </tbody>
+
+    </table>
+
+</div>
 
 
     {{-- ===================================================== --}}

@@ -112,11 +112,25 @@ class JabatanController extends Controller
             'skills',
             'assessments',
             'soals',
+            'jabatanSkills.skill',
         ]);
+
+        $skillIds = $jabatan->skills
+            ->pluck('id');
+
+        $availableSkills = Skill::whereNotIn(
+            'id',
+            $skillIds
+        )
+            ->orderBy('nama_skill')
+            ->get();
 
         return view(
             'hrd.jabatan.show',
-            compact('jabatan')
+            compact(
+                'jabatan',
+                'availableSkills'
+            )
         );
     }
 

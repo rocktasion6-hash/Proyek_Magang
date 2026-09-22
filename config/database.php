@@ -114,6 +114,22 @@ return [
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
+        'warehouse' => [
+            'driver' => 'mysql',
+            'url' => env('DB_WAREHOUSE_URL'),
+            'host' => env('DB_WAREHOUSE_HOST', '127.0.0.1'),
+            'port' => env('DB_WAREHOUSE_PORT', '3306'),
+            'database' => env('DB_WAREHOUSE_DATABASE','dw_penilaian_jabatan'),
+            'username' => env('DB_WAREHOUSE_USERNAME','root'),
+            'password' => env('DB_WAREHOUSE_PASSWORD',''),
+            'unix_socket' => env('DB_WAREHOUSE_SOCKET',''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+        ],
     ],
 
     /*

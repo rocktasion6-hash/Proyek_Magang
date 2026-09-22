@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use App\Models\Skill;
 
 class KaryawanController extends Controller
 {
@@ -221,32 +222,24 @@ class KaryawanController extends Controller
             'skills',
             'riwayatJabatans.jabatan',
             'riwayatSkills.skill',
+            'karyawanSkills.skill',
         ]);
 
-        return view(
-            'hrd.karyawan.show',
-            compact('karyawan')
-        );
-    }
+        $skillIds = $karyawan->skills
+            ->pluck('id');
 
-    public function edit(Karyawan $karyawan)
-    {
-        $departemens = Departemen::orderBy(
-            'nama_departemen'
-        )->get();
-
-        $jabatans = Jabatan::orderBy(
-            'level_jabatan'
+        $availableSkills = Skill::whereNotIn(
+            'id',
+            $skillIds
         )
-            ->orderBy('nama_jabatan')
+            ->orderBy('nama_skill')
             ->get();
 
         return view(
-            'hrd.karyawan.edit',
+            'hrd.karyawan.show',
             compact(
                 'karyawan',
-                'departemens',
-                'jabatans'
+                'availableSkills'
             )
         );
     }

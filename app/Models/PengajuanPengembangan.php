@@ -29,6 +29,8 @@ class PengajuanPengembangan extends Model
         return [
             'tanggal_pengajuan' => 'date',
             'tanggal_keputusan' => 'date',
+            'level_sebelum' => 'integer',
+            'level_sesudah' => 'integer',
         ];
     }
 

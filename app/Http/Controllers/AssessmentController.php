@@ -7,6 +7,8 @@ use App\Models\HasilAssessment;
 use App\Models\Jawaban;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\BlockchainRecord;
+use App\Services\BlockchainService;
 use Illuminate\Support\Facades\DB;
 
 class AssessmentController extends Controller
@@ -306,7 +308,7 @@ class AssessmentController extends Controller
             /*
              * Simpan hasil assessment.
              */
-            HasilAssessment::updateOrCreate(
+            $hasil = HasilAssessment::updateOrCreate(
                 [
                     'assessment_peserta_id' => $peserta->id,
                 ],
@@ -318,8 +320,34 @@ class AssessmentController extends Controller
                     'waktu_mulai' => $peserta->waktu_mulai,
                     'waktu_selesai' => $waktuSelesai,
                 ]
+            
             );
-        });
+            $blockchain = app(BlockchainService::class);
+
+            $blockchainRecordExists = BlockchainRecord::query()
+                ->where('entity_type', 'hasil_assessment')
+                ->where('entity_id', $hasil->id)
+                ->exists();
+
+            if (!$blockchainRecordExists) {
+                $blockchain->addBlock(
+                    'hasil_assessment',
+                    $hasil->id,
+                [
+                    'assessment_peserta_id' => $peserta->id,
+                    'assessment_id' => $peserta->assessment_id,
+                    'karyawan_id' => $peserta->karyawan_id,
+                    'nilai_akhir' => $hasil->nilai_akhir,
+                    'standar_nilai' => $hasil->standar_nilai,
+                    'status' => $hasil->status,
+                    'tanggal_ujian' => $hasil->tanggal_ujian,
+                    'waktu_mulai' => $hasil->waktu_mulai,
+                    'waktu_selesai' => $hasil->waktu_selesai,
+                ]
+            );
+        }
+    });
+        
 
         return redirect()->route(
             'karyawan.assessment.hasil',

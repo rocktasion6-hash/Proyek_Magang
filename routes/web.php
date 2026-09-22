@@ -16,6 +16,9 @@ use App\Http\Controllers\Hrd\KaryawanController;
 use App\Http\Controllers\Hrd\DepartemenController;
 use App\Http\Controllers\Hrd\JabatanController;
 use App\Http\Controllers\Hrd\SkillController;
+use App\Http\Controllers\Hrd\JabatanSkillController;
+use App\Http\Controllers\Hrd\KaryawanSkillController;
+use App\Http\Controllers\Hrd\LaporanController;
 /*
 |--------------------------------------------------------------------------
 | Authentication
@@ -104,6 +107,11 @@ Route::middleware(['auth', 'role:hrd'])->group(function () {
     Route::get('/hrd/skill/{skill}/edit', [SkillController::class,'edit'])->name('hrd.skill.edit');
     Route::put('/hrd/skill/{skill}', [SkillController::class,'update'])->name('hrd.skill.update');
     Route::delete('/hrd/skill/{skill}', [SkillController::class,'destroy'])->name('hrd.skill.destroy');
+    Route::post('/hrd/jabatan/{jabatan}/skill', [JabatanSkillController::class,'store'])->name('hrd.jabatan.skill.store');
+    Route::delete('/hrd/jabatan/{jabatan}/skill/{jabatanSkill}', [JabatanSkillController::class,'destroy'])->name('hrd.jabatan.skill.destroy');
+    Route::post('/hrd/karyawan/{karyawan}/skill', [KaryawanSkillController::class,'store'])->name('hrd.karyawan.skill.store');
+    Route::delete('/hrd/karyawan/{karyawan}/skill/{karyawanSkill}', [KaryawanSkillController::class,'destroy'])->name('hrd.karyawan.skill.destroy');
+    Route::get('/hrd/laporan', [LaporanController::class,'index'])->name('hrd.laporan.index');
 });
 
 /*

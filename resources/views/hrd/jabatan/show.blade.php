@@ -169,44 +169,182 @@
 
 <div class="card">
 
-    <h2>
-        Skill yang Dibutuhkan
-    </h2>
+    <div
+        style="
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            gap:10px;
+            flex-wrap:wrap;
+        "
+    >
 
-    <table style="width:100%; border-collapse:collapse;">
+        <div>
+
+            <h2>
+                Skill yang Dibutuhkan
+            </h2>
+
+            <p>
+                Tentukan skill dan level minimum
+                yang dibutuhkan untuk jabatan ini.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    @if($availableSkills->count() > 0)
+
+        <form
+            method="POST"
+            action="{{ route(
+                'hrd.jabatan.skill.store',
+                $jabatan
+            ) }}"
+            style="
+                background:#f9fafb;
+                padding:20px;
+                border-radius:8px;
+                margin-bottom:20px;
+            "
+        >
+
+            @csrf
+
+            <div
+                style="
+                    display:grid;
+                    grid-template-columns:1fr 200px auto;
+                    gap:10px;
+                    align-items:end;
+                "
+            >
+
+                <div>
+
+                    <label
+                        style="
+                            display:block;
+                            margin-bottom:7px;
+                            font-weight:bold;
+                        "
+                    >
+                        Skill
+                    </label>
+
+                    <select
+                        name="skill_id"
+                        required
+                        style="
+                            width:100%;
+                            padding:10px;
+                            border:1px solid #d1d5db;
+                            border-radius:6px;
+                        "
+                    >
+
+                        <option value="">
+                            -- Pilih Skill --
+                        </option>
+
+                        @foreach($availableSkills as $skill)
+
+                            <option
+                                value="{{ $skill->id }}"
+                            >
+                                {{ $skill->nama_skill }}
+                            </option>
+
+                        @endforeach
+
+                    </select>
+
+                </div>
+
+
+                <div>
+
+                    <label
+                        style="
+                            display:block;
+                            margin-bottom:7px;
+                            font-weight:bold;
+                        "
+                    >
+                        Level Dibutuhkan
+                    </label>
+
+                    <select
+                        name="level_dibutuhkan"
+                        required
+                        style="
+                            width:100%;
+                            padding:10px;
+                            border:1px solid #d1d5db;
+                            border-radius:6px;
+                        "
+                    >
+
+                        @for($level = 1; $level <= 5; $level++)
+
+                            <option
+                                value="{{ $level }}"
+                            >
+                                Level {{ $level }}
+                            </option>
+
+                        @endfor
+
+                    </select>
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    class="btn"
+                    style="
+                        background:#2563eb;
+                        color:white;
+                    "
+                >
+                    + Tambah
+                </button>
+
+            </div>
+
+        </form>
+
+    @endif
+
+
+    <table
+        style="
+            width:100%;
+            border-collapse:collapse;
+        "
+    >
 
         <thead>
 
             <tr>
 
-                <th
-                    style="
-                        padding:12px;
-                        text-align:left;
-                        border-bottom:1px solid #e5e7eb;
-                    "
-                >
+                <th style="padding:12px;text-align:left;border-bottom:1px solid #e5e7eb;">
                     No
                 </th>
 
-                <th
-                    style="
-                        padding:12px;
-                        text-align:left;
-                        border-bottom:1px solid #e5e7eb;
-                    "
-                >
+                <th style="padding:12px;text-align:left;border-bottom:1px solid #e5e7eb;">
                     Skill
                 </th>
 
-                <th
-                    style="
-                        padding:12px;
-                        text-align:left;
-                        border-bottom:1px solid #e5e7eb;
-                    "
-                >
+                <th style="padding:12px;text-align:left;border-bottom:1px solid #e5e7eb;">
                     Level Dibutuhkan
+                </th>
+
+                <th style="padding:12px;text-align:left;border-bottom:1px solid #e5e7eb;">
+                    Aksi
                 </th>
 
             </tr>
@@ -215,36 +353,63 @@
 
         <tbody>
 
-        @forelse($jabatan->skills as $skill)
+        @forelse($jabatan->jabatanSkills as $jabatanSkill)
 
             <tr>
 
-                <td
-                    style="
-                        padding:12px;
-                        border-bottom:1px solid #e5e7eb;
-                    "
-                >
+                <td style="padding:12px;border-bottom:1px solid #e5e7eb;">
                     {{ $loop->iteration }}
                 </td>
 
-                <td
-                    style="
-                        padding:12px;
-                        border-bottom:1px solid #e5e7eb;
-                    "
-                >
-                    {{ $skill->nama_skill }}
+                <td style="padding:12px;border-bottom:1px solid #e5e7eb;">
+
+                    <strong>
+                        {{ $jabatanSkill->skill->nama_skill }}
+                    </strong>
+
                 </td>
 
-                <td
-                    style="
-                        padding:12px;
-                        border-bottom:1px solid #e5e7eb;
-                    "
-                >
+                <td style="padding:12px;border-bottom:1px solid #e5e7eb;">
+
                     Level
-                    {{ $skill->pivot->level_dibutuhkan }}
+                    {{ $jabatanSkill->level_dibutuhkan }}
+
+                </td>
+
+                <td style="padding:12px;border-bottom:1px solid #e5e7eb;">
+
+                    <form
+                        method="POST"
+                        action="{{ route(
+                            'hrd.jabatan.skill.destroy',
+                            [
+                                'jabatan' => $jabatan,
+                                'jabatanSkill' => $jabatanSkill
+                            ]
+                        ) }}"
+                        onsubmit="return confirm(
+                            'Hapus skill ini dari jabatan?'
+                        )"
+                        style="display:inline;"
+                    >
+
+                        @csrf
+
+                        @method('DELETE')
+
+                        <button
+                            type="submit"
+                            class="btn"
+                            style="
+                                background:#dc2626;
+                                color:white;
+                            "
+                        >
+                            Hapus
+                        </button>
+
+                    </form>
+
                 </td>
 
             </tr>
@@ -254,13 +419,14 @@
             <tr>
 
                 <td
-                    colspan="3"
+                    colspan="4"
                     style="
                         padding:25px;
                         text-align:center;
                     "
                 >
-                    Belum ada skill yang dikaitkan dengan jabatan ini.
+                    Belum ada skill yang dibutuhkan
+                    untuk jabatan ini.
                 </td>
 
             </tr>

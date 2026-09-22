@@ -255,10 +255,14 @@
         <div class="row">
 
             <div class="label">
-                Level Skill Saat Ini
+                Level Skill Sebelum
             </div>
 
             <div>
+                Level {{ $pengajuan->level_sebelum }}
+            </div>
+
+        </div>
 
                 @php
                     $skillSaatIni = $pengajuan
@@ -279,15 +283,17 @@
 
         <div class="row">
 
-            <div class="label">
-                Target Level
-            </div>
-
-            <div>
-                Level {{ $targetLevel ?? '-' }}
-            </div>
-
+        <div class="label">
+            Level Skill Sesudah
         </div>
+
+        <div>
+            <strong>
+                Level {{ $pengajuan->level_sesudah }}
+            </strong>
+        </div>
+
+    </div>
 
         <div class="row">
 
