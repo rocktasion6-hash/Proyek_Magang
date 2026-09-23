@@ -9,6 +9,8 @@ use App\Models\PengajuanPengembangan;
 use App\Models\RiwayatJabatan;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use App\Models\BlockchainRecord;
+use App\Services\BlockchainService;
 use Illuminate\Support\Facades\DB;
 
 class PemindahanJabatanController extends Controller
@@ -144,7 +146,7 @@ class PemindahanJabatanController extends Controller
                 ->withInput();
         }
 
-        PengajuanPengembangan::create([
+        $pengajuan = PengajuanPengembangan::create([
             'karyawan_id' => $karyawan->id,
             'hasil_assessment_id' => $hasilAssessment->id,
             'jenis_pengajuan' => 'pemindahan_jabatan',
@@ -156,6 +158,38 @@ class PemindahanJabatanController extends Controller
             'tanggal_keputusan' => null,
             'catatan' => $validated['catatan'] ?? null,
         ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Catat pengajuan pemindahan ke blockchain
+        |--------------------------------------------------------------------------
+        */
+
+        $blockchain = app(BlockchainService::class);
+
+        $blockchainRecordExists = BlockchainRecord::query()
+            ->where('entity_type', 'pengajuan_pengembangan')
+            ->where('entity_id', $pengajuan->id)
+            ->exists();
+
+        if (!$blockchainRecordExists) {
+            $blockchain->addBlock(
+                'pengajuan_pengembangan',
+                $pengajuan->id,
+                [
+                    'karyawan_id' => $pengajuan->karyawan_id,
+                    'hasil_assessment_id' => $pengajuan->hasil_assessment_id,
+                    'jenis_pengajuan' => $pengajuan->jenis_pengajuan,
+                    'jabatan_asal_id' => $pengajuan->jabatan_asal_id,
+                    'jabatan_tujuan_id' => $pengajuan->jabatan_tujuan_id,
+                    'skill_id' => $pengajuan->skill_id,
+                    'status' => $pengajuan->status,
+                    'tanggal_pengajuan' => $pengajuan->tanggal_pengajuan,
+                    'tanggal_keputusan' => $pengajuan->tanggal_keputusan,
+                    'catatan' => $pengajuan->catatan,
+                ]
+            );
+        }
 
         return redirect()
             ->route('hrd.pemindahan-jabatan.index')
@@ -275,6 +309,29 @@ class PemindahanJabatanController extends Controller
                 'status' => 'disetujui',
                 'tanggal_keputusan' => $tanggal,
             ]);
+
+            $blockchain = app(BlockchainService::class);
+
+            $blockchainExists = BlockchainRecord::query()
+                ->where('entity_type', 'keputusan_pemindahan_jabatan')
+                ->where('entity_id', $pengajuan->id)
+                ->exists();
+
+            if (!$blockchainExists) {
+            $blockchain->addBlock(
+                'keputusan_pemindahan_jabatan',
+                $pengajuan->id,
+                [
+                    'pengajuan_pengembangan_id' => $pengajuan->id,
+                    'karyawan_id' => $karyawan->id,
+                    'hasil_assessment_id' => $pengajuan->hasil_assessment_id,
+                    'jabatan_asal_id' => $pengajuan->jabatan_asal_id,
+                    'jabatan_tujuan_id' => $pengajuan->jabatan_tujuan_id,
+                    'status' => 'disetujui',
+                    'tanggal_keputusan' => $tanggal,
+                ]
+            );
+        }
         });
 
         return back()->with(
@@ -284,37 +341,78 @@ class PemindahanJabatanController extends Controller
     }
 
     public function reject(
-        Request $request,
-        PengajuanPengembangan $pengajuan
+    Request $request,
+    PengajuanPengembangan $pengajuan
     ) {
-        abort_if(
-            $pengajuan->jenis_pengajuan !== 'pemindahan_jabatan',
-            404
+    abort_if(
+        $pengajuan->jenis_pengajuan !== 'pemindahan_jabatan',
+        404
+    );
+
+    if (!in_array($pengajuan->status, ['diajukan', 'diproses'])) {
+        return back()->with(
+            'error',
+            'Pengajuan ini tidak dapat ditolak.'
         );
+    }
 
-        if (!in_array($pengajuan->status, ['diajukan', 'diproses'])) {
-            return back()->with(
-                'error',
-                'Pengajuan ini tidak dapat ditolak.'
-            );
-        }
+    $validated = $request->validate([
+        'catatan' => [
+            'required',
+            'string',
+        ],
+    ]);
 
-        $validated = $request->validate([
-            'catatan' => [
-                'required',
-                'string',
-            ],
-        ]);
+    DB::transaction(function () use ($pengajuan, $validated) {
+
+        $tanggal = Carbon::now()->toDateString();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Update pengajuan menjadi ditolak
+        |--------------------------------------------------------------------------
+        */
 
         $pengajuan->update([
             'status' => 'ditolak',
-            'tanggal_keputusan' => Carbon::now()->toDateString(),
+            'tanggal_keputusan' => $tanggal,
             'catatan' => $validated['catatan'],
         ]);
 
-        return back()->with(
-            'success',
-            'Pengajuan pemindahan jabatan telah ditolak.'
-        );
+        /*
+        |--------------------------------------------------------------------------
+        | Catat keputusan penolakan ke blockchain
+        |--------------------------------------------------------------------------
+        */
+
+        $blockchain = app(BlockchainService::class);
+
+        $blockchainExists = BlockchainRecord::query()
+            ->where('entity_type', 'keputusan_pemindahan_jabatan')
+            ->where('entity_id', $pengajuan->id)
+            ->exists();
+
+        if (!$blockchainExists) {
+            $blockchain->addBlock(
+                'keputusan_pemindahan_jabatan',
+                $pengajuan->id,
+                [
+                    'pengajuan_pengembangan_id' => $pengajuan->id,
+                    'karyawan_id' => $pengajuan->karyawan_id,
+                    'hasil_assessment_id' => $pengajuan->hasil_assessment_id,
+                    'jabatan_asal_id' => $pengajuan->jabatan_asal_id,
+                    'jabatan_tujuan_id' => $pengajuan->jabatan_tujuan_id,
+                    'status' => 'ditolak',
+                    'tanggal_keputusan' => $tanggal,
+                    'catatan' => $validated['catatan'],
+                ]
+            );
+        }
+    });
+
+    return back()->with(
+        'success',
+        'Pengajuan pemindahan jabatan telah ditolak dan keputusan telah dicatat ke blockchain.'
+    );
     }
 }

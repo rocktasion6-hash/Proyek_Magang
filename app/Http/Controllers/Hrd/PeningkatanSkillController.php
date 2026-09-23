@@ -10,6 +10,8 @@ use App\Models\RiwayatSkill;
 use App\Models\Skill;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use App\Models\BlockchainRecord;
+use App\Services\BlockchainService;
 use Illuminate\Support\Facades\DB;
 
 class PeningkatanSkillController extends Controller
@@ -234,7 +236,7 @@ class PeningkatanSkillController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        PengajuanPengembangan::create([
+        $pengajuan = PengajuanPengembangan::create([
             'karyawan_id' => $karyawan->id,
             'hasil_assessment_id' => $hasilAssessment->id,
             'jenis_pengajuan' => 'peningkatan_skill',
@@ -250,6 +252,32 @@ class PeningkatanSkillController extends Controller
             'tanggal_keputusan' => null,
             'catatan' => $validated['catatan'] ?? null,
         ]);
+
+        $blockchain = app(BlockchainService::class);
+
+        $blockchainRecordExists = BlockchainRecord::query()
+            ->where('entity_type', 'pengajuan_pengembangan')
+            ->where('entity_id', $pengajuan->id)
+            ->exists();
+
+        if (!$blockchainRecordExists) {
+            $blockchain->addBlock(
+            'pengajuan_pengembangan',
+            $pengajuan->id,
+            [
+                'karyawan_id' => $pengajuan->karyawan_id,
+                'hasil_assessment_id' => $pengajuan->hasil_assessment_id,
+                'jenis_pengajuan' => $pengajuan->jenis_pengajuan,
+                'skill_id' => $pengajuan->skill_id,
+                'level_sebelum' => $pengajuan->level_sebelum,
+                'level_sesudah' => $pengajuan->level_sesudah,
+                'status' => $pengajuan->status,
+                'tanggal_pengajuan' => $pengajuan->tanggal_pengajuan,
+                'tanggal_keputusan' => $pengajuan->tanggal_keputusan,
+                'catatan' => $pengajuan->catatan,
+            ]
+        );
+    }
 
         return redirect()
             ->route('hrd.peningkatan-skill.index')
@@ -427,8 +455,9 @@ class PeningkatanSkillController extends Controller
             'pengajuan_pengembangan_id' => $pengajuan->id,
             'hasil_assessment_id' => $pengajuan->hasil_assessment_id,
             'tanggal_perubahan' => $tanggal,
-            'keterangan' =>
-                'Peningkatan skill berdasarkan hasil assessment.',
+            'keterangan' => 'Peningkatan skill berdasarkan hasil assessment.',
+
+            
         ]);
 
         /*
@@ -439,10 +468,40 @@ class PeningkatanSkillController extends Controller
 
         $pengajuan->update([
             'status' => 'disetujui',
-            'tanggal_keputusan' => $tanggal,
+            'tanggal_keputusan' => $tanggal,    
         ]);
-    });
 
+        /*
+        |--------------------------------------------------------------------------
+        | Catat keputusan peningkatan skill ke blockchain
+        |--------------------------------------------------------------------------
+        */
+
+        $blockchain = app(BlockchainService::class);
+
+        $blockchainExists = BlockchainRecord::query()
+            ->where('entity_type', 'keputusan_peningkatan_skill')
+            ->where('entity_id', $pengajuan->id)
+            ->exists();
+
+        if (!$blockchainExists) {
+        $blockchain->addBlock(
+            'keputusan_peningkatan_skill',
+            $pengajuan->id,
+            [
+            'pengajuan_pengembangan_id' => $pengajuan->id,
+            'karyawan_id' => $pengajuan->karyawan_id,
+            'hasil_assessment_id' => $pengajuan->hasil_assessment_id,
+            'skill_id' => $pengajuan->skill_id,
+            'level_sebelum' => $pengajuan->level_sebelum,
+            'level_sesudah' => $pengajuan->level_sesudah,
+            'status' => 'disetujui',
+            'tanggal_keputusan' => $tanggal,
+            ]
+        );
+    }
+    
+    });
         return back()->with(
             'success',
             'Peningkatan skill berhasil disetujui dan level skill karyawan telah diperbarui.'
@@ -458,10 +517,7 @@ class PeningkatanSkillController extends Controller
             404
         );
 
-        if (!in_array(
-            $pengajuan->status,
-            ['diajukan', 'diproses']
-        )) {
+        if (!in_array($pengajuan->status, ['diajukan', 'diproses'])) {
             return back()->with(
                 'error',
                 'Pengajuan ini tidak dapat ditolak.'
@@ -475,15 +531,66 @@ class PeningkatanSkillController extends Controller
             ],
         ]);
 
-        $pengajuan->update([
-            'status' => 'ditolak',
-            'tanggal_keputusan' => Carbon::now()->toDateString(),
-            'catatan' => $validated['catatan'],
-        ]);
+        DB::transaction(function () use (
+            $pengajuan,
+            $validated
+        ) {
+
+            $tanggal = Carbon::now()->toDateString();
+
+            /*
+            |--------------------------------------------------------------------------
+            | Update status pengajuan
+            |--------------------------------------------------------------------------
+            */
+
+            $pengajuan->update([
+                'status' => 'ditolak',
+                'tanggal_keputusan' => $tanggal,
+                'catatan' => $validated['catatan'],
+            ]);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Catat keputusan penolakan ke blockchain
+            |--------------------------------------------------------------------------
+            */
+
+            $blockchain = app(BlockchainService::class);
+
+            $blockchainExists = BlockchainRecord::query()
+                ->where(
+                    'entity_type',
+                    'keputusan_peningkatan_skill'
+                )
+                ->where(
+                    'entity_id',
+                    $pengajuan->id
+                )
+                ->exists();
+
+            if (!$blockchainExists) {
+                $blockchain->addBlock(
+                    'keputusan_peningkatan_skill',
+                    $pengajuan->id,
+                    [
+                        'pengajuan_pengembangan_id' => $pengajuan->id,
+                        'karyawan_id' => $pengajuan->karyawan_id,
+                        'hasil_assessment_id' => $pengajuan->hasil_assessment_id,
+                        'skill_id' => $pengajuan->skill_id,
+                        'level_sebelum' => $pengajuan->level_sebelum,
+                        'level_sesudah' => $pengajuan->level_sesudah,
+                        'status' => 'ditolak',
+                        'tanggal_keputusan' => $tanggal,
+                    'catatan' => $validated['catatan'],
+                    ]
+                );
+            }
+        });
 
         return back()->with(
             'success',
-            'Pengajuan peningkatan skill telah ditolak.'
+            'Pengajuan peningkatan skill telah ditolak dan keputusan telah dicatat ke blockchain.'
         );
     }
 }

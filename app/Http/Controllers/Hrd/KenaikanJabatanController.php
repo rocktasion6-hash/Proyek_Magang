@@ -11,6 +11,8 @@ use App\Models\RiwayatJabatan;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\BlockchainRecord;
+use App\Services\BlockchainService;
 
 class KenaikanJabatanController extends Controller
 {
@@ -161,7 +163,7 @@ class KenaikanJabatanController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        PengajuanPengembangan::create([
+        $pengajuan = PengajuanPengembangan::create([
             'karyawan_id' => $karyawan->id,
             'hasil_assessment_id' => $hasilAssessment->id,
             'jenis_pengajuan' => 'kenaikan_jabatan',
@@ -173,6 +175,31 @@ class KenaikanJabatanController extends Controller
             'tanggal_keputusan' => null,
             'catatan' => $validated['catatan'] ?? null,
         ]);
+
+        $blockchain = app(BlockchainService::class);
+
+        $blockchainRecordExists = BlockchainRecord::query()
+            ->where('entity_type', 'pengajuan_pengembangan')
+            ->where('entity_id', $pengajuan->id)
+            ->exists();
+
+        if (!$blockchainRecordExists) {
+            $blockchain->addBlock(
+            'pengajuan_pengembangan',
+            $pengajuan->id,
+                [
+                'karyawan_id' => $pengajuan->karyawan_id,
+                'hasil_assessment_id' => $pengajuan->hasil_assessment_id,
+                'jenis_pengajuan' => $pengajuan->jenis_pengajuan,
+                'jabatan_asal_id' => $pengajuan->jabatan_asal_id,
+                'jabatan_tujuan_id' => $pengajuan->jabatan_tujuan_id,
+                'status' => $pengajuan->status,
+                'tanggal_pengajuan' => $pengajuan->tanggal_pengajuan,
+                'tanggal_keputusan' => $pengajuan->tanggal_keputusan,
+                'catatan' => $pengajuan->catatan,
+                ]
+            );
+        }
 
         return redirect()
             ->route('hrd.kenaikan-jabatan.index')
@@ -309,8 +336,7 @@ class KenaikanJabatanController extends Controller
                 'hasil_assessment_id' => $pengajuan->hasil_assessment_id,
                 'tanggal_mulai' => $tanggal,
                 'tanggal_selesai' => null,
-                'keterangan' =>
-                    'Kenaikan jabatan berdasarkan hasil assessment.',
+                'keterangan' => 'Kenaikan jabatan berdasarkan hasil assessment.',
             ]);
 
             /*
@@ -322,8 +348,29 @@ class KenaikanJabatanController extends Controller
             $pengajuan->update([
                 'status' => 'disetujui',
                 'tanggal_keputusan' => $tanggal,
+            
+            
             ]);
+            
+            $blockchain = app(BlockchainService::class);
+
+            $blockchain->addBlock(
+            'keputusan_kenaikan_jabatan',
+            $pengajuan->id,
+            [
+            'pengajuan_pengembangan_id' => $pengajuan->id,
+            'karyawan_id' => $karyawan->id,
+            'hasil_assessment_id' => $pengajuan->hasil_assessment_id,
+            'jabatan_asal_id' => $pengajuan->jabatan_asal_id,
+            'jabatan_tujuan_id' => $pengajuan->jabatan_tujuan_id,
+            'status' => 'disetujui',
+            'tanggal_keputusan' => $tanggal,
+            ]
+        );
+
         });
+
+        
 
         return back()->with(
             'success',
@@ -331,33 +378,69 @@ class KenaikanJabatanController extends Controller
         );
     }
 
-    public function reject(Request $request, PengajuanPengembangan $pengajuan)
-    {
-        abort_if(
-            $pengajuan->jenis_pengajuan !== 'kenaikan_jabatan',
-            404
+    public function reject(
+        Request $request,
+        PengajuanPengembangan $pengajuan
+    ) {
+    abort_if(
+        $pengajuan->jenis_pengajuan !== 'kenaikan_jabatan',
+        404
+    );
+
+    if (!in_array($pengajuan->status, ['diajukan', 'diproses'])) {
+        return back()->with(
+            'error',
+            'Pengajuan ini tidak dapat ditolak.'
         );
+    }
 
-        if (!in_array($pengajuan->status, ['diajukan', 'diproses'])) {
-            return back()->with(
-                'error',
-                'Pengajuan ini tidak dapat ditolak.'
-            );
-        }
+    $validated = $request->validate([
+        'catatan' => ['required', 'string'],
+    ]);
 
-        $validated = $request->validate([
-            'catatan' => ['required', 'string'],
-        ]);
+    DB::transaction(function () use ($pengajuan, $validated) {
+
+        $tanggal = Carbon::now()->toDateString();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Update pengajuan menjadi ditolak
+        |--------------------------------------------------------------------------
+        */
 
         $pengajuan->update([
             'status' => 'ditolak',
-            'tanggal_keputusan' => Carbon::now()->toDateString(),
+            'tanggal_keputusan' => $tanggal,
             'catatan' => $validated['catatan'],
         ]);
 
-        return back()->with(
-            'success',
-            'Pengajuan kenaikan jabatan telah ditolak.'
+        /*
+        |--------------------------------------------------------------------------
+        | Catat keputusan penolakan ke blockchain
+        |--------------------------------------------------------------------------
+        */
+
+        $blockchain = app(BlockchainService::class);
+
+        $blockchain->addBlock(
+            'keputusan_kenaikan_jabatan',
+            $pengajuan->id,
+            [
+                'pengajuan_pengembangan_id' => $pengajuan->id,
+                'karyawan_id' => $pengajuan->karyawan_id,
+                'hasil_assessment_id' => $pengajuan->hasil_assessment_id,
+                'jabatan_asal_id' => $pengajuan->jabatan_asal_id,
+                'jabatan_tujuan_id' => $pengajuan->jabatan_tujuan_id,
+                'status' => 'ditolak',
+                'tanggal_keputusan' => $tanggal,
+                'catatan' => $validated['catatan'],
+            ]
         );
+    });
+
+    return back()->with(
+        'success',
+        'Pengajuan kenaikan jabatan telah ditolak dan keputusan telah dicatat ke blockchain.'
+    );
     }
 }
