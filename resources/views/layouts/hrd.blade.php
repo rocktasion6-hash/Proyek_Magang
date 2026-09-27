@@ -414,6 +414,31 @@
             Laporan & Analitik
             </a>
 
+            <a
+                href="{{ route('hrd.blockchain.index') }}"
+                class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition
+                {{ request()->routeIs('hrd.blockchain.*')
+                ? 'bg-slate-900 text-white'
+                    : 'text-slate-600 hover:bg-slate-100' }}"
+        >
+            <svg
+            class="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+        >
+            <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a2 2 0 011.414.586l4.414 4.414A2 2 0 0117 11.414V19a2 2 0 01-2 2z"
+        />
+        </svg>
+
+        Blockchain Explorer
+    </a>
+
+
         </div>
 
 

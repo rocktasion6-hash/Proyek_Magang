@@ -14,6 +14,7 @@ class AssessmentPeserta extends Model
     protected $fillable = [
         'assessment_id',
         'karyawan_id',
+        'percobaan_ke',
         'status',
         'waktu_mulai',
         'waktu_selesai',
@@ -22,6 +23,7 @@ class AssessmentPeserta extends Model
     protected function casts(): array
     {
         return [
+            'percobaan_ke' => 'integer',
             'waktu_mulai' => 'datetime',
             'waktu_selesai' => 'datetime',
         ];

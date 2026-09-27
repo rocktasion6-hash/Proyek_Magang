@@ -19,6 +19,7 @@ use App\Http\Controllers\Hrd\SkillController;
 use App\Http\Controllers\Hrd\JabatanSkillController;
 use App\Http\Controllers\Hrd\KaryawanSkillController;
 use App\Http\Controllers\Hrd\LaporanController;
+use App\Http\Controllers\Hrd\BlockchainController;
 /*
 |--------------------------------------------------------------------------
 | Authentication
@@ -54,6 +55,8 @@ Route::middleware(['auth', 'role:hrd'])->group(function () {
     Route::get('/hrd/assessment/tambah', [HrdAssessmentController::class,'create'])->name('hrd.assessment.create');
     Route::post('/hrd/assessment', [HrdAssessmentController::class,'store'])->name('hrd.assessment.store');
     Route::get('/hrd/assessment/{assessment}', [HrdAssessmentController::class,'show'])->name('hrd.assessment.show');
+    Route::post('/hrd/assessment/{assessment}/tugaskan-ulang',[HrdAssessmentController::class, 'tugaskanUlang'])->name('hrd.assessment.tugaskan-ulang');
+    Route::get('/hrd/assessment/{assessment}/tugaskan-ulang', fn($assessment) => redirect()->route('hrd.assessment.show', $assessment));
     Route::get('/hrd/hasil-penilaian', [HasilAssessmentController::class,'index'])->name('hrd.hasil-assessment.index');
     Route::get('/hrd/hasil-penilaian/{hasilAssessment}', [HasilAssessmentController::class,'show'])->name('hrd.hasil-assessment.show');
     Route::get('/hrd/kenaikan-jabatan', [KenaikanJabatanController::class,'index'])->name('hrd.kenaikan-jabatan.index');
@@ -112,6 +115,9 @@ Route::middleware(['auth', 'role:hrd'])->group(function () {
     Route::post('/hrd/karyawan/{karyawan}/skill', [KaryawanSkillController::class,'store'])->name('hrd.karyawan.skill.store');
     Route::delete('/hrd/karyawan/{karyawan}/skill/{karyawanSkill}', [KaryawanSkillController::class,'destroy'])->name('hrd.karyawan.skill.destroy');
     Route::get('/hrd/laporan', [LaporanController::class,'index'])->name('hrd.laporan.index');
+    Route::get('/blockchain', [BlockchainController::class, 'index'])->name('hrd.blockchain.index');
+    Route::post('/blockchain/verify', [BlockchainController::class, 'verify'])->name('hrd.blockchain.verify');
+    Route::post('/blockchain/verify-data', [BlockchainController::class, 'verifyData'])->name('hrd.blockchain.verify-data');
 });
 
 /*

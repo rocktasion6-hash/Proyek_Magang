@@ -39,6 +39,59 @@
 
         </div>
 
+        <div class="mt-8 bg-white rounded-2xl border border-slate-200 p-6">
+
+    <h3 class="text-lg font-black text-slate-800 mb-4">
+        Tugaskan Ulang Assessment
+    </h3>
+
+    <p class="text-sm text-slate-500 mb-5">
+        Assessment yang sama dapat diberikan kembali kepada karyawan.
+        Sistem akan membuat percobaan baru tanpa mengubah hasil ujian sebelumnya.
+    </p>
+
+    <form
+        action="{{ route('hrd.assessment.tugaskan-ulang', $assessment) }}"
+        method="POST"
+    >
+        @csrf
+
+        <div class="mb-5">
+            <label class="block text-sm font-bold text-slate-700 mb-2">
+                Pilih Karyawan
+            </label>
+
+            <select
+                name="karyawan_ids[]"
+                multiple
+                class="w-full rounded-xl border-slate-300"
+                required
+                >
+                    @foreach(
+                        \App\Models\Karyawan::where('status', 'aktif')
+                        ->orderBy('nama')
+                            ->get()
+                        as $karyawan
+                    )
+                        <option value="{{ $karyawan->id }}">
+                            {{ $karyawan->nama }}
+                            - {{ $karyawan->nik }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <button
+                type="submit"
+                class="px-5 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-sm"
+                onclick="return confirm('Yakin ingin menugaskan kembali assessment ini?')"
+            >
+                Tugaskan Ulang
+            </button>
+
+        </form>
+
+    </div>
 
         <!-- Informasi -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">

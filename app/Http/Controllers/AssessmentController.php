@@ -333,19 +333,19 @@ class AssessmentController extends Controller
                 $blockchain->addBlock(
                     'hasil_assessment',
                     $hasil->id,
-                [
-                    'assessment_peserta_id' => $peserta->id,
-                    'assessment_id' => $peserta->assessment_id,
-                    'karyawan_id' => $peserta->karyawan_id,
-                    'nilai_akhir' => $hasil->nilai_akhir,
-                    'standar_nilai' => $hasil->standar_nilai,
-                    'status' => $hasil->status,
-                    'tanggal_ujian' => $hasil->tanggal_ujian,
-                    'waktu_mulai' => $hasil->waktu_mulai,
-                    'waktu_selesai' => $hasil->waktu_selesai,
-                ]
-            );
-        }
+                    [
+                        'assessment_peserta_id' => $peserta->id,
+                        'assessment_id'         => $peserta->assessment_id,
+                        'karyawan_id'           => $peserta->karyawan_id,
+                        'nilai_akhir'           => $hasil->nilai_akhir,
+                        'standar_nilai'         => $hasil->standar_nilai,
+                        'status'                => $hasil->status,
+                        'tanggal_ujian'         => $hasil->tanggal_ujian?->format('Y-m-d H:i:s'),
+                        'waktu_mulai'           => $hasil->waktu_mulai?->format('Y-m-d H:i:s'),
+                        'waktu_selesai'         => $hasil->waktu_selesai?->format('Y-m-d H:i:s'),
+                    ]
+                );
+            }
     });
         
 

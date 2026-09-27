@@ -13,6 +13,7 @@ class BlockchainRecord extends Model
         'entity_type',
         'entity_id',
         'data_hash',
+        'data_snapshot',
         'previous_hash',
         'block_hash',
     ];
@@ -20,5 +21,6 @@ class BlockchainRecord extends Model
     protected $casts = [
         'block_number' => 'integer',
         'entity_id' => 'integer',
+        'data_snapshot' => 'array',
     ];
 }

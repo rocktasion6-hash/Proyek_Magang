@@ -267,9 +267,15 @@ class AssessmentController extends Controller
                     'karyawan_id' =>
                         $karyawanId,
 
+                    'percobaan_ke' => 1,
+
                     'status' => 'ditugaskan',
+
+                    'waktu_mulai' => 'null',
+
+                    'waktu_selesai' => 'null',
                 ]);
-            }
+            }   
         });
 
         return redirect()
@@ -278,6 +284,111 @@ class AssessmentController extends Controller
                 'success',
                 'Assessment berhasil dibuat dan peserta berhasil ditugaskan.'
             );
+    }
+
+    /**
+    * Menugaskan assessment yang sama kembali kepada karyawan.
+    */
+    public function tugaskanUlang(Request $request, Assessment $assessment)
+    {
+    $validated = $request->validate([
+        'karyawan_ids' => [
+            'required',
+            'array',
+            'min:1',
+        ],
+
+        'karyawan_ids.*' => [
+            'integer',
+            'exists:karyawans,id',
+        ],
+    ], [
+        'karyawan_ids.required' =>
+            'Minimal satu karyawan harus dipilih.',
+
+        'karyawan_ids.min' =>
+            'Minimal satu karyawan harus dipilih.',
+    ]);
+
+    if ($assessment->status === 'dibatalkan') {
+        return back()
+            ->with(
+                'error',
+                'Assessment yang sudah dibatalkan tidak dapat ditugaskan kembali.'
+            );
+    }
+
+    DB::transaction(function () use (
+        $validated,
+        $assessment
+    ) {
+        foreach ($validated['karyawan_ids'] as $karyawanId) {
+
+            /*
+             * Ambil percobaan terakhir karyawan
+             * pada assessment yang sama.
+             */
+            $pesertaTerakhir = AssessmentPeserta::where(
+                'assessment_id',
+                $assessment->id
+            )
+                ->where('karyawan_id', $karyawanId)
+                ->orderByDesc('percobaan_ke')
+                ->lockForUpdate()
+                ->first();
+
+            /*
+             * Jika masih ada percobaan yang belum selesai,
+             * jangan buat percobaan baru.
+             */
+            if (
+                $pesertaTerakhir &&
+                in_array(
+                    $pesertaTerakhir->status,
+                    [
+                        'ditugaskan',
+                        'sedang_mengerjakan',
+                    ]
+                )
+            ) {
+                continue;
+            }
+
+            /*
+             * Tentukan nomor percobaan berikutnya.
+             */
+            $percobaanBerikutnya =
+                ($pesertaTerakhir?->percobaan_ke ?? 0) + 1;
+
+            /*
+             * Buat peserta baru.
+             */
+            AssessmentPeserta::create([
+                'assessment_id' =>
+                    $assessment->id,
+
+                'karyawan_id' =>
+                    $karyawanId,
+
+                'percobaan_ke' =>
+                    $percobaanBerikutnya,
+
+                'status' =>
+                    'ditugaskan',
+
+                'waktu_mulai' =>
+                    null,
+
+                'waktu_selesai' =>
+                    null,
+            ]);
+        }
+    });
+
+    return back()->with(
+        'success',
+        'Assessment berhasil ditugaskan kembali. Percobaan baru dibuat tanpa mengubah hasil ujian sebelumnya.'
+    );
     }
 
     /**
