@@ -30,8 +30,8 @@ class HasilAssessmentController extends Controller
             $query->whereHas(
                 'assessmentPeserta.karyawan',
                 function ($q) use ($search) {
-                    $q->where('nama', 'like', '%' . $search . '%')
-                        ->orWhere('nik', 'like', '%' . $search . '%');
+                    $q->where('nama', 'like', '%'.$search.'%')
+                        ->orWhere('nik', 'like', '%'.$search.'%');
                 }
             );
         }
@@ -55,7 +55,7 @@ class HasilAssessmentController extends Controller
         $hasilAssessment->load([
             'assessmentPeserta.karyawan',
             'assessmentPeserta.assessment.jabatan',
-            'assessmentPeserta.assessment.skill',
+            'assessmentPeserta.assessment.soalUpload',
             'assessmentPeserta.assessment.soals.pilihanJawabans',
             'assessmentPeserta.jawabans.pilihanJawaban',
         ]);

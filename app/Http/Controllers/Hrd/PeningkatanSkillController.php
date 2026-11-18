@@ -3,15 +3,15 @@
 namespace App\Http\Controllers\Hrd;
 
 use App\Http\Controllers\Controller;
-use App\Models\HasilAssessment;
-use App\Models\KaryawanSkill;
-use App\Models\PengajuanPengembangan;
-use App\Models\RiwayatSkill;
-use App\Models\Skill;
-use Carbon\Carbon;
-use Illuminate\Http\Request;
 use App\Models\BlockchainRecord;
+use App\Models\HasilAssessment;
+use App\Models\Jabatan;
+use App\Models\PengajuanPengembangan;
+use App\Models\RiwayatJabatan;
 use App\Services\BlockchainService;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class PeningkatanSkillController extends Controller
@@ -35,8 +35,8 @@ class PeningkatanSkillController extends Controller
             $search = $request->search;
 
             $query->whereHas('karyawan', function ($q) use ($search) {
-                $q->where('nama', 'like', '%' . $search . '%')
-                    ->orWhere('nik', 'like', '%' . $search . '%');
+                $q->where('nama', 'like', '%'.$search.'%')
+                    ->orWhere('nik', 'like', '%'.$search.'%');
             });
         }
 
@@ -53,24 +53,52 @@ class PeningkatanSkillController extends Controller
 
     public function create()
     {
-        // Hanya hasil assessment yang lulus
-        $hasilAssessments = HasilAssessment::with([
-            'assessmentPeserta.karyawan',
-            'assessmentPeserta.assessment.skill',
-            'assessmentPeserta.assessment.jabatan',
-        ])
+        $hasilAssessments = HasilAssessment::query()
+            ->with([
+                'assessmentPeserta.karyawan.jabatan',
+                'assessmentPeserta.assessment.jabatan',
+            ])
             ->where('status', 'lulus')
+            ->whereHas('assessmentPeserta', function (Builder $query) {
+                $query->where('status', 'selesai')
+                    ->whereHas('karyawan', function (Builder $query) {
+                        $query->where('status', 'aktif')
+                            ->whereHas('jabatan', function (Builder $query) {
+                                $query->where('tipe_jabatan', 'operasional')
+                                    ->whereBetween('level_jabatan', [1, 4])
+                                    ->whereRaw(
+                                        'LOWER(TRIM(nama_jabatan)) != ?',
+                                        ['crew']
+                                    );
+                            });
+                    });
+            })
+            ->whereDoesntHave(
+                'assessmentPeserta.karyawan.pengajuanPengembangans',
+                function (Builder $query) {
+                    $query->whereIn('status', ['diajukan', 'diproses']);
+                }
+            )
             ->latest('tanggal_ujian')
-            ->get();
+            ->get()
+            ->filter(function (HasilAssessment $hasilAssessment): bool {
+                $peserta = $hasilAssessment->assessmentPeserta;
+                $jabatanAsal = $peserta?->karyawan?->jabatan;
+                $jabatanTujuan = $peserta?->assessment?->jabatan;
 
-        $skills = Skill::orderBy('nama_skill')->get();
+                return $jabatanAsal !== null
+                    && $jabatanTujuan !== null
+                    && $this->isEligibleSourcePosition($jabatanAsal)
+                    && $this->isNextLevelPosition(
+                        $jabatanAsal,
+                        $jabatanTujuan
+                    );
+            })
+            ->values();
 
         return view(
             'hrd.peningkatan-skill.create',
-            compact(
-                'hasilAssessments',
-                'skills'
-            )
+            compact('hasilAssessments')
         );
     }
 
@@ -81,24 +109,10 @@ class PeningkatanSkillController extends Controller
                 'required',
                 'exists:hasil_assessments,id',
             ],
-
-            'skill_id' => [
-                'required',
-                'exists:skills,id',
-            ],
-
-            'level_sesudah' => [
-                'required',
-                'integer',
-                'min:1',
-                'max:5',
-            ],
-
             'tanggal_pengajuan' => [
                 'required',
                 'date',
             ],
-
             'catatan' => [
                 'nullable',
                 'string',
@@ -106,185 +120,106 @@ class PeningkatanSkillController extends Controller
         ]);
 
         $hasilAssessment = HasilAssessment::with([
-            'assessmentPeserta.karyawan',
-            'assessmentPeserta.assessment.skill',
-        ])->findOrFail(
-            $validated['hasil_assessment_id']
-        );
-
-        /*
-        |--------------------------------------------------------------------------
-        | Wajib lulus
-        |--------------------------------------------------------------------------
-        */
+            'assessmentPeserta.karyawan.jabatan',
+            'assessmentPeserta.assessment.jabatan',
+        ])->findOrFail($validated['hasil_assessment_id']);
 
         if ($hasilAssessment->status !== 'lulus') {
             return back()
-                ->withErrors([
-                    'hasil_assessment_id' =>
-                        'Karyawan harus memiliki hasil assessment dengan status lulus.',
-                ])
+                ->withErrors(['hasil_assessment_id' => 'Hasil assessment harus berstatus lulus.'])
                 ->withInput();
         }
 
-        $karyawan = $hasilAssessment
-            ->assessmentPeserta
-            ->karyawan;
+        $peserta = $hasilAssessment->assessmentPeserta;
 
-        $skill = Skill::findOrFail(
-            $validated['skill_id']
-        );
-
-        /*
-        |--------------------------------------------------------------------------
-        | Ambil level skill saat ini
-        |--------------------------------------------------------------------------
-        */
-
-        $karyawanSkill = KaryawanSkill::where(
-            'karyawan_id',
-            $karyawan->id
-        )
-            ->where(
-                'skill_id',
-                $skill->id
-            )
-            ->first();
-
-        $levelSebelum = $karyawanSkill
-            ? (int) $karyawanSkill->level_skill
-            : 0;
-
-        $levelSesudah = (int) $validated['level_sesudah'];
-
-        /*
-        |--------------------------------------------------------------------------
-        | Level baru harus lebih tinggi
-        |--------------------------------------------------------------------------
-        */
-
-        if ($levelSesudah <= $levelSebelum) {
+        if (! $peserta || ! $peserta->karyawan || ! $peserta->assessment) {
             return back()
-                ->withErrors([
-                    'level_sesudah' =>
-                        'Level skill baru harus lebih tinggi dari level skill saat ini.',
-                ])
+                ->withErrors(['hasil_assessment_id' => 'Data peserta atau assessment tidak lengkap.'])
                 ->withInput();
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Jika assessment memiliki skill tertentu,
-        | skill peningkatan harus sama.
-        |--------------------------------------------------------------------------
-        */
+        if ($peserta->status !== 'selesai') {
+            return back()
+                ->withErrors(['hasil_assessment_id' => 'Assessment karyawan belum selesai.'])
+                ->withInput();
+        }
 
-        $assessmentSkill =
-            $hasilAssessment
-                ->assessmentPeserta
-                ->assessment
-                ->skill;
+        $karyawan = $peserta->karyawan;
+        $jabatanAsal = $karyawan->jabatan;
+
+        if ($karyawan->status !== 'aktif') {
+            return back()
+                ->withErrors(['hasil_assessment_id' => 'Hanya karyawan aktif yang dapat mengajukan peningkatan skill.'])
+                ->withInput();
+        }
+
+        if (! $jabatanAsal || ! $this->isEligibleSourcePosition($jabatanAsal)) {
+            return back()
+                ->withErrors(['hasil_assessment_id' => 'Karyawan harus berada di jabatan operasional non-Crew Level 1 sampai 4.'])
+                ->withInput();
+        }
+
+        $jabatanTujuan = $peserta->assessment->jabatan;
 
         if (
-            $assessmentSkill &&
-            $assessmentSkill->id !== $skill->id
+            ! $jabatanTujuan ||
+            ! $this->isNextLevelPosition($jabatanAsal, $jabatanTujuan)
         ) {
             return back()
-                ->withErrors([
-                    'skill_id' =>
-                        'Skill yang ditingkatkan harus sesuai dengan skill pada assessment.',
-                ])
+                ->withErrors(['hasil_assessment_id' => 'Assessment yang digunakan harus untuk jabatan operasional satu level di atas jabatan karyawan saat ini dan pada jalur jabatan yang sama.'])
                 ->withInput();
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Cegah pengajuan aktif ganda
-        |--------------------------------------------------------------------------
-        */
-
-        $sudahAda = PengajuanPengembangan::where(
-            'karyawan_id',
-            $karyawan->id
-        )
-            ->where(
-                'skill_id',
-                $skill->id
-            )
-            ->where(
-                'jenis_pengajuan',
-                'peningkatan_skill'
-            )
-            ->whereIn('status', [
-                'diajukan',
-                'diproses',
-            ])
+        $sudahAda = PengajuanPengembangan::query()
+            ->where('karyawan_id', $karyawan->id)
+            ->whereIn('status', ['diajukan', 'diproses'])
             ->exists();
 
         if ($sudahAda) {
             return back()
-                ->withErrors([
-                    'skill_id' =>
-                        'Karyawan ini sudah memiliki pengajuan peningkatan skill yang sedang diproses.',
-                ])
+                ->withErrors(['hasil_assessment_id' => 'Karyawan ini masih memiliki pengajuan pengembangan yang belum selesai diputuskan.'])
                 ->withInput();
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Simpan pengajuan
-        |--------------------------------------------------------------------------
-        */
+        DB::transaction(function () use (
+            $karyawan,
+            $hasilAssessment,
+            $jabatanAsal,
+            $jabatanTujuan,
+            $validated
+        ): void {
+            $pengajuan = PengajuanPengembangan::create([
+                'karyawan_id' => $karyawan->id,
+                'hasil_assessment_id' => $hasilAssessment->id,
+                'jenis_pengajuan' => 'peningkatan_skill',
+                'jabatan_asal_id' => $jabatanAsal->id,
+                'jabatan_tujuan_id' => $jabatanTujuan->id,
+                'skill_id' => null,
+                'level_sebelum' => $jabatanAsal->level_jabatan,
+                'level_sesudah' => $jabatanTujuan->level_jabatan,
+                'status' => 'diajukan',
+                'tanggal_pengajuan' => $validated['tanggal_pengajuan'],
+                'tanggal_keputusan' => null,
+                'catatan' => $validated['catatan'] ?? null,
+            ]);
 
-        $pengajuan = PengajuanPengembangan::create([
-            'karyawan_id' => $karyawan->id,
-            'hasil_assessment_id' => $hasilAssessment->id,
-            'jenis_pengajuan' => 'peningkatan_skill',
-            'jabatan_asal_id' => null,
-            'jabatan_tujuan_id' => null,
-            'skill_id' => $skill->id,
+            $blockchainRecordExists = BlockchainRecord::query()
+                ->where('entity_type', 'pengajuan_pengembangan')
+                ->where('entity_id', $pengajuan->id)
+                ->exists();
 
-            'level_sebelum' => $levelSebelum,
-            'level_sesudah' => $levelSesudah,
-
-            'status' => 'diajukan',
-            'tanggal_pengajuan' => $validated['tanggal_pengajuan'],
-            'tanggal_keputusan' => null,
-            'catatan' => $validated['catatan'] ?? null,
-        ]);
-
-        $blockchain = app(BlockchainService::class);
-
-        $blockchainRecordExists = BlockchainRecord::query()
-            ->where('entity_type', 'pengajuan_pengembangan')
-            ->where('entity_id', $pengajuan->id)
-            ->exists();
-
-        if (!$blockchainRecordExists) {
-            $blockchain->addBlock(
-            'pengajuan_pengembangan',
-            $pengajuan->id,
-            [
-                'karyawan_id' => $pengajuan->karyawan_id,
-                'hasil_assessment_id' => $pengajuan->hasil_assessment_id,
-                'jenis_pengajuan' => $pengajuan->jenis_pengajuan,
-                'skill_id' => $pengajuan->skill_id,
-                'level_sebelum' => $pengajuan->level_sebelum,
-                'level_sesudah' => $pengajuan->level_sesudah,
-                'status' => $pengajuan->status,
-                'tanggal_pengajuan' => $pengajuan->tanggal_pengajuan,
-                'tanggal_keputusan' => $pengajuan->tanggal_keputusan,
-                'catatan' => $pengajuan->catatan,
-            ]
-        );
-    }
+            if (! $blockchainRecordExists) {
+                app(BlockchainService::class)
+                    ->recordPengembanganEvent(
+                        'pengajuan_pengembangan',
+                        $pengajuan
+                    );
+            }
+        });
 
         return redirect()
             ->route('hrd.peningkatan-skill.index')
-            ->with(
-                'success',
-                'Pengajuan peningkatan skill berhasil dibuat.'
-            );
+            ->with('success', 'Pengajuan peningkatan skill berhasil dibuat.');
     }
 
     public function show(PengajuanPengembangan $pengajuan)
@@ -297,9 +232,8 @@ class PeningkatanSkillController extends Controller
         $pengajuan->load([
             'karyawan.departemen',
             'karyawan.jabatan',
-            'karyawan.skills',
-            'skill',
-            'hasilAssessment.assessmentPeserta.assessment.skill',
+            'jabatanAsal',
+            'jabatanTujuan',
             'hasilAssessment.assessmentPeserta.assessment.jabatan',
         ]);
 
@@ -316,16 +250,37 @@ class PeningkatanSkillController extends Controller
             404
         );
 
-        if ($pengajuan->status !== 'diajukan') {
+        $processError = null;
+
+        DB::transaction(function () use ($pengajuan, &$processError): void {
+            $dataPengajuan = PengajuanPengembangan::query()
+                ->whereKey($pengajuan->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($dataPengajuan->status !== 'diajukan') {
+                $processError = 'Pengajuan ini tidak dapat diproses.';
+
+                return;
+            }
+
+            $dataPengajuan->update([
+                'status' => 'diproses',
+            ]);
+
+            app(BlockchainService::class)
+                ->recordPengembanganEvent(
+                    'status_pengajuan_pengembangan',
+                    $dataPengajuan->refresh()
+                );
+        });
+
+        if ($processError !== null) {
             return back()->with(
                 'error',
-                'Pengajuan ini tidak dapat diproses.'
+                $processError
             );
         }
-
-        $pengajuan->update([
-            'status' => 'diproses',
-        ]);
 
         return back()->with(
             'success',
@@ -340,168 +295,153 @@ class PeningkatanSkillController extends Controller
             404
         );
 
-        if (!in_array(
-            $pengajuan->status,
-            ['diajukan', 'diproses']
-        )) {
-            return back()->with(
-                'error',
-                'Pengajuan ini tidak dapat disetujui.'
-            );
-        }
+        $approvalError = null;
 
-        /*
-        |--------------------------------------------------------------------------
-        | Cek hasil assessment
-        |--------------------------------------------------------------------------
-        */
+        DB::transaction(function () use ($pengajuan, &$approvalError): void {
+            $dataPengajuan = PengajuanPengembangan::query()
+                ->whereKey($pengajuan->id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        $hasilAssessment = HasilAssessment::findOrFail(
-            $pengajuan->hasil_assessment_id
-        );
+            if ($dataPengajuan->jenis_pengajuan !== 'peningkatan_skill') {
+                $approvalError = 'Jenis pengajuan tidak sesuai.';
 
-        if ($hasilAssessment->status !== 'lulus') {
-            return back()->with(
-                'error',
-                'Pengajuan tidak dapat disetujui karena hasil assessment tidak lulus.'
-            );
-        }
+                return;
+            }
 
-        $levelSebelum = (int) $pengajuan->level_sebelum;
-        $levelSesudah = (int) $pengajuan->level_sesudah;
+            if (! in_array($dataPengajuan->status, ['diajukan', 'diproses'], true)) {
+                $approvalError = 'Pengajuan ini tidak dapat disetujui.';
 
-        if ($levelSesudah <= $levelSebelum) {
-            return back()->with(
-                'error',
-                'Level skill baru harus lebih tinggi dari level sebelumnya.'
-            );
-        }
+                return;
+            }
 
-        DB::transaction(function () use (
-            $pengajuan,
-            $levelSebelum,
-            $levelSesudah
-        ) {
+            $hasilAssessment = HasilAssessment::with([
+                'assessmentPeserta.karyawan',
+                'assessmentPeserta.assessment',
+            ])->find($dataPengajuan->hasil_assessment_id);
 
-        /*
-        |--------------------------------------------------------------------------
-        | Ambil skill karyawan
-        |--------------------------------------------------------------------------
-        */
+            if (! $hasilAssessment || $hasilAssessment->status !== 'lulus') {
+                $approvalError =
+                    'Pengajuan tidak dapat disetujui karena hasil assessment tidak lulus.';
 
-        $karyawanSkill = KaryawanSkill::where(
-            'karyawan_id',
-            $pengajuan->karyawan_id
-        )
-            ->where(
-                'skill_id',
-                $pengajuan->skill_id
-            )
-            ->lockForUpdate()
-            ->first();
+                return;
+            }
 
-        $levelAktual = $karyawanSkill
-            ? (int) $karyawanSkill->level_skill
-            : 0;
+            $peserta = $hasilAssessment->assessmentPeserta;
 
-        /*
-        |--------------------------------------------------------------------------
-        | Pastikan kondisi database belum berubah
-        |--------------------------------------------------------------------------
-        */
+            if (
+                ! $peserta ||
+                $peserta->status !== 'selesai' ||
+                ! $peserta->assessment ||
+                (int) $peserta->karyawan_id !== (int) $dataPengajuan->karyawan_id
+            ) {
+                $approvalError =
+                    'Data peserta assessment tidak sesuai dengan pengajuan atau assessment belum selesai.';
 
-        if ($levelAktual !== $levelSebelum) {
-            throw new \Exception(
-                'Level skill karyawan telah berubah sejak pengajuan dibuat. Periksa kembali pengajuan ini.'
-            );
-        }
+                return;
+            }
 
-        $tanggal = Carbon::now()->toDateString();
+            $karyawan = $dataPengajuan->karyawan()
+                ->lockForUpdate()
+                ->first();
 
-        /*
-        |--------------------------------------------------------------------------
-        | Update / buat karyawan_skill
-        |--------------------------------------------------------------------------
-        */
+            if (! $karyawan || $karyawan->status !== 'aktif') {
+                $approvalError =
+                    'Peningkatan skill hanya dapat disetujui untuk karyawan aktif.';
 
-        if ($karyawanSkill) {
+                return;
+            }
 
-            $karyawanSkill->update([
-                'level_skill' => $levelSesudah,
-                'tanggal_penilaian' => $tanggal,
+            if ((int) $karyawan->jabatan_id !== (int) $dataPengajuan->jabatan_asal_id) {
+                $approvalError =
+                    'Jabatan karyawan sudah berubah sejak pengajuan dibuat. Periksa kembali dan buat pengajuan baru jika diperlukan.';
+
+                return;
+            }
+
+            $jabatanAsal = Jabatan::find($dataPengajuan->jabatan_asal_id);
+            $jabatanTujuan = Jabatan::find($dataPengajuan->jabatan_tujuan_id);
+
+            if (
+                ! $jabatanAsal ||
+                ! $jabatanTujuan ||
+                ! $this->isEligibleSourcePosition($jabatanAsal) ||
+                ! $this->isNextLevelPosition($jabatanAsal, $jabatanTujuan)
+            ) {
+                $approvalError =
+                    'Jabatan tujuan harus satu level di atas jabatan operasional karyawan dengan nama jabatan yang sama.';
+
+                return;
+            }
+
+            $levelSebelum = (int) $jabatanAsal->level_jabatan;
+            $levelSesudah = (int) $jabatanTujuan->level_jabatan;
+
+            if (
+                ($dataPengajuan->level_sebelum !== null &&
+                    (int) $dataPengajuan->level_sebelum !== $levelSebelum) ||
+                ($dataPengajuan->level_sesudah !== null &&
+                    (int) $dataPengajuan->level_sesudah !== $levelSesudah) ||
+                (int) $peserta->assessment->jabatan_id !== (int) $jabatanTujuan->id
+            ) {
+                $approvalError =
+                    'Level atau jabatan pada assessment tidak sesuai dengan pengajuan.';
+
+                return;
+            }
+
+            $adaPengajuanLain = PengajuanPengembangan::query()
+                ->where('karyawan_id', $karyawan->id)
+                ->where('id', '!=', $dataPengajuan->id)
+                ->whereIn('status', ['diajukan', 'diproses'])
+                ->exists();
+
+            if ($adaPengajuanLain) {
+                $approvalError =
+                    'Karyawan masih memiliki pengajuan pengembangan lain yang belum selesai diputuskan.';
+
+                return;
+            }
+
+            $tanggal = Carbon::now()->toDateString();
+
+            RiwayatJabatan::where('karyawan_id', $karyawan->id)
+                ->whereNull('tanggal_selesai')
+                ->update(['tanggal_selesai' => $tanggal]);
+
+            $karyawan->update([
+                'jabatan_id' => $jabatanTujuan->id,
             ]);
 
-        } else {
-
-            $karyawanSkill = KaryawanSkill::create([
-                'karyawan_id' => $pengajuan->karyawan_id,
-                'skill_id' => $pengajuan->skill_id,
-                'level_skill' => $levelSesudah,
-                'tanggal_penilaian' => $tanggal,
+            RiwayatJabatan::create([
+                'karyawan_id' => $karyawan->id,
+                'jabatan_id' => $jabatanTujuan->id,
+                'jenis_perubahan' => 'kenaikan',
+                'pengajuan_pengembangan_id' => $dataPengajuan->id,
+                'hasil_assessment_id' => $dataPengajuan->hasil_assessment_id,
+                'tanggal_mulai' => $tanggal,
+                'tanggal_selesai' => null,
+                'keterangan' => 'Peningkatan skill: '.$jabatanAsal->nama_jabatan.' → '.$jabatanTujuan->nama_jabatan,
             ]);
+
+            $dataPengajuan->update([
+                'level_sebelum' => $levelSebelum,
+                'level_sesudah' => $levelSesudah,
+                'status' => 'disetujui',
+                'tanggal_keputusan' => $tanggal,
+            ]);
+
+            app(BlockchainService::class)
+                ->recordPengembanganEvent(
+                    'keputusan_peningkatan_skill',
+                    $dataPengajuan->refresh()
+                );
+        });
+
+        if ($approvalError !== null) {
+            return back()->with('error', $approvalError);
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Simpan riwayat skill
-        |--------------------------------------------------------------------------
-        */
-
-        RiwayatSkill::create([
-            'karyawan_id' => $pengajuan->karyawan_id,
-            'skill_id' => $pengajuan->skill_id,
-            'level_sebelum' => $levelSebelum,
-            'level_sesudah' => $levelSesudah,
-            'pengajuan_pengembangan_id' => $pengajuan->id,
-            'hasil_assessment_id' => $pengajuan->hasil_assessment_id,
-            'tanggal_perubahan' => $tanggal,
-            'keterangan' => 'Peningkatan skill berdasarkan hasil assessment.',
-
-            
-        ]);
-
-        /*
-        |--------------------------------------------------------------------------
-        | Update status pengajuan
-        |--------------------------------------------------------------------------
-        */
-
-        $pengajuan->update([
-            'status' => 'disetujui',
-            'tanggal_keputusan' => $tanggal,    
-        ]);
-
-        /*
-        |--------------------------------------------------------------------------
-        | Catat keputusan peningkatan skill ke blockchain
-        |--------------------------------------------------------------------------
-        */
-
-        $blockchain = app(BlockchainService::class);
-
-        $blockchainExists = BlockchainRecord::query()
-            ->where('entity_type', 'keputusan_peningkatan_skill')
-            ->where('entity_id', $pengajuan->id)
-            ->exists();
-
-        if (!$blockchainExists) {
-        $blockchain->addBlock(
-            'keputusan_peningkatan_skill',
-            $pengajuan->id,
-            [
-            'pengajuan_pengembangan_id' => $pengajuan->id,
-            'karyawan_id' => $pengajuan->karyawan_id,
-            'hasil_assessment_id' => $pengajuan->hasil_assessment_id,
-            'skill_id' => $pengajuan->skill_id,
-            'level_sebelum' => $pengajuan->level_sebelum,
-            'level_sesudah' => $pengajuan->level_sesudah,
-            'status' => 'disetujui',
-            'tanggal_keputusan' => $tanggal,
-            ]
-        );
-    }
-    
-    });
         return back()->with(
             'success',
             'Peningkatan skill berhasil disetujui dan level skill karyawan telah diperbarui.'
@@ -517,13 +457,6 @@ class PeningkatanSkillController extends Controller
             404
         );
 
-        if (!in_array($pengajuan->status, ['diajukan', 'diproses'])) {
-            return back()->with(
-                'error',
-                'Pengajuan ini tidak dapat ditolak.'
-            );
-        }
-
         $validated = $request->validate([
             'catatan' => [
                 'required',
@@ -531,10 +464,23 @@ class PeningkatanSkillController extends Controller
             ],
         ]);
 
+        $rejectionError = null;
+
         DB::transaction(function () use (
             $pengajuan,
-            $validated
-        ) {
+            $validated,
+            &$rejectionError
+        ): void {
+            $dataPengajuan = PengajuanPengembangan::query()
+                ->whereKey($pengajuan->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if (! in_array($dataPengajuan->status, ['diajukan', 'diproses'], true)) {
+                $rejectionError = 'Pengajuan ini tidak dapat ditolak.';
+
+                return;
+            }
 
             $tanggal = Carbon::now()->toDateString();
 
@@ -544,53 +490,43 @@ class PeningkatanSkillController extends Controller
             |--------------------------------------------------------------------------
             */
 
-            $pengajuan->update([
+            $dataPengajuan->update([
                 'status' => 'ditolak',
                 'tanggal_keputusan' => $tanggal,
                 'catatan' => $validated['catatan'],
             ]);
 
-            /*
-            |--------------------------------------------------------------------------
-            | Catat keputusan penolakan ke blockchain
-            |--------------------------------------------------------------------------
-            */
-
-            $blockchain = app(BlockchainService::class);
-
-            $blockchainExists = BlockchainRecord::query()
-                ->where(
-                    'entity_type',
-                    'keputusan_peningkatan_skill'
-                )
-                ->where(
-                    'entity_id',
-                    $pengajuan->id
-                )
-                ->exists();
-
-            if (!$blockchainExists) {
-                $blockchain->addBlock(
+            app(BlockchainService::class)
+                ->recordPengembanganEvent(
                     'keputusan_peningkatan_skill',
-                    $pengajuan->id,
-                    [
-                        'pengajuan_pengembangan_id' => $pengajuan->id,
-                        'karyawan_id' => $pengajuan->karyawan_id,
-                        'hasil_assessment_id' => $pengajuan->hasil_assessment_id,
-                        'skill_id' => $pengajuan->skill_id,
-                        'level_sebelum' => $pengajuan->level_sebelum,
-                        'level_sesudah' => $pengajuan->level_sesudah,
-                        'status' => 'ditolak',
-                        'tanggal_keputusan' => $tanggal,
-                    'catatan' => $validated['catatan'],
-                    ]
+                    $dataPengajuan->refresh()
                 );
-            }
         });
+
+        if ($rejectionError !== null) {
+            return back()->with('error', $rejectionError);
+        }
 
         return back()->with(
             'success',
             'Pengajuan peningkatan skill telah ditolak dan keputusan telah dicatat ke blockchain.'
         );
+    }
+
+    private function isEligibleSourcePosition(Jabatan $jabatan): bool
+    {
+        return $jabatan->tipe_jabatan === 'operasional'
+            && ! $jabatan->isCrew()
+            && (int) $jabatan->level_jabatan >= 1
+            && (int) $jabatan->level_jabatan < 5;
+    }
+
+    private function isNextLevelPosition(
+        Jabatan $jabatanAsal,
+        Jabatan $jabatanTujuan
+    ): bool {
+        return $jabatanTujuan->tipe_jabatan === 'operasional'
+            && (int) $jabatanTujuan->level_jabatan === (int) $jabatanAsal->level_jabatan + 1
+            && $jabatanTujuan->namaDasar() === $jabatanAsal->namaDasar();
     }
 }

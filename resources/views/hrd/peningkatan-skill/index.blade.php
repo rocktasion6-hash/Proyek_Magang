@@ -240,7 +240,7 @@
             <tr>
                 <th>No</th>
                 <th>Karyawan</th>
-                <th>Skill</th>
+                <th>Peningkatan Jabatan</th>
                 <th>Nilai Assessment</th>
                 <th>Status</th>
                 <th>Tanggal</th>
@@ -274,7 +274,9 @@
                 </td>
 
                 <td>
-                    {{ $pengajuan->skill->nama_skill }}
+                    {{ $pengajuan->jabatanAsal->nama_jabatan ?? '-' }}
+                    →
+                    {{ $pengajuan->jabatanTujuan->nama_jabatan ?? '-' }}
                 </td>
 
                 <td>

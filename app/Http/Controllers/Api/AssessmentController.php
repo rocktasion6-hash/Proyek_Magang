@@ -15,7 +15,7 @@ class AssessmentController extends Controller
     {
         $assessments = Assessment::with([
             'jabatan',
-            'skill',
+            'soalUpload',
         ])
             ->withCount([
                 'peserta',
@@ -32,37 +32,25 @@ class AssessmentController extends Controller
                 'jabatan' => $assessment->jabatan
                     ? [
                         'id' => $assessment->jabatan->id,
-                        'nama_jabatan' =>
-                            $assessment->jabatan->nama_jabatan,
-                        'level_jabatan' =>
-                            $assessment->jabatan->level_jabatan,
+                        'nama_jabatan' => $assessment->jabatan->nama_jabatan,
+                        'level_jabatan' => $assessment->jabatan->level_jabatan,
                     ]
                     : null,
 
-                'skill' => $assessment->skill
-                    ? [
-                        'id' => $assessment->skill->id,
-                        'nama_skill' =>
-                            $assessment->skill->nama_skill,
-                    ]
-                    : null,
+                'bank_soal' => $assessment->soalUpload?->nama_file_tampilan,
 
                 'standar_nilai' => $assessment->standar_nilai,
                 'durasi' => $assessment->durasi,
 
-                'tanggal_mulai' =>
-                    $assessment->tanggal_mulai,
+                'tanggal_mulai' => $assessment->tanggal_mulai,
 
-                'tanggal_selesai' =>
-                    $assessment->tanggal_selesai,
+                'tanggal_selesai' => $assessment->tanggal_selesai,
 
                 'status' => $assessment->status,
 
-                'jumlah_soal' =>
-                    $assessment->soals_count,
+                'jumlah_soal' => $assessment->soals_count,
 
-                'jumlah_peserta' =>
-                    $assessment->peserta_count,
+                'jumlah_peserta' => $assessment->peserta_count,
             ];
         });
 
@@ -80,12 +68,12 @@ class AssessmentController extends Controller
     {
         $assessment = Assessment::with([
             'jabatan',
-            'skill',
+            'soalUpload',
             'soals.pilihanJawabans',
             'peserta.karyawan',
         ])->find($id);
 
-        if (!$assessment) {
+        if (! $assessment) {
             return response()->json([
                 'success' => false,
                 'message' => 'Assessment tidak ditemukan.',
@@ -96,41 +84,27 @@ class AssessmentController extends Controller
         $data = [
             'id' => $assessment->id,
 
-            'nama_assessment' =>
-                $assessment->nama_assessment,
+            'nama_assessment' => $assessment->nama_assessment,
 
             'jabatan' => $assessment->jabatan
                 ? [
                     'id' => $assessment->jabatan->id,
-                    'nama_jabatan' =>
-                        $assessment->jabatan->nama_jabatan,
-                    'level_jabatan' =>
-                        $assessment->jabatan->level_jabatan,
+                    'nama_jabatan' => $assessment->jabatan->nama_jabatan,
+                    'level_jabatan' => $assessment->jabatan->level_jabatan,
                 ]
                 : null,
 
-            'skill' => $assessment->skill
-                ? [
-                    'id' => $assessment->skill->id,
-                    'nama_skill' =>
-                        $assessment->skill->nama_skill,
-                ]
-                : null,
+            'bank_soal' => $assessment->soalUpload?->nama_file_tampilan,
 
-            'standar_nilai' =>
-                $assessment->standar_nilai,
+            'standar_nilai' => $assessment->standar_nilai,
 
-            'durasi' =>
-                $assessment->durasi,
+            'durasi' => $assessment->durasi,
 
-            'tanggal_mulai' =>
-                $assessment->tanggal_mulai,
+            'tanggal_mulai' => $assessment->tanggal_mulai,
 
-            'tanggal_selesai' =>
-                $assessment->tanggal_selesai,
+            'tanggal_selesai' => $assessment->tanggal_selesai,
 
-            'status' =>
-                $assessment->status,
+            'status' => $assessment->status,
 
             'soal' => $assessment->soals
                 ->sortBy('pivot.nomor_soal')
@@ -139,36 +113,31 @@ class AssessmentController extends Controller
                     return [
                         'id' => $soal->id,
 
-                        'nomor_soal' =>
-                            $soal->pivot->nomor_soal,
+                        'nomor_soal' => $soal->pivot->nomor_soal,
 
-                        'pertanyaan' =>
-                            $soal->pertanyaan,
+                        'pertanyaan' => $soal->pertanyaan,
 
-                        'tipe_soal' =>
-                            $soal->tipe_soal,
+                        'tipe_soal' => $soal->tipe_soal,
 
-                        'tingkat_kesulitan' =>
-                            $soal->tingkat_kesulitan,
+                        'tipe_prosedur' => $soal->tipe_prosedur,
 
-                        'bobot' =>
-                            $soal->bobot,
+                        'nama_prosedur' => $soal->nama_prosedur,
 
-                        'pilihan_jawaban' =>
-                            $soal->pilihanJawabans
-                                ->map(function ($pilihan) {
-                                    return [
-                                        'id' =>
-                                            $pilihan->id,
+                        'tingkat_kesulitan' => $soal->tingkat_kesulitan,
 
-                                        'kode' =>
-                                            $pilihan->kode,
+                        'bobot' => $soal->bobot,
 
-                                        'teks_jawaban' =>
-                                            $pilihan->teks_jawaban,
-                                    ];
-                                })
-                                ->values(),
+                        'pilihan_jawaban' => $soal->pilihanJawabans
+                            ->map(function ($pilihan) {
+                                return [
+                                    'id' => $pilihan->id,
+
+                                    'kode' => $pilihan->kode,
+
+                                    'teks_jawaban' => $pilihan->teks_jawaban,
+                                ];
+                            })
+                            ->values(),
                     ];
                 }),
 
@@ -177,30 +146,23 @@ class AssessmentController extends Controller
                     return [
                         'id' => $peserta->id,
 
-                        'karyawan_id' =>
-                            $peserta->karyawan_id,
+                        'karyawan_id' => $peserta->karyawan_id,
 
-                        'nama_karyawan' =>
-                            $peserta->karyawan
+                        'nama_karyawan' => $peserta->karyawan
                                 ? $peserta->karyawan->nama
                                 : null,
 
-                        'nik' =>
-                            $peserta->karyawan
+                        'nik' => $peserta->karyawan
                                 ? $peserta->karyawan->nik
                                 : null,
 
-                        'percobaan_ke' =>
-                            $peserta->percobaan_ke,
+                        'percobaan_ke' => $peserta->percobaan_ke,
 
-                        'status' =>
-                            $peserta->status,
+                        'status' => $peserta->status,
 
-                        'waktu_mulai' =>
-                            $peserta->waktu_mulai,
+                        'waktu_mulai' => $peserta->waktu_mulai,
 
-                        'waktu_selesai' =>
-                            $peserta->waktu_selesai,
+                        'waktu_selesai' => $peserta->waktu_selesai,
                     ];
                 })
                 ->values(),

@@ -59,44 +59,68 @@
         "
     >
 
-        <div
-            style="
-                padding:12px 0;
-                font-weight:bold;
-                border-bottom:1px solid #e5e7eb;
-            "
-        >
+        <div style="padding:12px 0;font-weight:bold;border-bottom:1px solid #e5e7eb;">
             Nama Jabatan
         </div>
 
-        <div
-            style="
-                padding:12px 0;
-                border-bottom:1px solid #e5e7eb;
-            "
-        >
+        <div style="padding:12px 0;border-bottom:1px solid #e5e7eb;">
             {{ $jabatan->nama_jabatan }}
         </div>
 
 
-        <div
-            style="
-                padding:12px 0;
-                font-weight:bold;
-                border-bottom:1px solid #e5e7eb;
-            "
-        >
+        <div style="padding:12px 0;font-weight:bold;border-bottom:1px solid #e5e7eb;">
+            Tipe Jabatan
+        </div>
+
+        <div style="padding:12px 0;border-bottom:1px solid #e5e7eb;">
+            @if($jabatan->tipe_jabatan === 'struktural')
+                <span style="background:#fef3c7;color:#92400e;padding:3px 8px;border-radius:4px;">
+                    Struktural
+                </span>
+            @else
+                <span style="background:#eff6ff;color:#1e40af;padding:3px 8px;border-radius:4px;">
+                    Operasional
+                </span>
+            @endif
+        </div>
+
+
+        @if($jabatan->tipe_jabatan === 'struktural')
+        <div style="padding:12px 0;font-weight:bold;border-bottom:1px solid #e5e7eb;">
+            Urutan Struktural
+        </div>
+
+        <div style="padding:12px 0;border-bottom:1px solid #e5e7eb;">
+            @php
+                $labelUrutan = [
+                    1 => 'Wakil Foreman',
+                    2 => 'Foreman',
+                    3 => 'Wakil Supervisor',
+                    4 => 'Supervisor',
+                    5 => 'Wakil General Manager',
+                    6 => 'Manager',
+                ];
+            @endphp
+            {{ $jabatan->urutan_struktural }}
+            &mdash;
+            {{ $labelUrutan[$jabatan->urutan_struktural] ?? '-' }}
+        </div>
+        @endif
+
+
+        @if($jabatan->tipe_jabatan !== 'struktural')
+        <div style="padding:12px 0;font-weight:bold;border-bottom:1px solid #e5e7eb;">
             Level Jabatan
         </div>
 
-        <div
-            style="
-                padding:12px 0;
-                border-bottom:1px solid #e5e7eb;
-            "
-        >
-            Level {{ $jabatan->level_jabatan }}
+        <div style="padding:12px 0;border-bottom:1px solid #e5e7eb;">
+            @if(mb_strtolower(trim($jabatan->nama_jabatan)) === 'crew')
+                Crew (Jabatan Awal)
+            @else
+                Level {{ $jabatan->level_jabatan }}
+            @endif
         </div>
+        @endif
 
 
         <div
@@ -194,6 +218,15 @@
 
     </div>
 
+
+    @if(mb_strtolower(trim($jabatan->nama_jabatan)) === 'crew')
+
+        <div style="background:#fef3c7;color:#92400e;padding:15px;border-radius:8px;margin-bottom:20px;">
+            Jabatan <strong>Crew</strong> tidak memiliki skill.
+            Skill hanya dikaitkan ke jabatan operasional (Level 1 ke atas).
+        </div>
+
+    @else
 
     @if($availableSkills->count() > 0)
 
@@ -436,6 +469,8 @@
         </tbody>
 
     </table>
+
+    @endif
 
 </div>
 

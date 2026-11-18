@@ -156,9 +156,10 @@
 
         <div class="info">
 
-            Jabatan yang dipilih akan menentukan
-            <strong>level jabatan</strong> karyawan.
-            Tidak perlu mengisi level karyawan secara terpisah.
+            Karyawan baru akan otomatis mendapatkan jabatan
+            <strong>Crew</strong> sebagai jabatan awal.
+            Untuk berpindah jabatan, karyawan harus mengikuti
+            ujian pemindahan jabatan terlebih dahulu.
 
         </div>
 
@@ -212,6 +213,23 @@
                     value="{{ old('nama') }}"
                     required
                     placeholder="Nama lengkap karyawan"
+                >
+
+            </div>
+
+            <div class="form-group">
+
+                <label for="pt">
+                    PT/Perusahaan
+                </label>
+
+                <input
+                    type="text"
+                    id="pt"
+                    name="pt"
+                    value="{{ old('pt') }}"
+                    maxlength="255"
+                    placeholder="Contoh: OSMI atau GCNS"
                 >
 
             </div>
@@ -348,38 +366,18 @@
 
             <div class="form-group">
 
-                <label>
-                    Jabatan
-                </label>
+                <label>Jabatan Awal</label>
 
-                <select
-                    name="jabatan_id"
-                    required
+                <input
+                    type="text"
+                    value="Crew"
+                    disabled
+                    style="background:#f3f4f6;color:#6b7280;"
                 >
 
-                    <option value="">
-                        -- Pilih Jabatan --
-                    </option>
-
-                    @foreach($jabatans as $jabatan)
-
-                        <option
-                            value="{{ $jabatan->id }}"
-                            {{ old('jabatan_id') == $jabatan->id ? 'selected' : '' }}
-                        >
-
-                            {{ $jabatan->nama_jabatan }}
-                            —
-                            Level {{ $jabatan->level_jabatan }}
-
-                        </option>
-
-                    @endforeach
-
-                </select>
-
                 <small class="hint">
-                    Level karyawan mengikuti level jabatan yang dipilih.
+                    Jabatan awal karyawan baru selalu Crew.
+                    Perubahan jabatan dilakukan melalui ujian pemindahan jabatan.
                 </small>
 
             </div>

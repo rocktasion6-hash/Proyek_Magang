@@ -43,16 +43,15 @@ class ReportingController extends Controller
         $missingTables = [];
 
         foreach ($tables as $table) {
-            if (!$schema->hasTable($table)) {
+            if (! $schema->hasTable($table)) {
                 $missingTables[] = $table;
             }
         }
 
-        if (!empty($missingTables)) {
+        if (! empty($missingTables)) {
             return response()->json([
                 'success' => false,
-                'message' =>
-                    'Terdapat tabel Data Warehouse yang belum tersedia.',
+                'message' => 'Terdapat tabel Data Warehouse yang belum tersedia.',
                 'missing_tables' => $missingTables,
             ], 500);
         }
@@ -97,10 +96,46 @@ class ReportingController extends Controller
             'status'
         );
 
+        $promosiStruktural = $database
+            ->table('fact_riwayat_jabatan as frj')
+            ->join('dim_jabatan as dj', 'dj.id', '=', 'frj.jabatan_id')
+            ->where('frj.jenis_perubahan', 'kenaikan')
+            ->where('dj.tipe_jabatan', 'struktural');
+
+        $promosiPerUrutan = (clone $promosiStruktural)
+            ->select(
+                'dj.urutan_struktural',
+                'dj.nama_jabatan',
+                DB::raw('COUNT(*) as total')
+            )
+            ->groupBy('dj.urutan_struktural', 'dj.nama_jabatan')
+            ->orderBy('dj.urutan_struktural')
+            ->get()
+            ->map(fn ($row) => [
+                'urutan_struktural' => (int) $row->urutan_struktural,
+                'nama_jabatan' => $row->nama_jabatan,
+                'total' => (int) $row->total,
+            ])
+            ->all();
+
+        $realisasiPengembangan = [
+            'promosi_struktural' => (clone $promosiStruktural)->count(),
+            'promosi_per_urutan' => $promosiPerUrutan,
+            'pemindahan_jabatan' => $database
+                ->table('fact_riwayat_jabatan')
+                ->where('jenis_perubahan', 'pemindahan')
+                ->count(),
+            'peningkatan_skill' => $database
+                ->table('fact_pengembangan as fp')
+                ->join('dim_waktu as dwk', 'dwk.tanggal', '=', 'fp.tanggal_keputusan')
+                ->where('fp.jenis_pengajuan', 'peningkatan_skill')
+                ->where('fp.status', 'disetujui')
+                ->count(),
+        ];
+
         return response()->json([
             'success' => true,
-            'message' =>
-                'Ringkasan Data Warehouse berhasil diambil.',
+            'message' => 'Ringkasan Data Warehouse berhasil diambil.',
 
             'source' => 'dw_penilaian_jabatan',
 
@@ -108,33 +143,27 @@ class ReportingController extends Controller
                 'jumlah_record' => $jumlahRecord,
 
                 'assessment' => [
-                    'total_record' =>
-                        $jumlahRecord['fact_assessment'],
+                    'total_record' => $jumlahRecord['fact_assessment'],
 
-                    'rata_rata_nilai' =>
-                        $rataRataNilai,
+                    'rata_rata_nilai' => $rataRataNilai,
 
-                    'berdasarkan_status' =>
-                        $statusAssessment,
+                    'berdasarkan_status' => $statusAssessment,
                 ],
 
                 'pengembangan' => [
-                    'total_record' =>
-                        $jumlahRecord['fact_pengembangan'],
+                    'total_record' => $jumlahRecord['fact_pengembangan'],
 
-                    'berdasarkan_jenis' =>
-                        $pengembanganPerJenis,
+                    'berdasarkan_jenis' => $pengembanganPerJenis,
 
-                    'berdasarkan_status' =>
-                        $pengembanganPerStatus,
+                    'berdasarkan_status' => $pengembanganPerStatus,
                 ],
 
-                'riwayat' => [
-                    'total_riwayat_jabatan' =>
-                        $jumlahRecord['fact_riwayat_jabatan'],
+                'realisasi_pengembangan' => $realisasiPengembangan,
 
-                    'total_riwayat_skill' =>
-                        $jumlahRecord['fact_riwayat_skill'],
+                'riwayat' => [
+                    'total_riwayat_jabatan' => $jumlahRecord['fact_riwayat_jabatan'],
+
+                    'total_riwayat_skill' => $jumlahRecord['fact_riwayat_skill'],
                 ],
             ],
         ]);
@@ -199,13 +228,13 @@ class ReportingController extends Controller
     ): array {
         $schema = Schema::connection('warehouse');
 
-        if (!$schema->hasTable($table)) {
+        if (! $schema->hasTable($table)) {
             return [];
         }
 
         $columns = $schema->getColumnListing($table);
 
-        if (!in_array($column, $columns)) {
+        if (! in_array($column, $columns)) {
             return [];
         }
 
@@ -253,11 +282,10 @@ class ReportingController extends Controller
 
         $schema = Schema::connection('warehouse');
 
-        if (!$schema->hasTable($table)) {
+        if (! $schema->hasTable($table)) {
             return response()->json([
                 'success' => false,
-                'message' =>
-                    "Tabel {$table} tidak ditemukan di Data Warehouse.",
+                'message' => "Tabel {$table} tidak ditemukan di Data Warehouse.",
             ], 500);
         }
 
@@ -270,7 +298,7 @@ class ReportingController extends Controller
         $query = $database->table($table);
 
         // Urutkan berdasarkan kolom pertama tabel jika tersedia.
-        if (!empty($columns)) {
+        if (! empty($columns)) {
             $query->orderByDesc($columns[0]);
         }
 

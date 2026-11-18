@@ -85,8 +85,8 @@
                             </p>
 
                             <p class="text-sm text-gray-500">
-                                Skill:
-                                {{ $peserta->assessment->skill?->nama_skill ?? 'Umum' }}
+                                Bank Soal:
+                                {{ $peserta->assessment->soalUpload?->nama_file_tampilan ?? '-' }}
                             </p>
 
                         </div>
@@ -116,6 +116,12 @@
                                 {{ ucfirst($peserta->status) }}
                             </span>
 
+                        @endif
+
+                        @if ($peserta->assessment->status !== 'aktif')
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                                Assessment Tidak Aktif
+                            </span>
                         @endif
 
                     </div>

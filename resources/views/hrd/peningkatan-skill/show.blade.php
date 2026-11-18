@@ -241,59 +241,24 @@
         </div>
 
         <div class="row">
-
-            <div class="label">
-                Skill
-            </div>
-
+            <div class="label">Jabatan Asal</div>
             <div>
-                {{ $pengajuan->skill->nama_skill }}
+                {{ $pengajuan->jabatanAsal->nama_jabatan ?? '-' }}
+                (Level
+                {{ $pengajuan->level_sebelum ?? ($pengajuan->jabatanAsal->level_jabatan ?? '-') }})
             </div>
-
         </div>
 
         <div class="row">
-
-            <div class="label">
-                Level Skill Sebelum
-            </div>
-
+            <div class="label">Jabatan Tujuan</div>
             <div>
-                Level {{ $pengajuan->level_sebelum }}
+                <strong>
+                    {{ $pengajuan->jabatanTujuan->nama_jabatan ?? '-' }}
+                    (Level
+                    {{ $pengajuan->level_sesudah ?? ($pengajuan->jabatanTujuan->level_jabatan ?? '-') }})
+                </strong>
             </div>
-
         </div>
-
-                @php
-                    $skillSaatIni = $pengajuan
-                        ->karyawan
-                        ->skills
-                        ->firstWhere('id', $pengajuan->skill_id);
-
-                    $levelSekarang = $skillSaatIni
-                        ? $skillSaatIni->pivot->level_skill
-                        : 0;
-                @endphp
-
-                Level {{ $levelSekarang }}
-
-            </div>
-
-        </div>
-
-        <div class="row">
-
-        <div class="label">
-            Level Skill Sesudah
-        </div>
-
-        <div>
-            <strong>
-                Level {{ $pengajuan->level_sesudah }}
-            </strong>
-        </div>
-
-    </div>
 
         <div class="row">
 

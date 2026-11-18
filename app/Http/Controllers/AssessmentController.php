@@ -3,12 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\AssessmentPeserta;
+use App\Models\BlockchainRecord;
 use App\Models\HasilAssessment;
 use App\Models\Jawaban;
+use App\Models\Soal;
+use App\Services\BlockchainService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\BlockchainRecord;
-use App\Services\BlockchainService;
 use Illuminate\Support\Facades\DB;
 
 class AssessmentController extends Controller
@@ -20,13 +21,13 @@ class AssessmentController extends Controller
     {
         $karyawan = Auth::user()->karyawan;
 
-        if (!$karyawan) {
+        if (! $karyawan) {
             abort(404, 'Data karyawan tidak ditemukan.');
         }
 
         $assessmentPeserta = AssessmentPeserta::with([
             'assessment.jabatan',
-            'assessment.skill',
+            'assessment.soalUpload',
         ])
             ->where('karyawan_id', $karyawan->id)
             ->latest()
@@ -44,7 +45,7 @@ class AssessmentController extends Controller
     {
         $karyawan = Auth::user()->karyawan;
 
-        if (!$karyawan) {
+        if (! $karyawan) {
             abort(404, 'Data karyawan tidak ditemukan.');
         }
 
@@ -54,7 +55,7 @@ class AssessmentController extends Controller
 
         $peserta->load([
             'assessment.jabatan',
-            'assessment.skill',
+            'assessment.soalUpload',
             'assessment.soals.pilihanJawabans',
         ]);
 
@@ -68,12 +69,18 @@ class AssessmentController extends Controller
     {
         $karyawan = Auth::user()->karyawan;
 
-        if (!$karyawan) {
+        if (! $karyawan) {
             abort(404, 'Data karyawan tidak ditemukan.');
         }
 
         if ($peserta->karyawan_id !== $karyawan->id) {
             abort(403, 'Anda tidak memiliki akses ke assessment ini.');
+        }
+
+        if ($peserta->status === 'ditugaskan' && $peserta->assessment->status !== 'aktif') {
+            return redirect()
+                ->route('karyawan.assessment.show', $peserta)
+                ->with('error', 'Assessment ini sedang tidak aktif dan belum dapat dikerjakan.');
         }
 
         if ($peserta->status === 'selesai') {
@@ -83,10 +90,29 @@ class AssessmentController extends Controller
         }
 
         if ($peserta->status === 'ditugaskan') {
-            $peserta->update([
-                'status' => 'sedang_mengerjakan',
-                'waktu_mulai' => now(),
-            ]);
+            DB::transaction(function () use ($peserta): void {
+                $participant = AssessmentPeserta::query()
+                    ->whereKey($peserta->id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                if ($participant->status !== 'ditugaskan') {
+                    return;
+                }
+
+                $participant->update([
+                    'status' => 'sedang_mengerjakan',
+                    'waktu_mulai' => now(),
+                ]);
+
+                app(BlockchainService::class)
+                    ->recordAssessmentParticipantEvent(
+                        'assessment_dimulai',
+                        $participant->refresh()
+                    );
+            });
+
+            $peserta->refresh();
         }
 
         return redirect()->route(
@@ -102,7 +128,7 @@ class AssessmentController extends Controller
     {
         $karyawan = Auth::user()->karyawan;
 
-        if (!$karyawan) {
+        if (! $karyawan) {
             abort(404, 'Data karyawan tidak ditemukan.');
         }
 
@@ -123,14 +149,33 @@ class AssessmentController extends Controller
 
         $peserta->load([
             'assessment',
+            'assessment.jabatan',
             'assessment.soals' => function ($query) {
                 $query->with('pilihanJawabans')
+                    ->orderByRaw("
+                        CASE soals.tipe_soal
+                            WHEN 'pilihan_ganda' THEN 1
+                            WHEN 'multi_jawaban' THEN 2
+                            WHEN 'benar_salah' THEN 3
+                            ELSE 4
+                        END
+                    ")
                     ->orderBy('assessment_soal.nomor_soal');
             },
         ]);
 
+        $peserta->assessment->soals->each(function (Soal $soal) use ($peserta): void {
+            $soal->setAttribute(
+                'nilai_point',
+                $peserta->assessment->nilaiPointUntukSoal($soal)
+            );
+        });
+
+        $soalsPerTipe = $peserta->assessment->soals->groupBy('tipe_soal');
+
         return view('karyawan.assessment.kerjakan', compact(
-            'peserta'
+            'peserta',
+            'soalsPerTipe'
         ));
     }
 
@@ -141,7 +186,7 @@ class AssessmentController extends Controller
     {
         $karyawan = Auth::user()->karyawan;
 
-        if (!$karyawan) {
+        if (! $karyawan) {
             abort(404, 'Data karyawan tidak ditemukan.');
         }
 
@@ -156,7 +201,7 @@ class AssessmentController extends Controller
         }
 
         $peserta->load([
-            'assessment',
+            'assessment.jabatan',
             'assessment.soals.pilihanJawabans',
         ]);
 
@@ -183,14 +228,14 @@ class AssessmentController extends Controller
 
             foreach ($peserta->assessment->soals as $soal) {
 
-                $bobot = (float) $soal->bobot;
+                $bobot = $peserta->assessment->nilaiPointUntukSoal($soal);
 
                 $totalBobot += $bobot;
 
                 $jawabanKaryawan = $jawabanInput[$soal->id] ?? [];
 
                 // Jika bukan array, ubah menjadi array
-                if (!is_array($jawabanKaryawan)) {
+                if (! is_array($jawabanKaryawan)) {
                     $jawabanKaryawan = [$jawabanKaryawan];
                 }
 
@@ -207,6 +252,7 @@ class AssessmentController extends Controller
 
                 if (
                     in_array($soal->tipe_soal, [
+                        'pilihan_ganda',
                         'pilihan_tunggal',
                         'benar_salah',
                     ])
@@ -320,34 +366,23 @@ class AssessmentController extends Controller
                     'waktu_mulai' => $peserta->waktu_mulai,
                     'waktu_selesai' => $waktuSelesai,
                 ]
-            
-            );
-            $blockchain = app(BlockchainService::class);
 
+            );
             $blockchainRecordExists = BlockchainRecord::query()
                 ->where('entity_type', 'hasil_assessment')
                 ->where('entity_id', $hasil->id)
                 ->exists();
 
-            if (!$blockchainRecordExists) {
-                $blockchain->addBlock(
-                    'hasil_assessment',
-                    $hasil->id,
-                    [
-                        'assessment_peserta_id' => $peserta->id,
-                        'assessment_id'         => $peserta->assessment_id,
-                        'karyawan_id'           => $peserta->karyawan_id,
-                        'nilai_akhir'           => $hasil->nilai_akhir,
-                        'standar_nilai'         => $hasil->standar_nilai,
-                        'status'                => $hasil->status,
-                        'tanggal_ujian'         => $hasil->tanggal_ujian?->format('Y-m-d H:i:s'),
-                        'waktu_mulai'           => $hasil->waktu_mulai?->format('Y-m-d H:i:s'),
-                        'waktu_selesai'         => $hasil->waktu_selesai?->format('Y-m-d H:i:s'),
-                    ]
+            if (! $blockchainRecordExists) {
+                $blockchain = app(BlockchainService::class);
+
+                $blockchain->recordAssessmentParticipantEvent(
+                    'assessment_diselesaikan',
+                    $peserta->refresh()
                 );
+                $blockchain->recordAssessmentResultEvent($hasil);
             }
-    });
-        
+        });
 
         return redirect()->route(
             'karyawan.assessment.hasil',
@@ -362,7 +397,7 @@ class AssessmentController extends Controller
     {
         $karyawan = Auth::user()->karyawan;
 
-        if (!$karyawan) {
+        if (! $karyawan) {
             abort(404, 'Data karyawan tidak ditemukan.');
         }
 

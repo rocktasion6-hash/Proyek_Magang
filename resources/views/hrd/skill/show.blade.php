@@ -109,10 +109,6 @@
                 </th>
 
                 <th style="padding:12px;text-align:left;border-bottom:1px solid #e5e7eb;">
-                    Level Jabatan
-                </th>
-
-                <th style="padding:12px;text-align:left;border-bottom:1px solid #e5e7eb;">
                     Level Skill Dibutuhkan
                 </th>
 
@@ -131,23 +127,11 @@
                 </td>
 
                 <td style="padding:12px;border-bottom:1px solid #e5e7eb;">
-
-                    <strong>
-                        {{ $jabatan->nama_jabatan }}
-                    </strong>
-
+                    <strong>{{ $jabatan->nama_jabatan }}</strong>
                 </td>
 
                 <td style="padding:12px;border-bottom:1px solid #e5e7eb;">
-
-                    Level {{ $jabatan->level_jabatan }}
-
-                </td>
-
-                <td style="padding:12px;border-bottom:1px solid #e5e7eb;">
-
                     Level {{ $jabatan->pivot->level_dibutuhkan }}
-
                 </td>
 
             </tr>
@@ -157,7 +141,7 @@
             <tr>
 
                 <td
-                    colspan="4"
+                    colspan="3"
                     style="
                         padding:25px;
                         text-align:center;
@@ -173,6 +157,11 @@
         </tbody>
 
     </table>
+
+    <div style="background:#eff6ff;color:#1e40af;padding:12px 15px;border-radius:8px;margin-top:15px;font-size:14px;">
+        Skill ini dibutuhkan oleh jabatan-jabatan di atas. Karyawan harus berada di jabatan tersebut untuk dapat memiliki skill ini.
+        Contoh alur: <strong>Crew → Operator Loader Level 1</strong> (pemindahan jabatan) → peningkatan skill → <strong>Operator Loader Level 2</strong>.
+    </div>
 
 </div>
 

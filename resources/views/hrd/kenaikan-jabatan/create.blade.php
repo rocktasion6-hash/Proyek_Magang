@@ -119,8 +119,8 @@
         <h1>Tambah Pengajuan Kenaikan Jabatan</h1>
 
         <p>
-            Pengajuan hanya dapat dibuat menggunakan hasil assessment
-            yang berstatus <strong>LULUS</strong>.
+            Pengajuan hanya dapat menggunakan hasil assessment yang sudah selesai
+            dan berstatus <strong>LULUS</strong> untuk tahap struktural berikutnya.
         </p>
 
         @if($errors->any())
@@ -145,13 +145,19 @@
 
         <div class="info">
 
-            <strong>Aturan:</strong>
-
-            Jabatan tujuan harus memiliki
-            <strong>level lebih tinggi</strong>
-            dibanding jabatan karyawan saat ini.
+            <strong>Alur kenaikan:</strong>
+            Karyawan operasional → assessment struktural Urutan 1 (Wakil Foreman).
+            Karyawan struktural harus naik satu urutan setiap kali melalui
+            assessment jabatan tujuan berikutnya, sampai Urutan 6 (Manager).
+            Jabatan tujuan mengikuti assessment yang lulus.
 
         </div>
+
+        @if($hasilAssessments->isEmpty())
+            <div class="info">
+                Belum ada hasil assessment lulus yang sesuai dengan tahap kenaikan jabatan karyawan.
+            </div>
+        @endif
 
         <form
             method="POST"
@@ -181,6 +187,7 @@
                             $peserta = $hasil->assessmentPeserta;
                             $karyawan = $peserta->karyawan;
                             $jabatan = $karyawan->jabatan;
+                            $jabatanTujuan = $peserta->assessment->jabatan;
                         @endphp
 
                         <option
@@ -195,51 +202,20 @@
 
                             |
                             {{ $jabatan->nama_jabatan }}
+                            @if($jabatan->tipe_jabatan === 'struktural')
+                                (Urutan {{ $jabatan->urutan_struktural }})
+                            @endif
 
-                            |
-                            Nilai:
+                            →
+
+                            {{ $jabatanTujuan->nama_jabatan }}
+                            (Urutan {{ $jabatanTujuan->urutan_struktural }})
+
+                            | Nilai:
                             {{ number_format($hasil->nilai_akhir, 2) }}
 
                             |
                             Lulus
-
-                        </option>
-
-                    @endforeach
-
-                </select>
-
-            </div>
-
-            <div class="form-group">
-
-                <label>
-                    Jabatan Tujuan
-                </label>
-
-                <select
-                    name="jabatan_tujuan_id"
-                    required
-                >
-
-                    <option value="">
-                        -- Pilih Jabatan Tujuan --
-                    </option>
-
-                    @foreach($jabatans as $jabatan)
-
-                        <option
-                            value="{{ $jabatan->id }}"
-                            {{ old('jabatan_tujuan_id') == $jabatan->id ? 'selected' : '' }}
-                        >
-
-                            {{ $jabatan->nama_jabatan }}
-
-                            —
-                            Level {{ $jabatan->level_jabatan }}
-
-                            —
-                            Standar {{ $jabatan->standar_nilai }}
 
                         </option>
 
@@ -280,7 +256,11 @@
 
             </div>
 
-            <button class="btn btn-primary">
+            <button
+                type="submit"
+                class="btn btn-primary"
+                @disabled($hasilAssessments->isEmpty())
+            >
                 Simpan Pengajuan
             </button>
 

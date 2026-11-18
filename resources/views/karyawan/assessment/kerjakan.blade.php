@@ -68,7 +68,25 @@
             @csrf
 
 
-            @foreach ($peserta->assessment->soals as $index => $soal)
+            @php
+                $nomorSoal = 1;
+                $labelTipeSoal = [
+                    'pilihan_ganda' => 'Pilihan Ganda / Pilihan Tunggal',
+                    'pilihan_tunggal' => 'Pilihan Ganda / Pilihan Tunggal',
+                    'multi_jawaban' => 'Multi Jawaban',
+                    'benar_salah' => 'Benar / Salah',
+                ];
+            @endphp
+
+            @foreach ($soalsPerTipe as $tipeSoal => $soals)
+
+                <div class="mb-4 mt-8 first:mt-0">
+                    <h2 class="text-xl font-bold text-gray-800">
+                        {{ $labelTipeSoal[$tipeSoal] ?? $tipeSoal }}
+                    </h2>
+                </div>
+
+                @foreach ($soals as $soal)
 
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
 
@@ -77,7 +95,7 @@
                         <div class="flex-shrink-0">
 
                             <span class="w-9 h-9 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
-                                {{ $index + 1 }}
+                                {{ $nomorSoal++ }}
                             </span>
 
                         </div>
@@ -87,10 +105,10 @@
 
                             <div class="flex flex-wrap items-center gap-2 mb-3">
 
-                                @if ($soal->tipe_soal === 'pilihan_tunggal')
+                                @if (in_array($soal->tipe_soal, ['pilihan_ganda', 'pilihan_tunggal'], true))
 
                                     <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
-                                        Pilihan Tunggal
+                                        Pilihan Ganda / Pilihan Tunggal
                                     </span>
 
                                 @elseif ($soal->tipe_soal === 'multi_jawaban')
@@ -108,7 +126,7 @@
                                 @endif
 
                                 <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
-                                    Bobot {{ number_format($soal->bobot, 0) }}
+                                    Poin {{ number_format($soal->nilai_point, 2) }}
                                 </span>
 
                             </div>
@@ -117,6 +135,12 @@
                             <p class="text-lg font-semibold text-gray-800 leading-relaxed">
                                 {{ $soal->pertanyaan }}
                             </p>
+
+                            @if ($soal->nama_prosedur)
+                                <p class="text-sm text-gray-500 mt-2">
+                                    {{ $soal->nama_prosedur }}
+                                </p>
+                            @endif
 
 
                             <!-- Pilihan -->
@@ -164,12 +188,16 @@
 
                                             <div>
 
-                                                <span class="font-semibold text-gray-800">
-                                                    {{ $pilihan->kode }}.
-                                                </span>
+                                                @if ($soal->tipe_soal !== 'benar_salah')
+                                                    <span class="font-semibold text-gray-800">
+                                                        {{ $pilihan->kode }}.
+                                                    </span>
+                                                @endif
 
                                                 <span class="text-gray-700">
-                                                    {{ $pilihan->teks_jawaban }}
+                                                    {{ $soal->tipe_soal === 'benar_salah'
+                                                        ? mb_strtoupper($pilihan->teks_jawaban)
+                                                        : $pilihan->teks_jawaban }}
                                                 </span>
 
                                             </div>
@@ -187,6 +215,8 @@
                     </div>
 
                 </div>
+
+                @endforeach
 
             @endforeach
 

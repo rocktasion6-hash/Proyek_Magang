@@ -30,7 +30,8 @@
 
             <p style="margin-bottom:0;">
                 Ringkasan data karyawan, assessment,
-                dan pengembangan untuk tahun {{ $tahun }}.
+                dan pengembangan {{ $labelTahun }}.
+                Distribusi karyawan menampilkan kondisi terkini pada pembaruan warehouse terakhir.
             </p>
 
         </div>
@@ -67,7 +68,9 @@
                             ? 'selected'
                             : '' }}
                     >
-                        {{ $tahunItem }}
+                        {{ $tahunItem === 'semua'
+                            ? 'Semua Tahun'
+                            : $tahunItem }}
                     </option>
 
                 @endforeach
@@ -97,7 +100,7 @@
     <div class="card" style="margin:0;">
 
         <small>
-            Karyawan Aktif
+            Karyawan Aktif Saat Ini
         </small>
 
         <h2 style="margin:10px 0 0;">
@@ -114,7 +117,7 @@
     <div class="card" style="margin:0;">
 
         <small>
-            Departemen
+            Departemen Saat Ini
         </small>
 
         <h2 style="margin:10px 0 0;">
@@ -131,7 +134,7 @@
     <div class="card" style="margin:0;">
 
         <small>
-            Jabatan
+            Jabatan Saat Ini
         </small>
 
         <h2 style="margin:10px 0 0;">
@@ -148,7 +151,7 @@
     <div class="card" style="margin:0;">
 
         <small>
-            Skill
+            Skill Saat Ini
         </small>
 
         <h2 style="margin:10px 0 0;">
@@ -188,7 +191,7 @@
         </h2>
 
         <small>
-            tahun {{ $tahun }}
+            {{ $labelTahun }}
         </small>
 
     </div>
@@ -333,6 +336,46 @@
 
 </div>
 
+<p style="margin-top:-15px;margin-bottom:25px;">
+    Status pengajuan mengikuti status terakhir dari pengajuan yang dibuat {{ $labelTahun }};
+    tren keputusan memakai tanggal keputusan.
+</p>
+
+<div
+    style="
+        display:grid;
+        grid-template-columns:repeat(4, 1fr);
+        gap:20px;
+        margin-bottom:25px;
+    "
+>
+
+    <div class="card" style="margin:0;">
+        <small>Perubahan Jabatan Terealisasi</small>
+        <h2 style="margin:10px 0 0;">{{ $totalPerubahanJabatan }}</h2>
+        <small>berdasarkan riwayat jabatan {{ $labelTahun }}</small>
+    </div>
+
+    <div class="card" style="margin:0;">
+        <small>Promosi Struktural Terealisasi</small>
+        <h2 style="margin:10px 0 0;">{{ $totalPromosiStruktural }}</h2>
+        <small>berdasarkan riwayat jabatan {{ $labelTahun }}</small>
+    </div>
+
+    <div class="card" style="margin:0;">
+        <small>Pemindahan Terealisasi</small>
+        <h2 style="margin:10px 0 0;">{{ $totalPemindahanAktual }}</h2>
+        <small>berdasarkan riwayat jabatan {{ $labelTahun }}</small>
+    </div>
+
+    <div class="card" style="margin:0;">
+        <small>Peningkatan Skill Terealisasi</small>
+        <h2 style="margin:10px 0 0;">{{ $totalPeningkatanSkill }}</h2>
+        <small>berdasarkan pengajuan disetujui {{ $labelTahun }}</small>
+    </div>
+
+</div>
+
 
 {{-- ========================================================== --}}
 {{-- CHART ASSESSMENT --}}
@@ -395,7 +438,7 @@
     <div class="card">
 
         <h2>
-            Karyawan per Jabatan
+            Karyawan Aktif per Jabatan Saat Ini
         </h2>
 
         <div style="height:350px;">
@@ -410,7 +453,7 @@
     <div class="card">
 
         <h2>
-            Karyawan per Departemen
+            Karyawan Aktif per Departemen Saat Ini
         </h2>
 
         <div style="height:350px;">
@@ -431,13 +474,38 @@
 <div class="card">
 
     <h2>
-        Tren Hasil Assessment {{ $tahun }}
+    Tren Hasil Assessment {{ $labelTahun }}
     </h2>
 
     <div style="height:350px;">
 
         <canvas id="assessmentTrendChart"></canvas>
 
+    </div>
+
+</div>
+
+<div
+    style="
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:20px;
+        margin-bottom:20px;
+    "
+>
+
+    <div class="card">
+        <h2>Promosi Struktural per Urutan {{ $labelTahun }}</h2>
+        <div style="height:350px;">
+            <canvas id="promotionSequenceChart"></canvas>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Keputusan Pengajuan per Bulan {{ $labelTahun }}</h2>
+        <div style="height:350px;">
+            <canvas id="developmentDecisionChart"></canvas>
+        </div>
     </div>
 
 </div>
@@ -485,7 +553,11 @@
                 </th>
 
                 <th style="padding:12px;text-align:left;border-bottom:1px solid #e5e7eb;">
-                    Tanggal
+                    Tanggal Pengajuan
+                </th>
+
+                <th style="padding:12px;text-align:left;border-bottom:1px solid #e5e7eb;">
+                    Tanggal Keputusan
                 </th>
 
             </tr>
@@ -533,24 +605,62 @@
 
                     @if($pengajuan->jenis_pengajuan === 'peningkatan_skill')
 
-                        {{ $pengajuan->nama_skill ?? '-' }}
+                        @if($pengajuan->skill_progressions->isNotEmpty())
 
-                        <br>
+                            @foreach($pengajuan->skill_progressions as $skillProgression)
 
-                        <small>
-                            Level
-                            {{ $pengajuan->level_sebelum ?? '-' }}
+                                {{ $skillProgression->nama_skill }}
+                                @if($skillProgression->level_sebelum !== null)
+                                    Level {{ $skillProgression->level_sebelum }}
+                                @endif
+
+                                →
+
+                                {{ $skillProgression->nama_skill }}
+                                @if($skillProgression->level_sesudah !== null)
+                                    Level {{ $skillProgression->level_sesudah }}
+                                @endif
+
+                                @if(! $loop->last)
+                                    <br>
+                                @endif
+
+                            @endforeach
+
+                        @else
+
+                            {{ $pengajuan->jabatan_asal ?? $pengajuan->nama_skill ?? '-' }}
+
                             →
-                            {{ $pengajuan->level_sesudah ?? '-' }}
-                        </small>
+
+                            {{ $pengajuan->jabatan_tujuan ?? $pengajuan->nama_skill ?? '-' }}
+
+                            @if($pengajuan->level_sebelum !== null || $pengajuan->level_sesudah !== null)
+                                <br>
+
+                                <small>
+                                    Level
+                                    {{ $pengajuan->level_sebelum ?? '-' }}
+                                    →
+                                    {{ $pengajuan->level_sesudah ?? '-' }}
+                                </small>
+                            @endif
+
+                        @endif
 
                     @else
 
                         {{ $pengajuan->jabatan_asal ?? '-' }}
+                        @if($pengajuan->tipe_jabatan_asal === 'struktural' && $pengajuan->urutan_asal !== null)
+                            (Urutan {{ $pengajuan->urutan_asal }})
+                        @endif
 
                         →
 
                         {{ $pengajuan->jabatan_tujuan ?? '-' }}
+                        @if($pengajuan->tipe_jabatan_tujuan === 'struktural' && $pengajuan->urutan_tujuan !== null)
+                            (Urutan {{ $pengajuan->urutan_tujuan }})
+                        @endif
 
                     @endif
 
@@ -566,9 +676,13 @@
 
                 <td style="padding:12px;border-bottom:1px solid #e5e7eb;">
 
-                    {{ \Carbon\Carbon::parse(
-                        $pengajuan->tanggal
-                    )->format('d-m-Y') }}
+                    {{ \Carbon\Carbon::parse($pengajuan->tanggal)->format('d-m-Y') }}
+                </td>
+
+                <td style="padding:12px;border-bottom:1px solid #e5e7eb;">
+                    {{ $pengajuan->tanggal_keputusan
+                        ? \Carbon\Carbon::parse($pengajuan->tanggal_keputusan)->format('d-m-Y')
+                        : '-' }}
 
                 </td>
 
@@ -579,14 +693,14 @@
             <tr>
 
                 <td
-                    colspan="6"
+                    colspan="7"
                     style="
                         padding:25px;
                         text-align:center;
                     "
                 >
                     Belum ada data pengembangan
-                    pada tahun {{ $tahun }}.
+                    {{ $labelTahun }}.
                 </td>
 
             </tr>
@@ -616,7 +730,7 @@
 
     const assessmentLulus = {{ Js::from($totalLulus) }};
     const assessmentTidakLulus = {{ Js::from($totalTidakLulus) }};
-    const jabatanLabels = {{ Js::from($karyawanPerJabatan->pluck('nama_jabatan')->values()) }};
+    const jabatanLabels = {{ Js::from($karyawanPerJabatan->pluck('label_jabatan')->values()) }};
     const jabatanData = {{ Js::from($karyawanPerJabatan->pluck('jumlah')->values()) }};
     const departemenLabels = {{ Js::from($karyawanPerDepartemen->pluck('nama_departemen')->values()) }};
     const departemenData = {{ Js::from($karyawanPerDepartemen->pluck('jumlah')->values()) }};
@@ -627,6 +741,10 @@
     const tidakLulusBulanan = {{ Js::from($dataTidakLulusBulanan) }};
     const labelPengembanganJenis = {{ Js::from($labelPengembanganJenis) }};
     const dataPengembanganJenis = {{ Js::from($dataPengembanganJenis) }};
+    const promosiUrutanLabels = {{ Js::from($labelPromosiPerUrutan) }};
+    const promosiUrutanData = {{ Js::from($dataPromosiPerUrutan) }};
+    const keputusanDisetujuiData = {{ Js::from($dataDisetujuiBulanan) }};
+    const keputusanDitolakData = {{ Js::from($dataDitolakBulanan) }};
 
 
     /*
@@ -822,6 +940,62 @@
                         ticks: {
                             precision: 0
                         }
+                    }
+                }
+            }
+        }
+    );
+
+    new Chart(
+        document.getElementById('promotionSequenceChart'),
+        {
+            type: 'bar',
+            data: {
+                labels: promosiUrutanLabels,
+                datasets: [{
+                    label: 'Promosi terealisasi',
+                    data: promosiUrutanData
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { precision: 0 }
+                    }
+                }
+            }
+        }
+    );
+
+    new Chart(
+        document.getElementById('developmentDecisionChart'),
+        {
+            type: 'line',
+            data: {
+                labels: bulanLabels,
+                datasets: [
+                    {
+                        label: 'Disetujui',
+                        data: keputusanDisetujuiData,
+                        tension: 0.3
+                    },
+                    {
+                        label: 'Ditolak',
+                        data: keputusanDitolakData,
+                        tension: 0.3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { precision: 0 }
                     }
                 }
             }

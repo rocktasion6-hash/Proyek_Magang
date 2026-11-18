@@ -12,7 +12,8 @@ class Assessment extends Model
     protected $fillable = [
         'nama_assessment',
         'jabatan_id',
-        'skill_id',
+        'departemen_id',
+        'soal_upload_id',
         'standar_nilai',
         'durasi',
         'tanggal_mulai',
@@ -37,12 +38,19 @@ class Assessment extends Model
         return $this->belongsTo(Jabatan::class);
     }
 
-    /**
-     * Skill yang diuji, jika assessment khusus skill.
-     */
-    public function skill()
+    public function soalUpload()
     {
-        return $this->belongsTo(Skill::class);
+        return $this->belongsTo(SoalUpload::class);
+    }
+
+    public function departemen()
+    {
+        return $this->belongsTo(Departemen::class);
+    }
+
+    public function konfigurasiSoals()
+    {
+        return $this->hasMany(AssessmentKonfigurasiSoal::class);
     }
 
     /**
@@ -64,7 +72,7 @@ class Assessment extends Model
             'assessment_id',
             'soal_id'
         )->withPivot('nomor_soal')
-         ->withTimestamps();
+            ->withTimestamps();
     }
 
     /**
@@ -86,5 +94,28 @@ class Assessment extends Model
     public function peserta()
     {
         return $this->hasMany(AssessmentPeserta::class);
+    }
+
+    public function nilaiPointUntukSoal(Soal $soal): float
+    {
+        $jabatan = $this->jabatan;
+
+        if (
+            $jabatan?->tipe_jabatan !== 'operasional'
+            || (int) $jabatan->level_jabatan < 1
+            || (int) $jabatan->level_jabatan > 5
+        ) {
+            return (float) $soal->nilai_point;
+        }
+
+        if ($soal->tipe_soal !== 'multi_jawaban') {
+            return 1.0;
+        }
+
+        return match ((int) $jabatan->level_jabatan) {
+            1 => 3.0,
+            2, 3 => 2.0,
+            4, 5 => 1.0,
+        };
     }
 }

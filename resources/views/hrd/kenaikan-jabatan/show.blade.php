@@ -236,7 +236,11 @@
 
             <div>
                 {{ $pengajuan->jabatanAsal->nama_jabatan }}
-                (Level {{ $pengajuan->jabatanAsal->level_jabatan }})
+                @if($pengajuan->jabatanAsal->tipe_jabatan === 'struktural')
+                    (Urutan {{ $pengajuan->jabatanAsal->urutan_struktural }})
+                @else
+                    (Operasional)
+                @endif
             </div>
 
         </div>
@@ -249,7 +253,7 @@
 
             <div>
                 {{ $pengajuan->jabatanTujuan->nama_jabatan }}
-                (Level {{ $pengajuan->jabatanTujuan->level_jabatan }})
+                (Urutan {{ $pengajuan->jabatanTujuan->urutan_struktural }})
             </div>
 
         </div>

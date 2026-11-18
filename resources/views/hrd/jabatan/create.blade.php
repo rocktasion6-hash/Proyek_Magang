@@ -48,13 +48,9 @@
             margin-bottom:20px;
         "
     >
-
-        <strong>Catatan:</strong>
-
-        Level jabatan digunakan sebagai dasar
-        dalam membedakan tingkatan jabatan dan
-        proses kenaikan jabatan.
-
+        <strong>Panduan Tipe Jabatan:</strong><br>
+        <strong>Operasional</strong> — Crew, Operator Loader Level 1, Operator Loader Level 2, dst.<br>
+        <strong>Struktural</strong> — Wakil Foreman (urutan 1), Foreman (2), Wakil Supervisor (3), Supervisor (4), Wakil General Manager (5), Manager (6).
     </div>
 
 
@@ -68,13 +64,7 @@
 
         <div style="margin-bottom:20px;">
 
-            <label
-                style="
-                    display:block;
-                    margin-bottom:7px;
-                    font-weight:bold;
-                "
-            >
+            <label style="display:block;margin-bottom:7px;font-weight:bold;">
                 Nama Jabatan
             </label>
 
@@ -83,13 +73,8 @@
                 name="nama_jabatan"
                 value="{{ old('nama_jabatan') }}"
                 required
-                placeholder="Contoh: Operator Senior"
-                style="
-                    width:100%;
-                    padding:11px;
-                    border:1px solid #d1d5db;
-                    border-radius:6px;
-                "
+                placeholder="Contoh: Operator Loader Level 1"
+                style="width:100%;padding:11px;border:1px solid #d1d5db;border-radius:6px;"
             >
 
         </div>
@@ -97,13 +82,55 @@
 
         <div style="margin-bottom:20px;">
 
-            <label
-                style="
-                    display:block;
-                    margin-bottom:7px;
-                    font-weight:bold;
-                "
+            <label style="display:block;margin-bottom:7px;font-weight:bold;">
+                Tipe Jabatan
+            </label>
+
+            <select
+                name="tipe_jabatan"
+                id="tipe_jabatan"
+                required
+                onchange="toggleUrutan()"
+                style="width:100%;padding:11px;border:1px solid #d1d5db;border-radius:6px;"
             >
+                <option value="operasional" {{ old('tipe_jabatan', 'operasional') === 'operasional' ? 'selected' : '' }}>
+                    Operasional (Crew, Operator, Teknisi, dll)
+                </option>
+                <option value="struktural" {{ old('tipe_jabatan') === 'struktural' ? 'selected' : '' }}>
+                    Struktural (Wakil Foreman, Foreman, Supervisor, dll)
+                </option>
+            </select>
+
+        </div>
+
+
+        <div id="wrap_urutan" style="margin-bottom:20px; {{ old('tipe_jabatan') === 'struktural' ? '' : 'display:none;' }}">
+
+            <label style="display:block;margin-bottom:7px;font-weight:bold;">
+                Urutan Struktural
+            </label>
+
+            <select
+                name="urutan_struktural"
+                style="width:100%;padding:11px;border:1px solid #d1d5db;border-radius:6px;"
+            >
+                <option value="">-- Pilih Urutan --</option>
+                <option value="1" {{ old('urutan_struktural') == 1 ? 'selected' : '' }}>1 — Wakil Foreman</option>
+                <option value="2" {{ old('urutan_struktural') == 2 ? 'selected' : '' }}>2 — Foreman</option>
+                <option value="3" {{ old('urutan_struktural') == 3 ? 'selected' : '' }}>3 — Wakil Supervisor</option>
+                <option value="4" {{ old('urutan_struktural') == 4 ? 'selected' : '' }}>4 — Supervisor</option>
+                <option value="5" {{ old('urutan_struktural') == 5 ? 'selected' : '' }}>5 — Wakil General Manager</option>
+                <option value="6" {{ old('urutan_struktural') == 6 ? 'selected' : '' }}>6 — Manager</option>
+            </select>
+
+            <small style="color:#6b7280;">Urutan menentukan hierarki kenaikan jabatan struktural.</small>
+
+        </div>
+
+
+        <div id="wrap_level" style="margin-bottom:20px; {{ old('tipe_jabatan') === 'struktural' ? 'display:none;' : '' }}">
+
+            <label style="display:block;margin-bottom:7px;font-weight:bold;">
                 Level Jabatan
             </label>
 
@@ -111,19 +138,13 @@
                 type="number"
                 name="level_jabatan"
                 value="{{ old('level_jabatan', 1) }}"
-                min="1"
-                required
-                placeholder="Contoh: 2"
-                style="
-                    width:100%;
-                    padding:11px;
-                    border:1px solid #d1d5db;
-                    border-radius:6px;
-                "
+                min="0"
+                placeholder="Contoh: 1"
+                style="width:100%;padding:11px;border:1px solid #d1d5db;border-radius:6px;"
             >
 
             <small style="color:#6b7280;">
-                Semakin besar angka, semakin tinggi level jabatan.
+                0 = Crew, 1 = Level 1, 2 = Level 2, dst.
             </small>
 
         </div>
@@ -221,5 +242,15 @@
     </form>
 
 </div>
+
+<script>
+function toggleUrutan() {
+    const tipe = document.getElementById('tipe_jabatan').value;
+    document.getElementById('wrap_urutan').style.display =
+        tipe === 'struktural' ? 'block' : 'none';
+    document.getElementById('wrap_level').style.display =
+        tipe === 'struktural' ? 'none' : 'block';
+}
+</script>
 
 @endsection

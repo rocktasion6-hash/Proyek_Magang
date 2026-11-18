@@ -119,8 +119,9 @@
         <h1>Tambah Pengajuan Peningkatan Skill</h1>
 
         <p>
-            Pengajuan hanya dapat menggunakan hasil assessment
-            yang berstatus <strong>LULUS</strong>.
+            Pengajuan hanya dapat menggunakan hasil assessment yang sudah selesai
+            dan berstatus <strong>LULUS</strong> untuk jabatan satu level di atas
+            jabatan karyawan saat ini.
         </p>
 
         @if($errors->any())
@@ -142,18 +143,19 @@
         @endif
 
         <div class="info">
-
-            <strong>Aturan:</strong>
-
-            Level skill baru harus lebih tinggi
-            dari level skill karyawan saat ini.
-
-            <br><br>
-
-            Level skill menggunakan rentang
-            <strong>1 sampai 5</strong>.
-
+            <strong>Alur Pengembangan:</strong><br>
+            Crew → <em>Pemindahan Jabatan</em> → Operator Loader Level 1
+            → <em>Assessment Level 2</em> → Pengajuan Peningkatan Skill
+            → Level 2 → assessment dan pengajuan berikutnya sampai Level 5 (maks).
+            Jabatan tujuan mengikuti assessment untuk level berikutnya dan harus
+            berasal dari jalur jabatan yang sama.
         </div>
+
+        @if($hasilAssessments->isEmpty())
+            <div class="info">
+                Belum ada hasil assessment lulus yang sesuai dengan jabatan karyawan saat ini dan level berikutnya.
+            </div>
+        @endif
 
         <form
             method="POST"
@@ -165,7 +167,7 @@
             <div class="form-group">
 
                 <label>
-                    Hasil Assessment
+                    Hasil Assessment (Lulus)
                 </label>
 
                 <select
@@ -180,107 +182,30 @@
                     @foreach($hasilAssessments as $hasil)
 
                         @php
-                            $peserta = $hasil->assessmentPeserta;
+                            $peserta  = $hasil->assessmentPeserta;
                             $karyawan = $peserta->karyawan;
-                            $assessment = $peserta->assessment;
+                            $jabatan  = $karyawan->jabatan;
+                            $jabatanTujuan = $peserta->assessment->jabatan;
                         @endphp
 
                         <option
                             value="{{ $hasil->id }}"
                             {{ old('hasil_assessment_id') == $hasil->id ? 'selected' : '' }}
                         >
-
-                            {{ $karyawan->nama }}
-
-                            |
-                            {{ $karyawan->nik }}
-
-                            |
-
-                            @if($assessment->skill)
-                                {{ $assessment->skill->nama_skill }}
-                            @else
-                                Assessment Jabatan
-                            @endif
-
-                            |
-
-                            Nilai:
-                            {{ number_format(
-                                $hasil->nilai_akhir,
-                                2
-                            ) }}
-
-                            |
-                            Lulus
-
+                            {{ $karyawan->nama }} ({{ $karyawan->nik }})
+                            | {{ $jabatan->nama_jabatan }}
+                            → {{ $jabatanTujuan->nama_jabatan }}
+                            (Level {{ $jabatanTujuan->level_jabatan }})
+                            | Nilai: {{ number_format($hasil->nilai_akhir, 2) }}
                         </option>
 
                     @endforeach
 
                 </select>
 
-            </div>
-
-            <div class="form-group">
-
-                <label>
-                    Skill yang Ditingkatkan
-                </label>
-
-                <select
-                    name="skill_id"
-                    required
-                >
-
-                    <option value="">
-                        -- Pilih Skill --
-                    </option>
-
-                    @foreach($skills as $skill)
-
-                        <option
-                            value="{{ $skill->id }}"
-                            {{ old('skill_id') == $skill->id ? 'selected' : '' }}
-                        >
-
-                            {{ $skill->nama_skill }}
-
-                        </option>
-
-                    @endforeach
-
-                </select>
-
-            </div>
-
-            <div class="form-group">
-
-                <label>
-                    Level Skill Baru
-                </label>
-
-                <select
-                    name="level_sesudah"
-                    required
-                >
-
-                    <option value="">
-                        -- Pilih Level --
-                    </option>
-
-                    @for($level = 1; $level <= 5; $level++)
-
-                        <option
-                            value="{{ $level }}"
-                            {{ old('level_sesudah') == $level ? 'selected' : '' }}
-                        >
-                            Level {{ $level }}
-                        </option>
-
-                    @endfor
-
-                </select>
+                <small style="color:#6b7280;">
+                    Hanya menampilkan karyawan aktif level 1–4 dengan assessment level berikutnya yang sudah selesai dan lulus.
+                </small>
 
             </div>
 
@@ -293,10 +218,7 @@
                 <input
                     type="date"
                     name="tanggal_pengajuan"
-                    value="{{ old(
-                        'tanggal_pengajuan',
-                        now()->toDateString()
-                    ) }}"
+                    value="{{ old('tanggal_pengajuan', now()->toDateString()) }}"
                     required
                 >
 
@@ -318,6 +240,7 @@
             <button
                 type="submit"
                 class="btn btn-primary"
+                @disabled($hasilAssessments->isEmpty())
             >
                 Simpan Pengajuan
             </button>

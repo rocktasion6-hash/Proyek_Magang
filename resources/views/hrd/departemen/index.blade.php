@@ -194,33 +194,66 @@
                     "
                 >
 
-                    <a
-                        href="{{ route(
-                            'hrd.departemen.show',
-                            $departemen
-                        ) }}"
-                        class="btn"
+                    <div
                         style="
-                            background:#111827;
-                            color:white;
+                            display:flex;
+                            align-items:center;
+                            gap:8px;
+                            flex-wrap:wrap;
                         "
                     >
-                        Detail
-                    </a>
 
-                    <a
-                        href="{{ route(
-                            'hrd.departemen.edit',
-                            $departemen
-                        ) }}"
-                        class="btn"
-                        style="
-                            background:#f59e0b;
-                            color:white;
-                        "
-                    >
-                        Edit
-                    </a>
+                        <a
+                            href="{{ route(
+                                'hrd.departemen.show',
+                                $departemen
+                            ) }}"
+                            class="btn"
+                            style="
+                                background:#111827;
+                                color:white;
+                            "
+                        >
+                            Detail
+                        </a>
+
+                        <a
+                            href="{{ route(
+                                'hrd.departemen.edit',
+                                $departemen
+                            ) }}"
+                            class="btn"
+                            style="
+                                background:#f59e0b;
+                                color:white;
+                            "
+                        >
+                            Edit
+                        </a>
+
+                        <form
+                            method="POST"
+                            action="{{ route(
+                                'hrd.departemen.destroy',
+                                $departemen
+                            ) }}"
+                            onsubmit="return confirm('Yakin ingin menghapus departemen ini?')"
+                        >
+                            @csrf
+                            @method('DELETE')
+
+                            <button
+                                type="submit"
+                                class="btn"
+                                style="
+                                    background:#dc2626;
+                                    color:white;
+                                "
+                            >
+                                Hapus
+                            </button>
+                        </form>
+                    </div>
 
                 </td>
 

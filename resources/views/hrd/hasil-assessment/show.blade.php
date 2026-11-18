@@ -134,11 +134,11 @@
                 <div>
 
                     <p class="text-sm text-gray-500">
-                        Skill
+                        File Bank Soal
                     </p>
 
                     <p class="font-semibold text-gray-800 mt-1">
-                        {{ $hasilAssessment->assessmentPeserta->assessment->skill?->nama_skill ?? 'Umum' }}
+                        {{ $hasilAssessment->assessmentPeserta->assessment->soalUpload?->nama_file_tampilan ?? '-' }}
                     </p>
 
                 </div>

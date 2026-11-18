@@ -1,466 +1,118 @@
-<!DOCTYPE html>
-<html lang="id">
-
-<head>
-    <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>Tambah Soal - HRD</title>
-
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
-
-<body class="bg-gray-100 min-h-screen">
 @extends('layouts.hrd')
 @section('title', 'Tambah Soal')
 @section('page_title', 'Tambah Soal')
 @section('content')
-    <main class="max-w-4xl mx-auto px-6 py-10">
 
-        <div class="mb-6">
+<div class="card" style="max-width:800px;">
 
-            <h1 class="text-2xl font-bold text-gray-800">
-                Tambah Soal
-            </h1>
+    <h1 style="margin:0 0 20px;">Tambah Soal Manual</h1>
 
-            <p class="text-gray-500 mt-1">
-                Tambahkan soal baru ke dalam bank soal.
-            </p>
+    @if($errors->any())
+        <div style="background:#fee2e2;color:#991b1b;padding:12px 15px;border-radius:6px;margin-bottom:20px;">
+            <ul style="margin:0;padding-left:18px;">
+                @foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach
+            </ul>
+        </div>
+    @endif
 
+    <form method="POST" action="{{ route('hrd.soal.store') }}">
+        @csrf
+
+        <div style="margin-bottom:18px;">
+            <label style="display:block;font-weight:600;margin-bottom:6px;">Jabatan</label>
+            <select name="jabatan_id" required style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:6px;">
+                <option value="">-- Pilih Jabatan --</option>
+                @foreach($jabatans as $j)
+                    <option value="{{ $j->id }}" {{ old('jabatan_id') == $j->id ? 'selected' : '' }}>
+                        {{ $j->nama_jabatan }}{{ $j->tipe_jabatan === 'struktural' ? ' (Jabatan Struktural)' : ' (Level '.$j->level_jabatan.')' }}
+                    </option>
+                @endforeach
+            </select>
         </div>
 
+        <div style="margin-bottom:18px;">
+            <label style="display:block;font-weight:600;margin-bottom:6px;">Nama Prosedur</label>
+            <input type="text" name="nama_prosedur" value="{{ old('nama_prosedur') }}"
+                   placeholder="Contoh: Prosedur Pengoperasian Excavator"
+                   style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:6px;">
+        </div>
 
-        @if ($errors->any())
-
-            <div class="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-6">
-
-                <ul class="list-disc pl-5 space-y-1">
-
-                    @foreach ($errors->all() as $error)
-
-                        <li>{{ $error }}</li>
-
-                    @endforeach
-
-                </ul>
-
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:18px;">
+            <div>
+                <label style="display:block;font-weight:600;margin-bottom:6px;">Tipe Soal</label>
+                <select name="tipe_soal" id="tipe_soal" required onchange="buatPilihan()"
+                        style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:6px;">
+                    <option value="">-- Pilih Tipe --</option>
+                    <option value="pilihan_ganda" {{ old('tipe_soal') === 'pilihan_ganda' ? 'selected' : '' }}>Pilihan Ganda</option>
+                    <option value="multi_jawaban" {{ old('tipe_soal') === 'multi_jawaban' ? 'selected' : '' }}>Multi Jawaban</option>
+                    <option value="benar_salah" {{ old('tipe_soal') === 'benar_salah' ? 'selected' : '' }}>Benar / Salah</option>
+                </select>
             </div>
-
-        @endif
-
-
-        <form
-            method="POST"
-            action="{{ route('hrd.soal.store') }}"
-            id="soalForm"
-        >
-
-            @csrf
-
-
-            <!-- Informasi Soal -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-
-                <h2 class="text-lg font-semibold text-gray-800 mb-5">
-                    Informasi Soal
-                </h2>
-
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-
-                    <!-- Jabatan -->
-                    <div>
-
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Jabatan
-                        </label>
-
-                        <select
-                            name="jabatan_id"
-                            required
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2"
-                        >
-
-                            <option value="">
-                                Pilih Jabatan
-                            </option>
-
-                            @foreach ($jabatans as $jabatan)
-
-                                <option
-                                    value="{{ $jabatan->id }}"
-                                    @selected(old('jabatan_id') == $jabatan->id)
-                                >
-                                    {{ $jabatan->nama_jabatan }}
-                                </option>
-
-                            @endforeach
-
-                        </select>
-
-                    </div>
-
-
-                    <!-- Skill -->
-                    <div>
-
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Skill
-                        </label>
-
-                        <select
-                            name="skill_id"
-                            required
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2"
-                        >
-
-                            <option value="">
-                                Pilih Skill
-                            </option>
-
-                            @foreach ($skills as $skill)
-
-                                <option
-                                    value="{{ $skill->id }}"
-                                    @selected(old('skill_id') == $skill->id)
-                                >
-                                    {{ $skill->nama_skill }}
-                                </option>
-
-                            @endforeach
-
-                        </select>
-
-                    </div>
-
-
-                    <!-- Tipe -->
-                    <div>
-
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Tipe Soal
-                        </label>
-
-                        <select
-                            name="tipe_soal"
-                            id="tipe_soal"
-                            required
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2"
-                        >
-
-                            <option value="">
-                                Pilih Tipe Soal
-                            </option>
-
-                            <option
-                                value="pilihan_tunggal"
-                                @selected(old('tipe_soal') === 'pilihan_tunggal')
-                            >
-                                Pilihan Tunggal ABCD
-                            </option>
-
-                            <option
-                                value="multi_jawaban"
-                                @selected(old('tipe_soal') === 'multi_jawaban')
-                            >
-                                Multi Jawaban ABCD
-                            </option>
-
-                            <option
-                                value="benar_salah"
-                                @selected(old('tipe_soal') === 'benar_salah')
-                            >
-                                Benar / Salah
-                            </option>
-
-                        </select>
-
-                    </div>
-
-
-                    <!-- Kesulitan -->
-                    <div>
-
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Tingkat Kesulitan
-                        </label>
-
-                        <select
-                            name="tingkat_kesulitan"
-                            required
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2"
-                        >
-
-                            <option value="">
-                                Pilih Tingkat
-                            </option>
-
-                            <option value="mudah">
-                                Mudah
-                            </option>
-
-                            <option value="sedang">
-                                Sedang
-                            </option>
-
-                            <option value="sulit">
-                                Sulit
-                            </option>
-
-                        </select>
-
-                    </div>
-
-                </div>
-
-
-                <!-- Pertanyaan -->
-                <div class="mt-5">
-
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Pertanyaan
-                    </label>
-
-                    <textarea
-                        name="pertanyaan"
-                        rows="4"
-                        required
-                        class="w-full border border-gray-300 rounded-lg px-3 py-3"
-                        placeholder="Masukkan pertanyaan..."
-                    >{{ old('pertanyaan') }}</textarea>
-
-                </div>
-
-
-                <!-- Bobot -->
-                <div class="mt-5 max-w-xs">
-
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Bobot Soal
-                    </label>
-
-                    <input
-                        type="number"
-                        name="bobot"
-                        value="{{ old('bobot', 5) }}"
-                        min="0.01"
-                        step="0.01"
-                        required
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2"
-                    >
-
-                </div>
-
+            <div>
+                <label style="display:block;font-weight:600;margin-bottom:6px;">Nilai Point</label>
+                <input type="number" name="nilai_point" value="{{ old('nilai_point') }}" step="0.01" min="0"
+                       placeholder="Contoh: 1"
+                       style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:6px;">
             </div>
+        </div>
+
+        <div style="margin-bottom:18px;">
+            <label style="display:block;font-weight:600;margin-bottom:6px;">Pertanyaan</label>
+            <textarea name="pertanyaan" rows="3" required
+                      style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:6px;">{{ old('pertanyaan') }}</textarea>
+        </div>
+
+        <div id="pilihanContainer" style="margin-bottom:18px;"></div>
+
+        <div style="display:flex;gap:10px;">
+            <button type="submit" class="btn" style="background:#2563eb;color:white;">Simpan Soal</button>
+            <a href="{{ route('hrd.soal.index') }}" class="btn" style="background:#6b7280;color:white;">Batal</a>
+        </div>
+
+    </form>
+</div>
+
+<script>
+function buatPilihan() {
+    const tipe = document.getElementById('tipe_soal').value;
+    const container = document.getElementById('pilihanContainer');
+    container.innerHTML = '';
+    if (!tipe) return;
+
+    if (tipe === 'benar_salah') {
+        container.innerHTML = `
+            <label style="display:block;font-weight:600;margin-bottom:8px;">Jawaban Benar</label>
+            <div style="display:flex;gap:15px;">
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                    <input type="radio" name="jawaban_benar[]" value="1" required>
+                    <input type="hidden" name="pilihan[0][teks_jawaban]" value="Benar">
+                    <input type="hidden" name="pilihan[1][teks_jawaban]" value="Salah">
+                    Benar
+                </label>
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                    <input type="radio" name="jawaban_benar[]" value="2">
+                    Salah
+                </label>
+            </div>`;
+        return;
+    }
+
+    const inputType = tipe === 'pilihan_ganda' ? 'radio' : 'checkbox';
+    const kodes = ['A','B','C','D','E'];
+    let html = `<label style="display:block;font-weight:600;margin-bottom:8px;">Pilihan Jawaban</label>`;
+    kodes.forEach((k, i) => {
+        html += `
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+            <input type="${inputType}" name="jawaban_benar[]" value="${i+1}" style="flex-shrink:0;">
+            <span style="font-weight:700;width:20px;">${k}.</span>
+            <input type="text" name="pilihan[${i}][teks_jawaban]" ${i < 2 ? 'required' : ''}
+                   placeholder="Pilihan ${k}${i >= 2 ? ' (opsional)' : ''}"
+                   style="flex:1;padding:9px;border:1px solid #d1d5db;border-radius:6px;">
+        </div>`;
+    });
+    container.innerHTML = html;
+}
+buatPilihan();
+</script>
 
-
-            <!-- Pilihan Jawaban -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mt-6">
-
-                <div class="mb-5">
-
-                    <h2 class="text-lg font-semibold text-gray-800">
-                        Pilihan Jawaban
-                    </h2>
-
-                    <p
-                        id="petunjukJawaban"
-                        class="text-sm text-gray-500 mt-1"
-                    >
-                        Pilih tipe soal terlebih dahulu.
-                    </p>
-
-                </div>
-
-
-                <div id="pilihanContainer">
-
-                    <!-- Akan dibuat oleh JavaScript -->
-
-                </div>
-
-            </div>
-
-
-            <!-- Tombol -->
-            <div class="flex items-center justify-between mt-6">
-
-                <a
-                    href="{{ route('hrd.soal.index') }}"
-                    class="px-5 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium"
-                >
-                    Batal
-                </a>
-
-                <button
-                    type="submit"
-                    class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold"
-                >
-                    Simpan Soal
-                </button>
-
-            </div>
-
-        </form>
-
-    </main>
-
-
-    <script>
-
-        const tipeSelect = document.getElementById('tipe_soal');
-
-        const container = document.getElementById('pilihanContainer');
-
-        const petunjuk = document.getElementById('petunjukJawaban');
-
-
-        function buatPilihan() {
-
-            const tipe = tipeSelect.value;
-
-            container.innerHTML = '';
-
-
-            if (!tipe) {
-
-                petunjuk.textContent =
-                    'Pilih tipe soal terlebih dahulu.';
-
-                return;
-            }
-
-
-            if (tipe === 'benar_salah') {
-
-                petunjuk.textContent =
-                    'Pilih satu jawaban yang benar.';
-
-                const pilihan = [
-                    ['A', 'Benar'],
-                    ['B', 'Salah']
-                ];
-
-                pilihan.forEach(function (item, index) {
-
-                    container.innerHTML += `
-                        <div class="border border-gray-200 rounded-lg p-4 mb-3">
-
-                            <div class="flex items-center gap-4">
-
-                                <input
-                                    type="radio"
-                                    name="jawaban_benar[]"
-                                    value="${index + 1}"
-                                    class="w-4 h-4"
-                                >
-
-                                <input
-                                    type="hidden"
-                                    name="pilihan[${index}][kode]"
-                                    value="${item[0]}"
-                                >
-
-                                <input
-                                    type="hidden"
-                                    name="pilihan[${index}][teks_jawaban]"
-                                    value="${item[1]}"
-                                >
-
-                                <span class="font-bold text-gray-800">
-                                    ${item[0]}
-                                </span>
-
-                                <span class="text-gray-700">
-                                    ${item[1]}
-                                </span>
-
-                            </div>
-
-                        </div>
-                    `;
-
-                });
-
-                return;
-            }
-
-
-            petunjuk.textContent =
-                tipe === 'pilihan_tunggal'
-                    ? 'Pilih tepat satu jawaban yang benar.'
-                    : 'Pilih semua jawaban yang benar.';
-
-
-            const kode = ['A', 'B', 'C', 'D'];
-
-
-            kode.forEach(function (huruf, index) {
-
-                const inputType =
-                    tipe === 'pilihan_tunggal'
-                        ? 'radio'
-                        : 'checkbox';
-
-
-                container.innerHTML += `
-                    <div class="border border-gray-200 rounded-lg p-4 mb-3">
-
-                        <div class="flex items-start gap-4">
-
-                            <input
-                                type="${inputType}"
-                                name="jawaban_benar[]"
-                                value="${index + 1}"
-                                class="mt-1 w-4 h-4"
-                            >
-
-                            <div class="flex-1">
-
-                                <input
-                                    type="hidden"
-                                    name="pilihan[${index}][kode]"
-                                    value="${huruf}"
-                                >
-
-                                <label class="block text-sm font-medium text-gray-700 mb-2">
-                                    Pilihan ${huruf}
-                                </label>
-
-                                <input
-                                    type="text"
-                                    name="pilihan[${index}][teks_jawaban]"
-                                    required
-                                    class="w-full border border-gray-300 rounded-lg px-3 py-2"
-                                    placeholder="Masukkan jawaban ${huruf}..."
-                                >
-
-                            </div>
-
-                        </div>
-
-                    </div>
-                `;
-
-            });
-
-        }
-
-
-        tipeSelect.addEventListener(
-            'change',
-            buatPilihan
-        );
-
-
-        // Membuat pilihan ketika halaman dibuka
-        buatPilihan();
-
-    </script>
 @endsection
-</body>
-</html>

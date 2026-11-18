@@ -13,6 +13,7 @@ class Karyawan extends Model
         'user_id',
         'nik',
         'nama',
+        'pt',
         'departemen_id',
         'jabatan_id',
         'level',
@@ -55,7 +56,7 @@ class Karyawan extends Model
             'karyawan_id',
             'skill_id'
         )->withPivot('level_skill', 'tanggal_penilaian')
-         ->withTimestamps();
+            ->withTimestamps();
     }
 
     public function pengajuanPengembangans()

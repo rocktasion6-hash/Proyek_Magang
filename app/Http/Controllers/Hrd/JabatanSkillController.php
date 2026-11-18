@@ -14,6 +14,14 @@ class JabatanSkillController extends Controller
         Request $request,
         Jabatan $jabatan
     ) {
+        // Jabatan Crew tidak memiliki skill.
+        if (mb_strtolower(trim($jabatan->nama_jabatan)) === 'crew') {
+            return back()->with(
+                'error',
+                'Jabatan Crew tidak dapat dikaitkan dengan skill.'
+            );
+        }
+
         $validated = $request->validate([
             'skill_id' => [
                 'required',
@@ -41,8 +49,7 @@ class JabatanSkillController extends Controller
         if ($sudahAda) {
             return back()
                 ->withErrors([
-                    'skill_id' =>
-                        'Skill tersebut sudah dikaitkan dengan jabatan ini.',
+                    'skill_id' => 'Skill tersebut sudah dikaitkan dengan jabatan ini.',
                 ])
                 ->withInput();
         }

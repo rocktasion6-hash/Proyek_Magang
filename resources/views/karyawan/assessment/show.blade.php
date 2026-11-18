@@ -47,11 +47,11 @@
 
                 <div>
                     <p class="text-sm text-gray-500">
-                        Skill
+                        File Bank Soal
                     </p>
 
                     <p class="font-semibold text-gray-800 mt-1">
-                        {{ $peserta->assessment->skill?->nama_skill ?? 'Umum' }}
+                        {{ $peserta->assessment->soalUpload?->nama_file_tampilan ?? '-' }}
                     </p>
                 </div>
 
@@ -115,19 +115,25 @@
 
                 @if ($peserta->status === 'ditugaskan')
 
-                    <form
-                        method="POST"
-                        action="{{ route('karyawan.assessment.start', $peserta) }}"
-                    >
-                        @csrf
-
-                        <button
-                            type="submit"
-                            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg"
+                    @if ($peserta->assessment->status === 'aktif')
+                        <form
+                            method="POST"
+                            action="{{ route('karyawan.assessment.start', $peserta) }}"
                         >
-                            Mulai Ujian
-                        </button>
-                    </form>
+                            @csrf
+
+                            <button
+                                type="submit"
+                                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg"
+                            >
+                                Mulai Ujian
+                            </button>
+                        </form>
+                    @else
+                        <p class="rounded-lg bg-gray-100 px-4 py-3 text-center font-medium text-gray-600">
+                            Assessment sedang tidak aktif.
+                        </p>
+                    @endif
 
                 @elseif ($peserta->status === 'sedang_mengerjakan')
 

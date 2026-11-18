@@ -8,7 +8,6 @@ use App\Models\HasilAssessment;
 use App\Models\Jabatan;
 use App\Models\Karyawan;
 use App\Models\PengajuanPengembangan;
-use App\Models\Skill;
 
 class HrdDashboardController extends Controller
 {
@@ -18,7 +17,10 @@ class HrdDashboardController extends Controller
 
         $totalJabatan = Jabatan::count();
 
-        $totalSkill = Skill::count();
+        $totalSkill = Jabatan::where('tipe_jabatan', 'operasional')
+            ->whereRaw('LOWER(TRIM(nama_jabatan)) != ?', ['crew'])
+            ->whereBetween('level_jabatan', [2, 5])
+            ->count();
 
         $assessmentAktif = Assessment::where('status', 'aktif')->count();
 
@@ -35,7 +37,7 @@ class HrdDashboardController extends Controller
 
         $assessmentTerbaru = Assessment::with([
             'jabatan',
-            'skill'
+            'soalUpload',
         ])
             ->latest()
             ->take(5)

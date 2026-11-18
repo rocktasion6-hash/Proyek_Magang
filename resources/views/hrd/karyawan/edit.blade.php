@@ -232,6 +232,23 @@
 
             </div>
 
+            <div class="form-group">
+
+                <label for="pt">
+                    PT/Perusahaan
+                </label>
+
+                <input
+                    type="text"
+                    id="pt"
+                    name="pt"
+                    value="{{ old('pt', $karyawan->pt) }}"
+                    maxlength="255"
+                    placeholder="Contoh: OSMI atau GCNS"
+                >
+
+            </div>
+
 
             {{-- ================================================= --}}
             {{-- AKUN --}}

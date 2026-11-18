@@ -13,8 +13,8 @@ use App\Models\RiwayatSkill;
 use App\Models\Skill;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use LogicException;
 
 class WarehouseEtl extends Command
 {
@@ -25,656 +25,645 @@ class WarehouseEtl extends Command
 
     public function handle(): int
     {
-        $this->info(
-            'Memulai proses ETL Data Warehouse...'
-        );
-
         $dw = DB::connection('warehouse');
 
-        /*
-        |--------------------------------------------------------------------------
-        | Hapus data fact terlebih dahulu
-        |--------------------------------------------------------------------------
-        */
+        $result = $dw->transaction(function () use ($dw): int {
+            $this->info(
+                'Memulai proses ETL Data Warehouse...'
+            );
 
-        $dw->statement('SET FOREIGN_KEY_CHECKS=0');
+            /*
+            |--------------------------------------------------------------------------
+            | Hapus data fact terlebih dahulu
+            |--------------------------------------------------------------------------
+            */
 
-        try {
-        // Kosongkan fact table terlebih dahulu
-            $dw->table('fact_riwayat_skill')->truncate();
-            $dw->table('fact_riwayat_jabatan')->truncate();
-            $dw->table('fact_pengembangan')->truncate();
-            $dw->table('fact_assessment')->truncate();
+            $dw->table('fact_riwayat_skill')->delete();
+            $dw->table('fact_riwayat_jabatan')->delete();
+            $dw->table('fact_pengembangan')->delete();
+            $dw->table('fact_assessment')->delete();
 
-        // Setelah fact kosong, kosongkan dimension table
-            $dw->table('dim_karyawan')->truncate();
-            $dw->table('dim_skill')->truncate();
-            $dw->table('dim_jabatan')->truncate();
-            $dw->table('dim_departemen')->truncate();
-            $dw->table('dim_waktu')->truncate();
-        } finally {
-        // Wajib diaktifkan kembali
-            $dw->statement('SET FOREIGN_KEY_CHECKS=1');
-        }
-       
+            // Hapus dimensi setelah semua fact yang merujuknya.
+            $dw->table('bridge_jabatan_skill')->delete();
+            $dw->table('dim_karyawan')->delete();
+            $dw->table('dim_skill')->delete();
+            $dw->table('dim_jabatan')->delete();
+            $dw->table('dim_departemen')->delete();
+            $dw->table('dim_waktu')->delete();
 
-        /*
-        |--------------------------------------------------------------------------
-        | DIM DEPARTEMEN
-        |--------------------------------------------------------------------------
-        */
+            /*
+            |--------------------------------------------------------------------------
+            | DIM DEPARTEMEN
+            |--------------------------------------------------------------------------
+            */
 
-        $departemenMap = [];
+            $departemenMap = [];
 
-        foreach (Departemen::orderBy('id')->get() as $departemen) {
+            foreach (Departemen::orderBy('id')->get() as $departemen) {
 
-            $id = $dw->table(
-                'dim_departemen'
-            )->insertGetId([
-                'departemen_asal_id' =>
-                    $departemen->id,
-                'nama_departemen' =>
-                    $departemen->nama_departemen,
-                'deskripsi' =>
-                    $departemen->deskripsi,
-            ]);
+                $id = $dw->table(
+                    'dim_departemen'
+                )->insertGetId([
+                    'departemen_asal_id' => $departemen->id,
+                    'nama_departemen' => $departemen->nama_departemen,
+                    'deskripsi' => $departemen->deskripsi,
+                ]);
 
-            $departemenMap[$departemen->id] = $id;
-        }
+                $departemenMap[$departemen->id] = $id;
+            }
 
-        $this->info(
-            'Dim Departemen selesai.'
-        );
+            $this->info(
+                'Dim Departemen selesai.'
+            );
 
-        /*
-        |--------------------------------------------------------------------------
-        | DIM JABATAN
-        |--------------------------------------------------------------------------
-        */
+            /*
+            |--------------------------------------------------------------------------
+            | DIM JABATAN
+            |--------------------------------------------------------------------------
+            */
 
-        $jabatanMap = [];
+            $jabatanMap = [];
 
-        foreach (Jabatan::orderBy('id')->get() as $jabatan) {
+            foreach (Jabatan::orderBy('id')->get() as $jabatan) {
 
-            $id = $dw->table(
-                'dim_jabatan'
-            )->insertGetId([
-                'jabatan_asal_id' =>
-                    $jabatan->id,
-                'nama_jabatan' =>
-                    $jabatan->nama_jabatan,
-                'level_jabatan' =>
-                    $jabatan->level_jabatan,
-                'standar_nilai' =>
-                    $jabatan->standar_nilai,
-                'deskripsi' =>
-                    $jabatan->deskripsi,
-            ]);
+                $id = $dw->table(
+                    'dim_jabatan'
+                )->insertGetId([
+                    'jabatan_asal_id' => $jabatan->id,
+                    'nama_jabatan' => $jabatan->nama_jabatan,
+                    'level_jabatan' => $jabatan->level_jabatan,
+                    'tipe_jabatan' => $jabatan->tipe_jabatan,
+                    'urutan_struktural' => $jabatan->urutan_struktural,
+                    'standar_nilai' => $jabatan->standar_nilai,
+                    'deskripsi' => $jabatan->deskripsi,
+                ]);
 
-            $jabatanMap[$jabatan->id] = $id;
-        }
+                $jabatanMap[$jabatan->id] = $id;
+            }
 
-        $this->info(
-            'Dim Jabatan selesai.'
-        );
+            $this->info(
+                'Dim Jabatan selesai.'
+            );
 
-        /*
-        |--------------------------------------------------------------------------
-        | DIM SKILL
-        |--------------------------------------------------------------------------
-        */
+            /*
+            |--------------------------------------------------------------------------
+            | DIM SKILL
+            |--------------------------------------------------------------------------
+            */
 
-        $skillMap = [];
+            $skillMap = [];
 
-        foreach (Skill::orderBy('id')->get() as $skill) {
+            foreach (Skill::orderBy('id')->get() as $skill) {
 
-            $id = $dw->table(
-                'dim_skill'
-            )->insertGetId([
-                'skill_asal_id' =>
-                    $skill->id,
-                'nama_skill' =>
-                    $skill->nama_skill,
-                'deskripsi' =>
-                    $skill->deskripsi,
-            ]);
+                $id = $dw->table(
+                    'dim_skill'
+                )->insertGetId([
+                    'skill_asal_id' => $skill->id,
+                    'nama_skill' => $skill->nama_skill,
+                    'deskripsi' => $skill->deskripsi,
+                ]);
 
-            $skillMap[$skill->id] = $id;
-        }
+                $skillMap[$skill->id] = $id;
+            }
 
-        $this->info(
-            'Dim Skill selesai.'
-        );
+            $this->info(
+                'Dim Skill selesai.'
+            );
 
-        /*
-        |--------------------------------------------------------------------------
-        | DIM KARYAWAN
-        |--------------------------------------------------------------------------
-        */
+            /*
+            |--------------------------------------------------------------------------
+            | BRIDGE JABATAN SKILL
+            |--------------------------------------------------------------------------
+            */
 
-        $karyawanMap = [];
+            $jabatanSkills = DB::table('jabatan_skill')
+                ->orderBy('id')
+                ->get();
+            $loadedJabatanSkillCount = 0;
 
-        foreach (
-            Karyawan::with([
-                'departemen',
-                'jabatan',
-            ])->orderBy('id')->get()
-            as $karyawan
-        ) {
-
-            $id = $dw->table(
-                'dim_karyawan'
-            )->insertGetId([
-                'karyawan_asal_id' =>
-                    $karyawan->id,
-
-                'nik' =>
-                    $karyawan->nik,
-
-                'nama' =>
-                    $karyawan->nama,
-
-                'departemen_id' =>
-                    $departemenMap[
-                        $karyawan->departemen_id
-                    ],
-
-                'jabatan_id' =>
-                    $jabatanMap[
-                        $karyawan->jabatan_id
-                    ],
-
-                'tanggal_masuk' =>
-                    $karyawan->tanggal_masuk,
-
-                'status' =>
-                    $karyawan->status,
-            ]);
-
-            $karyawanMap[$karyawan->id] = $id;
-        }
-
-        $this->info(
-            'Dim Karyawan selesai.'
-        );
-
-        /*
-        |--------------------------------------------------------------------------
-        | Kumpulkan tanggal untuk DIM WAKTU
-        |--------------------------------------------------------------------------
-        */
-
-        $tanggalCollection = collect();
-
-        HasilAssessment::query()
-            ->pluck('tanggal_ujian')
-            ->each(function ($tanggal) use (
-                $tanggalCollection
-            ) {
-                if ($tanggal) {
-                    $tanggalCollection->push(
-                        Carbon::parse($tanggal)
-                            ->toDateString()
+            foreach ($jabatanSkills as $jabatanSkill) {
+                if (
+                    ! isset($jabatanMap[$jabatanSkill->jabatan_id]) ||
+                    ! isset($skillMap[$jabatanSkill->skill_id])
+                ) {
+                    throw new LogicException(
+                        "Pemetaan skill jabatan {$jabatanSkill->id} merujuk dimensi yang tidak tersedia."
                     );
                 }
-            });
 
-        PengajuanPengembangan::query()
-            ->pluck('tanggal_pengajuan')
-            ->each(function ($tanggal) use (
-                $tanggalCollection
+                $dw->table('bridge_jabatan_skill')->insert([
+                    'jabatan_id' => $jabatanMap[$jabatanSkill->jabatan_id],
+                    'skill_id' => $skillMap[$jabatanSkill->skill_id],
+                    'level_dibutuhkan' => $jabatanSkill->level_dibutuhkan,
+                ]);
+
+                $loadedJabatanSkillCount++;
+            }
+
+            $this->info(
+                'Bridge Jabatan Skill selesai: '.$loadedJabatanSkillCount
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | DIM KARYAWAN
+            |--------------------------------------------------------------------------
+            */
+
+            $karyawanMap = [];
+
+            foreach (
+                Karyawan::with([
+                    'departemen',
+                    'jabatan',
+                ])->orderBy('id')->get() as $karyawan
             ) {
-                if ($tanggal) {
-                    $tanggalCollection->push(
-                        Carbon::parse($tanggal)
-                            ->toDateString()
-                    );
-                }
-            });
 
-        RiwayatJabatan::query()
-            ->pluck('tanggal_mulai')
-            ->each(function ($tanggal) use (
-                $tanggalCollection
-            ) {
-                if ($tanggal) {
-                    $tanggalCollection->push(
-                        Carbon::parse($tanggal)
-                            ->toDateString()
-                    );
-                }
-            });
+                $id = $dw->table(
+                    'dim_karyawan'
+                )->insertGetId([
+                    'karyawan_asal_id' => $karyawan->id,
 
-        RiwayatSkill::query()
-            ->pluck('tanggal_perubahan')
-            ->each(function ($tanggal) use (
-                $tanggalCollection
-            ) {
-                if ($tanggal) {
-                    $tanggalCollection->push(
-                        Carbon::parse($tanggal)
-                            ->toDateString()
-                    );
-                }
-            });
+                    'nik' => $karyawan->nik,
 
-        Karyawan::query()
-            ->pluck('tanggal_masuk')
-            ->each(function ($tanggal) use (
-                $tanggalCollection
-            ) {
-                if ($tanggal) {
-                    $tanggalCollection->push(
-                        Carbon::parse($tanggal)
-                            ->toDateString()
-                    );
-                }
-            });
+                    'nama' => $karyawan->nama,
 
-        $tanggalCollection = $tanggalCollection
-            ->filter()
-            ->unique()
-            ->sort()
-            ->values();
+                    'departemen_id' => $departemenMap[
+                            $karyawan->departemen_id
+                        ],
 
-        $waktuMap = [];
+                    'jabatan_id' => $jabatanMap[
+                            $karyawan->jabatan_id
+                        ],
 
-        foreach ($tanggalCollection as $tanggal) {
+                    'tanggal_masuk' => $karyawan->tanggal_masuk,
 
-            $date = Carbon::parse($tanggal);
+                    'status' => $karyawan->status,
+                ]);
 
-            $id = $dw->table(
-                'dim_waktu'
-            )->insertGetId([
-                'tanggal' =>
-                    $date->toDateString(),
+                $karyawanMap[$karyawan->id] = $id;
+            }
 
-                'tahun' =>
-                    $date->year,
+            $this->info(
+                'Dim Karyawan selesai.'
+            );
 
-                'bulan' =>
-                    $date->month,
+            /*
+            |--------------------------------------------------------------------------
+            | Kumpulkan tanggal untuk DIM WAKTU
+            |--------------------------------------------------------------------------
+            */
 
-                'nama_bulan' =>
-                    $this->namaBulan(
+            $tanggalCollection = collect();
+
+            HasilAssessment::query()
+                ->pluck('tanggal_ujian')
+                ->each(function ($tanggal) use (
+                    $tanggalCollection
+                ) {
+                    if ($tanggal) {
+                        $tanggalCollection->push(
+                            Carbon::parse($tanggal)
+                                ->toDateString()
+                        );
+                    }
+                });
+
+            PengajuanPengembangan::query()
+                ->get(['tanggal_pengajuan', 'tanggal_keputusan'])
+                ->each(function ($pengajuan) use (
+                    $tanggalCollection
+                ) {
+                    foreach ([
+                        $pengajuan->tanggal_pengajuan,
+                        $pengajuan->tanggal_keputusan,
+                    ] as $tanggal) {
+                        if ($tanggal) {
+                            $tanggalCollection->push(
+                                Carbon::parse($tanggal)->toDateString()
+                            );
+                        }
+                    }
+                });
+
+            RiwayatJabatan::query()
+                ->pluck('tanggal_mulai')
+                ->each(function ($tanggal) use (
+                    $tanggalCollection
+                ) {
+                    if ($tanggal) {
+                        $tanggalCollection->push(
+                            Carbon::parse($tanggal)
+                                ->toDateString()
+                        );
+                    }
+                });
+
+            RiwayatSkill::query()
+                ->pluck('tanggal_perubahan')
+                ->each(function ($tanggal) use (
+                    $tanggalCollection
+                ) {
+                    if ($tanggal) {
+                        $tanggalCollection->push(
+                            Carbon::parse($tanggal)
+                                ->toDateString()
+                        );
+                    }
+                });
+
+            Karyawan::query()
+                ->pluck('tanggal_masuk')
+                ->each(function ($tanggal) use (
+                    $tanggalCollection
+                ) {
+                    if ($tanggal) {
+                        $tanggalCollection->push(
+                            Carbon::parse($tanggal)
+                                ->toDateString()
+                        );
+                    }
+                });
+
+            $tanggalCollection = $tanggalCollection
+                ->filter()
+                ->unique()
+                ->sort()
+                ->values();
+
+            $waktuMap = [];
+
+            foreach ($tanggalCollection as $tanggal) {
+
+                $date = Carbon::parse($tanggal);
+
+                $id = $dw->table(
+                    'dim_waktu'
+                )->insertGetId([
+                    'tanggal' => $date->toDateString(),
+
+                    'tahun' => $date->year,
+
+                    'bulan' => $date->month,
+
+                    'nama_bulan' => $this->namaBulan(
                         $date->month
                     ),
 
-                'kuartal' =>
-                    $date->quarter,
+                    'kuartal' => $date->quarter,
 
-                'hari' =>
-                    $date->day,
-            ]);
+                    'hari' => $date->day,
+                ]);
 
-            $waktuMap[
-                $date->toDateString()
-            ] = $id;
-        }
-
-        $this->info(
-            'Dim Waktu selesai.'
-        );
-
-        /*
-        |--------------------------------------------------------------------------
-        | FACT ASSESSMENT
-        |--------------------------------------------------------------------------
-        */
-
-        $hasilAssessments = HasilAssessment::with([
-            'assessmentPeserta.karyawan',
-            'assessmentPeserta.assessment.jabatan',
-            'assessmentPeserta.assessment.skill',
-        ])->get();
-
-        $factAssessmentMap = [];
-
-        foreach (
-            $hasilAssessments as $hasil
-        ) {
-
-            $peserta =
-                $hasil->assessmentPeserta;
-
-            if (!$peserta) {
-                continue;
+                $waktuMap[
+                    $date->toDateString()
+                ] = $id;
             }
 
-            $karyawan =
-                $peserta->karyawan;
+            $this->info(
+                'Dim Waktu selesai.'
+            );
 
-            $assessment =
-                $peserta->assessment;
+            /*
+            |--------------------------------------------------------------------------
+            | FACT ASSESSMENT
+            |--------------------------------------------------------------------------
+            */
 
-            if (!$karyawan || !$assessment) {
-                continue;
-            }
-
-            $tanggal = Carbon::parse(
-                $hasil->tanggal_ujian
-            )->toDateString();
-
-            $factId = $dw->table(
-                'fact_assessment'
-            )->insertGetId([
-                'waktu_id' =>
-                    $waktuMap[$tanggal],
-
-                'karyawan_id' =>
-                    $karyawanMap[$karyawan->id],
-
-                'jabatan_id' =>
-                    $jabatanMap[
-                        $assessment->jabatan_id
-                    ] ?? null,
-
-                'skill_id' =>
-                    $assessment->skill_id
-                        ? (
-                            $skillMap[
-                                $assessment->skill_id
-                            ] ?? null
-                        )
-                        : null,
-
-                'assessment_asal_id' =>
-                    $assessment->id,
-
-                'hasil_assessment_asal_id' =>
-                    $hasil->id,
-
-                'nilai_akhir' =>
-                    $hasil->nilai_akhir,
-
-                'standar_nilai' =>
-                    $hasil->standar_nilai,
-
-                'status' =>
-                    $hasil->status,
-
-                'jumlah_peserta' =>
-                    1,
-            ]);
-
-            $factAssessmentMap[
-                $hasil->id
-            ] = $factId;
-        }
-
-        $this->info(
-            'Fact Assessment selesai: ' .
-            $hasilAssessments->count()
-        );
-
-        /*
-        |--------------------------------------------------------------------------
-        | FACT PENGEMBANGAN
-        |--------------------------------------------------------------------------
-        */
-
-        $pengembangans =
-            PengajuanPengembangan::with([
-                'karyawan',
-                'skill',
-                'jabatanAsal',
-                'jabatanTujuan',
+            $hasilAssessments = HasilAssessment::with([
+                'assessmentPeserta.karyawan',
+                'assessmentPeserta.assessment.jabatan',
             ])->get();
 
-        foreach (
-            $pengembangans as $pengembangan
-        ) {
+            $factAssessmentMap = [];
+            $factAssessmentCount = 0;
+            $skippedAssessmentCount = 0;
 
-            if (!$pengembangan->karyawan) {
-                continue;
-            }
-
-            $tanggal = Carbon::parse(
-                $pengembangan->tanggal_pengajuan
-            )->toDateString();
-
-            $dw->table(
-                'fact_pengembangan'
-            )->insert([
-                'waktu_id' =>
-                    $waktuMap[$tanggal],
-
-                'karyawan_id' =>
-                    $karyawanMap[
-                        $pengembangan->karyawan_id
-                    ],
-
-                'hasil_assessment_asal_id' =>
-                    $pengembangan->hasil_assessment_id
-                        ? (
-                            $factAssessmentMap[
-                                $pengembangan->hasil_assessment_id
-                            ] ?? null
-                        )
-                        : null,
-
-                'skill_id' =>
-                    $pengembangan->skill_id
-                        ? (
-                            $skillMap[
-                                $pengembangan->skill_id
-                            ] ?? null
-                        )
-                        : null,
-
-                'jabatan_asal_id' =>
-                    $pengembangan->jabatan_asal_id
-                        ? (
-                            $jabatanMap[
-                                $pengembangan->jabatan_asal_id
-                            ] ?? null
-                        )
-                        : null,
-
-                'jabatan_tujuan_id' =>
-                    $pengembangan->jabatan_tujuan_id
-                        ? (
-                            $jabatanMap[
-                                $pengembangan->jabatan_tujuan_id
-                            ] ?? null
-                        )
-                        : null,
-
-                'pengajuan_asal_id' =>
-                    $pengembangan->id,
-
-                'jenis_pengajuan' =>
-                    $pengembangan->jenis_pengajuan,
-
-                'status' =>
-                    $pengembangan->status,
-
-                'level_sebelum' =>
-                    $pengembangan->level_sebelum,
-
-                'level_sesudah' =>
-                    $pengembangan->level_sesudah,
-
-                'jumlah_pengajuan' =>
-                    1,
-            ]);
-        }
-
-        $this->info(
-            'Fact Pengembangan selesai: ' .
-            $pengembangans->count()
-        );
-
-        /*
-        |--------------------------------------------------------------------------
-        | FACT RIWAYAT JABATAN
-        |--------------------------------------------------------------------------
-        */
-
-        $riwayatJabatans =
-            RiwayatJabatan::with([
-                'karyawan',
-            ])->get();
-
-        foreach (
-            $riwayatJabatans as $riwayat
-        ) {
-
-            if (!$riwayat->karyawan) {
-                continue;
-            }
-
-            $tanggal = Carbon::parse(
-                $riwayat->tanggal_mulai
-            )->toDateString();
-
-            $durasi = null;
-
-            if ($riwayat->tanggal_selesai) {
-
-                $durasi = Carbon::parse(
-                    $riwayat->tanggal_mulai
-                )->diffInDays(
-                    Carbon::parse(
-                        $riwayat->tanggal_selesai
-                    )
-                );
-            }
-
-            $dw->table(
-                'fact_riwayat_jabatan'
-            )->insert([
-                'waktu_id' =>
-                    $waktuMap[$tanggal],
-
-                'karyawan_id' =>
-                    $karyawanMap[
-                        $riwayat->karyawan_id
-                    ],
-
-                'jabatan_id' =>
-                    $jabatanMap[
-                        $riwayat->jabatan_id
-                    ],
-
-                'pengajuan_asal_id' =>
-                    $riwayat->pengajuan_pengembangan_id,
-
-                'hasil_assessment_asal_id' =>
-                    $riwayat->hasil_assessment_id,
-
-                'jenis_perubahan' =>
-                    $riwayat->jenis_perubahan,
-
-                'tanggal_mulai' =>
-                    $riwayat->tanggal_mulai,
-
-                'tanggal_selesai' =>
-                    $riwayat->tanggal_selesai,
-
-                'durasi_hari' =>
-                    $durasi,
-
-                'jumlah_perubahan' =>
-                    1,
-            ]);
-        }
-
-        $this->info(
-            'Fact Riwayat Jabatan selesai: ' .
-            $riwayatJabatans->count()
-        );
-
-        /*
-        |--------------------------------------------------------------------------
-        | FACT RIWAYAT SKILL
-        |--------------------------------------------------------------------------
-        */
-
-        $riwayatSkills =
-            RiwayatSkill::with([
-                'karyawan',
-                'skill',
-            ])->get();
-
-        foreach (
-            $riwayatSkills as $riwayat
-        ) {
-
-            if (
-                !$riwayat->karyawan ||
-                !$riwayat->skill
+            foreach (
+                $hasilAssessments as $hasil
             ) {
-                continue;
+
+                $peserta =
+                    $hasil->assessmentPeserta;
+
+                if (! $peserta) {
+                    $skippedAssessmentCount++;
+
+                    continue;
+                }
+
+                $karyawan =
+                    $peserta->karyawan;
+
+                $assessment =
+                    $peserta->assessment;
+
+                if (! $karyawan || ! $assessment || ! $hasil->tanggal_ujian) {
+                    $skippedAssessmentCount++;
+
+                    continue;
+                }
+
+                $tanggal = Carbon::parse(
+                    $hasil->tanggal_ujian
+                )->toDateString();
+
+                $factId = $dw->table(
+                    'fact_assessment'
+                )->insertGetId([
+                    'waktu_id' => $waktuMap[$tanggal],
+
+                    'karyawan_id' => $karyawanMap[$karyawan->id],
+
+                    'jabatan_id' => $jabatanMap[
+                            $assessment->jabatan_id
+                        ] ?? null,
+
+                    'skill_id' => null,
+
+                    'assessment_asal_id' => $assessment->id,
+
+                    'hasil_assessment_asal_id' => $hasil->id,
+
+                    'nilai_akhir' => $hasil->nilai_akhir,
+
+                    'standar_nilai' => $hasil->standar_nilai,
+
+                    'status' => $hasil->status,
+
+                    'jumlah_peserta' => 1,
+                ]);
+
+                $factAssessmentMap[
+                    $hasil->id
+                ] = $factId;
+
+                $factAssessmentCount++;
             }
 
-            $tanggal = Carbon::parse(
-                $riwayat->tanggal_perubahan
-            )->toDateString();
+            $this->reportFactLoad(
+                'Fact Assessment',
+                $factAssessmentCount,
+                $skippedAssessmentCount
+            );
 
-            $perubahanLevel =
-                $riwayat->level_sesudah -
-                $riwayat->level_sebelum;
+            /*
+            |--------------------------------------------------------------------------
+            | FACT PENGEMBANGAN
+            |--------------------------------------------------------------------------
+            */
 
-            $dw->table(
-                'fact_riwayat_skill'
-            )->insert([
-                'waktu_id' =>
-                    $waktuMap[$tanggal],
+            $pengembangans =
+                PengajuanPengembangan::with([
+                    'karyawan',
+                    'skill',
+                    'jabatanAsal',
+                    'jabatanTujuan',
+                ])->get();
 
-                'karyawan_id' =>
-                    $karyawanMap[
-                        $riwayat->karyawan_id
-                    ],
+            $factPengembanganCount = 0;
+            $skippedPengembanganCount = 0;
 
-                'skill_id' =>
-                    $skillMap[
-                        $riwayat->skill_id
-                    ],
+            foreach (
+                $pengembangans as $pengembangan
+            ) {
 
-                'pengajuan_asal_id' =>
-                    $riwayat->pengajuan_pengembangan_id,
+                if (! $pengembangan->karyawan || ! $pengembangan->tanggal_pengajuan) {
+                    $skippedPengembanganCount++;
 
-                'hasil_assessment_asal_id' =>
-                    $riwayat->hasil_assessment_id,
+                    continue;
+                }
 
-                'level_sebelum' =>
-                    $riwayat->level_sebelum,
+                $tanggal = Carbon::parse(
+                    $pengembangan->tanggal_pengajuan
+                )->toDateString();
 
-                'level_sesudah' =>
-                    $riwayat->level_sesudah,
+                $dw->table(
+                    'fact_pengembangan'
+                )->insert([
+                    'waktu_id' => $waktuMap[$tanggal],
 
-                'perubahan_level' =>
-                    $perubahanLevel,
+                    'karyawan_id' => $karyawanMap[
+                            $pengembangan->karyawan_id
+                        ],
 
-                'tanggal_perubahan' =>
-                    $riwayat->tanggal_perubahan,
+                    'hasil_assessment_asal_id' => $pengembangan->hasil_assessment_id
+                            ? (
+                                $factAssessmentMap[
+                                    $pengembangan->hasil_assessment_id
+                                ] ?? null
+                            )
+                            : null,
 
-                'jumlah_perubahan' =>
-                    1,
-            ]);
-        }
+                    'skill_id' => $pengembangan->skill_id
+                            ? (
+                                $skillMap[
+                                    $pengembangan->skill_id
+                                ] ?? null
+                            )
+                            : null,
 
-        $this->info(
-            'Fact Riwayat Skill selesai: ' .
-            $riwayatSkills->count()
-        );
+                    'jabatan_asal_id' => $pengembangan->jabatan_asal_id
+                            ? (
+                                $jabatanMap[
+                                    $pengembangan->jabatan_asal_id
+                                ] ?? null
+                            )
+                            : null,
+
+                    'jabatan_tujuan_id' => $pengembangan->jabatan_tujuan_id
+                            ? (
+                                $jabatanMap[
+                                    $pengembangan->jabatan_tujuan_id
+                                ] ?? null
+                            )
+                            : null,
+
+                    'pengajuan_asal_id' => $pengembangan->id,
+
+                    'jenis_pengajuan' => $pengembangan->jenis_pengajuan,
+
+                    'status' => $pengembangan->status,
+
+                    'tanggal_keputusan' => $pengembangan->tanggal_keputusan,
+
+                    'level_sebelum' => $pengembangan->level_sebelum,
+
+                    'level_sesudah' => $pengembangan->level_sesudah,
+
+                    'jumlah_pengajuan' => 1,
+                ]);
+
+                $factPengembanganCount++;
+            }
+
+            $this->reportFactLoad(
+                'Fact Pengembangan',
+                $factPengembanganCount,
+                $skippedPengembanganCount
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | FACT RIWAYAT JABATAN
+            |--------------------------------------------------------------------------
+            */
+
+            $riwayatJabatans =
+                RiwayatJabatan::with([
+                    'karyawan',
+                ])->get();
+
+            $factRiwayatJabatanCount = 0;
+            $skippedRiwayatJabatanCount = 0;
+
+            foreach (
+                $riwayatJabatans as $riwayat
+            ) {
+
+                if (! $riwayat->karyawan || ! $riwayat->tanggal_mulai) {
+                    $skippedRiwayatJabatanCount++;
+
+                    continue;
+                }
+
+                $tanggal = Carbon::parse(
+                    $riwayat->tanggal_mulai
+                )->toDateString();
+
+                $durasi = null;
+
+                if ($riwayat->tanggal_selesai) {
+
+                    $durasi = Carbon::parse(
+                        $riwayat->tanggal_mulai
+                    )->diffInDays(
+                        Carbon::parse(
+                            $riwayat->tanggal_selesai
+                        )
+                    );
+                }
+
+                $dw->table(
+                    'fact_riwayat_jabatan'
+                )->insert([
+                    'waktu_id' => $waktuMap[$tanggal],
+
+                    'karyawan_id' => $karyawanMap[
+                            $riwayat->karyawan_id
+                        ],
+
+                    'jabatan_id' => $jabatanMap[
+                            $riwayat->jabatan_id
+                        ],
+
+                    'pengajuan_asal_id' => $riwayat->pengajuan_pengembangan_id,
+
+                    'hasil_assessment_asal_id' => $riwayat->hasil_assessment_id,
+
+                    'jenis_perubahan' => $riwayat->jenis_perubahan,
+
+                    'tanggal_mulai' => $riwayat->tanggal_mulai,
+
+                    'tanggal_selesai' => $riwayat->tanggal_selesai,
+
+                    'durasi_hari' => $durasi,
+
+                    'jumlah_perubahan' => 1,
+                ]);
+
+                $factRiwayatJabatanCount++;
+            }
+
+            $this->reportFactLoad(
+                'Fact Riwayat Jabatan',
+                $factRiwayatJabatanCount,
+                $skippedRiwayatJabatanCount
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | FACT RIWAYAT SKILL
+            |--------------------------------------------------------------------------
+            */
+
+            $riwayatSkills =
+                RiwayatSkill::with([
+                    'karyawan',
+                    'skill',
+                ])->get();
+
+            $factRiwayatSkillCount = 0;
+            $skippedRiwayatSkillCount = 0;
+
+            foreach (
+                $riwayatSkills as $riwayat
+            ) {
+
+                if (
+                    ! $riwayat->karyawan ||
+                    ! $riwayat->skill ||
+                    ! $riwayat->tanggal_perubahan
+                ) {
+                    $skippedRiwayatSkillCount++;
+
+                    continue;
+                }
+
+                $tanggal = Carbon::parse(
+                    $riwayat->tanggal_perubahan
+                )->toDateString();
+
+                $perubahanLevel =
+                    $riwayat->level_sesudah -
+                    $riwayat->level_sebelum;
+
+                $dw->table(
+                    'fact_riwayat_skill'
+                )->insert([
+                    'waktu_id' => $waktuMap[$tanggal],
+
+                    'karyawan_id' => $karyawanMap[
+                            $riwayat->karyawan_id
+                        ],
+
+                    'skill_id' => $skillMap[
+                            $riwayat->skill_id
+                        ],
+
+                    'pengajuan_asal_id' => $riwayat->pengajuan_pengembangan_id,
+
+                    'hasil_assessment_asal_id' => $riwayat->hasil_assessment_id,
+
+                    'level_sebelum' => $riwayat->level_sebelum,
+
+                    'level_sesudah' => $riwayat->level_sesudah,
+
+                    'perubahan_level' => $perubahanLevel,
+
+                    'tanggal_perubahan' => $riwayat->tanggal_perubahan,
+
+                    'jumlah_perubahan' => 1,
+                ]);
+
+                $factRiwayatSkillCount++;
+            }
+
+            $this->reportFactLoad(
+                'Fact Riwayat Skill',
+                $factRiwayatSkillCount,
+                $skippedRiwayatSkillCount
+            );
+
+            return self::SUCCESS;
+        });
 
         $this->newLine();
+        $this->info('========================================');
+        $this->info('ETL DATA WAREHOUSE SELESAI');
+        $this->info('========================================');
 
-        $this->info(
-            '========================================'
-        );
-
-        $this->info(
-            'ETL DATA WAREHOUSE SELESAI'
-        );
-
-        $this->info(
-            '========================================'
-        );
-
-        return self::SUCCESS;
+        return $result;
     }
 
     private function namaBulan(
@@ -695,5 +684,23 @@ class WarehouseEtl extends Command
             12 => 'Desember',
             default => '-',
         };
+    }
+
+    private function reportFactLoad(
+        string $factTable,
+        int $loadedCount,
+        int $skippedCount
+    ): void {
+        $message = "{$factTable}: {$loadedCount} dimuat, {$skippedCount} dilewati.";
+
+        if ($skippedCount > 0) {
+            $this->warn(
+                $message.' Data dilewati karena relasi atau tanggal wajib tidak tersedia.'
+            );
+
+            return;
+        }
+
+        $this->info($message);
     }
 }

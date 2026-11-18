@@ -17,7 +17,7 @@ class KaryawanDashboardController extends Controller
         $karyawan = $user->karyawan;
 
         // Jika akun belum memiliki data karyawan
-        if (!$karyawan) {
+        if (! $karyawan) {
             abort(404, 'Data karyawan tidak ditemukan.');
         }
 
@@ -27,7 +27,7 @@ class KaryawanDashboardController extends Controller
 
         $assessmentAktif = AssessmentPeserta::with([
             'assessment.jabatan',
-            'assessment.skill',
+            'assessment.soalUpload',
         ])
             ->where('karyawan_id', $karyawan->id)
             ->whereIn('status', [
@@ -36,7 +36,6 @@ class KaryawanDashboardController extends Controller
             ])
             ->latest()
             ->get();
-
 
         // ========================================
         // HASIL ASSESSMENT TERAKHIR
@@ -51,7 +50,6 @@ class KaryawanDashboardController extends Controller
             ->latest('tanggal_ujian')
             ->first();
 
-
         // ========================================
         // TOTAL ASSESSMENT
         // ========================================
@@ -60,7 +58,6 @@ class KaryawanDashboardController extends Controller
             'karyawan_id',
             $karyawan->id
         )->count();
-
 
         // ========================================
         // TOTAL ASSESSMENT LULUS
@@ -71,7 +68,6 @@ class KaryawanDashboardController extends Controller
                 $query->where('karyawan_id', $karyawan->id);
             })
             ->count();
-
 
         // ========================================
         // PENGAJUAN PENGEMBANGAN
@@ -87,7 +83,6 @@ class KaryawanDashboardController extends Controller
             ->latest('tanggal_pengajuan')
             ->take(5)
             ->get();
-
 
         // ========================================
         // KIRIM DATA KE VIEW

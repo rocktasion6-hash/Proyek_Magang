@@ -60,6 +60,11 @@
             color: white;
         }
 
+        .btn-delete {
+            background: #dc2626;
+            color: white;
+        }
+
         .filter {
             background: white;
             padding: 20px;
@@ -243,6 +248,7 @@
                 <th>No</th>
                 <th>NIK</th>
                 <th>Nama</th>
+                <th>PT/Perusahaan</th>
                 <th>Departemen</th>
                 <th>Jabatan</th>
                 <th>Status</th>
@@ -269,6 +275,10 @@
                     <strong>
                         {{ $karyawan->nama }}
                     </strong>
+                </td>
+
+                <td>
+                    {{ $karyawan->pt ?: '-' }}
                 </td>
 
                 <td>
@@ -309,6 +319,23 @@
                         Edit
                     </a>
 
+                    <form
+                        action="{{ route('hrd.karyawan.destroy', $karyawan) }}"
+                        method="POST"
+                        style="display:inline;"
+                        onsubmit="return confirm('Hapus karyawan ini beserta akun login, hasil assessment, dan seluruh riwayat terkait? Tindakan ini tidak dapat dibatalkan.')"
+                    >
+                        @csrf
+                        @method('DELETE')
+
+                        <button
+                            type="submit"
+                            class="btn btn-delete"
+                        >
+                            Hapus
+                        </button>
+                    </form>
+
                 </td>
 
             </tr>
@@ -318,7 +345,7 @@
             <tr>
 
                 <td
-                    colspan="7"
+                    colspan="8"
                     style="text-align:center;"
                 >
                     Belum ada data karyawan.

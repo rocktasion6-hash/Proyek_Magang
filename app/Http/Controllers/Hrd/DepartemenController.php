@@ -19,11 +19,11 @@ class DepartemenController extends Controller
                 $q->where(
                     'nama_departemen',
                     'like',
-                    '%' . $search . '%'
+                    '%'.$search.'%'
                 )->orWhere(
                     'deskripsi',
                     'like',
-                    '%' . $search . '%'
+                    '%'.$search.'%'
                 );
             });
         }
@@ -98,7 +98,7 @@ class DepartemenController extends Controller
                 'required',
                 'string',
                 'max:255',
-                'unique:departemens,nama_departemen,' .
+                'unique:departemens,nama_departemen,'.
                     $departemen->id,
             ],
             'deskripsi' => [
@@ -132,6 +132,13 @@ class DepartemenController extends Controller
             return back()->with(
                 'error',
                 'Departemen tidak dapat dinonaktifkan karena masih memiliki karyawan.'
+            );
+        }
+
+        if ($departemen->soalUploads()->exists() || $departemen->assessments()->exists()) {
+            return back()->with(
+                'error',
+                'Departemen tidak dapat dihapus karena sudah digunakan oleh bank soal atau assessment.'
             );
         }
 

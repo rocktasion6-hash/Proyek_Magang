@@ -14,6 +14,17 @@ class KaryawanSkillController extends Controller
         Request $request,
         Karyawan $karyawan
     ) {
+        // Karyawan Crew belum boleh punya skill.
+        if (
+            $karyawan->jabatan &&
+            mb_strtolower(trim($karyawan->jabatan->nama_jabatan)) === 'crew'
+        ) {
+            return back()->with(
+                'error',
+                'Karyawan masih berjabatan Crew. Skill hanya dapat ditambahkan setelah karyawan melakukan pemindahan jabatan.'
+            );
+        }
+
         $validated = $request->validate([
             'skill_id' => [
                 'required',
@@ -52,10 +63,8 @@ class KaryawanSkillController extends Controller
             */
 
             $karyawanSkill->update([
-                'level_skill' =>
-                    $validated['level_skill'],
-                'tanggal_penilaian' =>
-                    $validated['tanggal_penilaian'],
+                'level_skill' => $validated['level_skill'],
+                'tanggal_penilaian' => $validated['tanggal_penilaian'],
             ]);
 
             return back()->with(
@@ -68,8 +77,7 @@ class KaryawanSkillController extends Controller
             'karyawan_id' => $karyawan->id,
             'skill_id' => $validated['skill_id'],
             'level_skill' => $validated['level_skill'],
-            'tanggal_penilaian' =>
-                $validated['tanggal_penilaian'],
+            'tanggal_penilaian' => $validated['tanggal_penilaian'],
         ]);
 
         return back()->with(

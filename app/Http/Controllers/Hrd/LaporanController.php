@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Hrd;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Http\Controllers\Controller;
 
 class LaporanController extends Controller
 {
@@ -29,13 +29,13 @@ class LaporanController extends Controller
             ->pluck('tahun');
 
         // Tambahkan tahun sekarang kalau belum ada
-        if (!$years->contains((int) now()->year)) {
+        if (! $years->contains((int) now()->year)) {
             $years->push((int) now()->year);
         }
 
         $years = $years->sortDesc()->values();
 
-        $tahunTersedia = $years;
+        $tahunTersedia = collect(['semua'])->concat($years);
         /*
         |--------------------------------------------------------------------------
         | DATA MASTER
@@ -54,7 +54,10 @@ class LaporanController extends Controller
         $totalJabatan = $dw->table('dim_jabatan')
             ->count();
 
-        $totalSkill = $dw->table('dim_skill')
+        $totalSkill = $dw->table('dim_jabatan')
+            ->where('tipe_jabatan', 'operasional')
+            ->whereRaw('LOWER(TRIM(nama_jabatan)) != ?', ['crew'])
+            ->whereBetween('level_jabatan', [2, 5])
             ->count();
 
         /*
@@ -120,6 +123,38 @@ class LaporanController extends Controller
             ->where('fp.status', 'ditolak')
             ->count();
 
+        $keputusanBulananQuery = $dw->table('fact_pengembangan as fp')
+            ->join('dim_waktu as dwk', 'dwk.tanggal', '=', 'fp.tanggal_keputusan')
+            ->select(
+                'dwk.bulan',
+                'fp.status',
+                DB::raw('COUNT(*) as jumlah')
+            )
+            ->whereIn('fp.status', ['disetujui', 'ditolak']);
+
+        if ($tahun !== 'semua') {
+            $keputusanBulananQuery->where('dwk.tahun', $tahun);
+        }
+
+        $keputusanBulanan = $keputusanBulananQuery
+            ->groupBy('dwk.bulan', 'fp.status')
+            ->orderBy('dwk.bulan')
+            ->get();
+
+        $dataDisetujuiBulananArray = array_fill(1, 12, 0);
+        $dataDitolakBulananArray = array_fill(1, 12, 0);
+
+        foreach ($keputusanBulanan as $item) {
+            if ($item->status === 'disetujui') {
+                $dataDisetujuiBulananArray[(int) $item->bulan] = (int) $item->jumlah;
+            } else {
+                $dataDitolakBulananArray[(int) $item->bulan] = (int) $item->jumlah;
+            }
+        }
+
+        $dataDisetujuiBulanan = array_values($dataDisetujuiBulananArray);
+        $dataDitolakBulanan = array_values($dataDitolakBulananArray);
+
         /*
         |--------------------------------------------------------------------------
         | JUMLAH KARYAWAN PER JABATAN
@@ -130,11 +165,25 @@ class LaporanController extends Controller
             ->leftJoin('dim_karyawan as dk', 'dk.jabatan_id', '=', 'dj.id')
             ->select(
                 'dj.nama_jabatan',
-                DB::raw('COUNT(CASE WHEN dk.status = "aktif" THEN 1 END) as jumlah')
+                'dj.tipe_jabatan',
+                'dj.urutan_struktural',
+                DB::raw("COUNT(CASE WHEN dk.status = 'aktif' THEN 1 END) as jumlah")
             )
-            ->groupBy('dj.id', 'dj.nama_jabatan')
+            ->groupBy(
+                'dj.id',
+                'dj.nama_jabatan',
+                'dj.tipe_jabatan',
+                'dj.urutan_struktural'
+            )
             ->orderByDesc('jumlah')
             ->get();
+
+        $karyawanPerJabatan->each(function ($jabatan) {
+            $jabatan->label_jabatan = $jabatan->tipe_jabatan === 'struktural'
+                && $jabatan->urutan_struktural !== null
+                ? $jabatan->nama_jabatan.' (Urutan '.$jabatan->urutan_struktural.')'
+                : $jabatan->nama_jabatan;
+        });
 
         /*
         |--------------------------------------------------------------------------
@@ -151,11 +200,67 @@ class LaporanController extends Controller
             )
             ->select(
                 'dd.nama_departemen',
-                DB::raw('COUNT(CASE WHEN dk.status = "aktif" THEN 1 END) as jumlah')
+                DB::raw("COUNT(CASE WHEN dk.status = 'aktif' THEN 1 END) as jumlah")
             )
             ->groupBy('dd.id', 'dd.nama_departemen')
             ->orderByDesc('jumlah')
             ->get();
+
+        $riwayatJabatanQuery = $dw->table('fact_riwayat_jabatan as frj')
+            ->join('dim_waktu as dwk', 'dwk.id', '=', 'frj.waktu_id')
+            ->whereIn('frj.jenis_perubahan', ['kenaikan', 'pemindahan']);
+
+        if ($tahun !== 'semua') {
+            $riwayatJabatanQuery->where('dwk.tahun', $tahun);
+        }
+
+        $totalPerubahanJabatan = (clone $riwayatJabatanQuery)->count();
+
+        $peningkatanSkillTerealisasiQuery = $dw->table('fact_pengembangan as fp')
+            ->join('dim_waktu as dwk', 'dwk.tanggal', '=', 'fp.tanggal_keputusan')
+            ->where('fp.jenis_pengajuan', 'peningkatan_skill')
+            ->where('fp.status', 'disetujui');
+
+        if ($tahun !== 'semua') {
+            $peningkatanSkillTerealisasiQuery->where('dwk.tahun', $tahun);
+        }
+
+        $totalPeningkatanSkill = $peningkatanSkillTerealisasiQuery->count();
+
+        $promosiStrukturalQuery = $dw->table('fact_riwayat_jabatan as frj')
+            ->join('dim_waktu as dwk', 'dwk.id', '=', 'frj.waktu_id')
+            ->join('dim_jabatan as dj', 'dj.id', '=', 'frj.jabatan_id')
+            ->where('frj.jenis_perubahan', 'kenaikan')
+            ->where('dj.tipe_jabatan', 'struktural');
+
+        if ($tahun !== 'semua') {
+            $promosiStrukturalQuery->where('dwk.tahun', $tahun);
+        }
+
+        $totalPromosiStruktural = (clone $promosiStrukturalQuery)->count();
+
+        $promosiPerUrutan = (clone $promosiStrukturalQuery)
+            ->select(
+                'dj.urutan_struktural',
+                'dj.nama_jabatan',
+                DB::raw('COUNT(*) as jumlah')
+            )
+            ->groupBy('dj.urutan_struktural', 'dj.nama_jabatan')
+            ->orderBy('dj.urutan_struktural')
+            ->get();
+
+        $labelPromosiPerUrutan = $promosiPerUrutan
+            ->map(fn ($item) => 'Urutan '.$item->urutan_struktural.' - '.$item->nama_jabatan)
+            ->values();
+        $dataPromosiPerUrutan = $promosiPerUrutan
+            ->pluck('jumlah')
+            ->map(fn ($jumlah) => (int) $jumlah)
+            ->values();
+
+        $pemindahanAktualQuery = clone $riwayatJabatanQuery;
+        $totalPemindahanAktual = $pemindahanAktualQuery
+            ->where('frj.jenis_perubahan', 'pemindahan')
+            ->count();
 
         /*
         |--------------------------------------------------------------------------
@@ -190,15 +295,15 @@ class LaporanController extends Controller
 
         foreach ($pengembanganPerJenis as $item) {
             $label = match ($item->jenis_pengajuan) {
-            'kenaikan_jabatan' => 'Kenaikan Jabatan',
-            'pemindahan_jabatan' => 'Pemindahan Jabatan',
-            'peningkatan_skill' => 'Peningkatan Skill',
-            default => ucwords(str_replace('_', ' ', $item->jenis_pengajuan)),
-        };
+                'kenaikan_jabatan' => 'Kenaikan Jabatan',
+                'pemindahan_jabatan' => 'Pemindahan Jabatan',
+                'peningkatan_skill' => 'Peningkatan Skill',
+                default => ucwords(str_replace('_', ' ', $item->jenis_pengajuan)),
+            };
 
-        $labelPengembanganJenis[] = $label;
-        $dataPengembanganJenis[] = (int) $item->jumlah;
-    }    
+            $labelPengembanganJenis[] = $label;
+            $dataPengembanganJenis[] = (int) $item->jumlah;
+        }
 
         /*
         |--------------------------------------------------------------------------
@@ -286,7 +391,7 @@ class LaporanController extends Controller
 
         if ($tahun !== 'semua') {
             $tidakLulusBulananQuery->where('dwk.tahun', $tahun);
-    }
+        }
 
         $tidakLulusBulanan = $tidakLulusBulananQuery
             ->groupBy('dwk.bulan')
@@ -312,7 +417,6 @@ class LaporanController extends Controller
 
         $dataLulusBulanan = array_values($dataLulusBulananArray);
         $dataTidakLulusBulanan = array_values($dataTidakLulusBulananArray);
-
 
         /*
         |--------------------------------------------------------------------------
@@ -353,14 +457,27 @@ class LaporanController extends Controller
                 'fp.level_sebelum as level_sebelum',
                 'fp.level_sesudah as level_sesudah',
                 'fp.pengajuan_asal_id',
+                'fp.jabatan_asal_id',
+                'fp.jabatan_tujuan_id',
                 'dk.nama as nama_karyawan',
                 'dk.nik',
                 'ja.nama_jabatan as jabatan_asal',
+                'ja.tipe_jabatan as tipe_jabatan_asal',
+                'ja.urutan_struktural as urutan_asal',
                 'jt.nama_jabatan as jabatan_tujuan',
+                'jt.tipe_jabatan as tipe_jabatan_tujuan',
+                'jt.urutan_struktural as urutan_tujuan',
                 'ds.nama_skill',
                 'dwk.tanggal',
                 'dwk.tahun',
-                'dwk.nama_bulan'
+                'dwk.nama_bulan',
+                'wkeputusan.tanggal as tanggal_keputusan'
+            )
+            ->leftJoin(
+                'dim_waktu as wkeputusan',
+                'wkeputusan.tanggal',
+                '=',
+                'fp.tanggal_keputusan'
             );
 
         if ($tahun !== 'semua') {
@@ -372,6 +489,55 @@ class LaporanController extends Controller
             ->orderByDesc('fp.id')
             ->limit(10)
             ->get();
+
+        $skillProgressionJabatanIds = $latestPengembangan
+            ->where('jenis_pengajuan', 'peningkatan_skill')
+            ->flatMap(fn ($pengajuan) => [
+                $pengajuan->jabatan_asal_id,
+                $pengajuan->jabatan_tujuan_id,
+            ])
+            ->filter()
+            ->unique()
+            ->values();
+
+        $skillMappingsByJabatan = $skillProgressionJabatanIds->isEmpty()
+            ? collect()
+            : $dw->table('bridge_jabatan_skill as bjs')
+                ->join('dim_skill as ds', 'ds.id', '=', 'bjs.skill_id')
+                ->whereIn('bjs.jabatan_id', $skillProgressionJabatanIds)
+                ->select(
+                    'bjs.jabatan_id',
+                    'bjs.skill_id',
+                    'bjs.level_dibutuhkan',
+                    'ds.nama_skill'
+                )
+                ->get()
+                ->groupBy('jabatan_id');
+
+        $latestPengembangan->each(function (object $pengajuan) use ($skillMappingsByJabatan): void {
+            if ($pengajuan->jenis_pengajuan !== 'peningkatan_skill') {
+                return;
+            }
+
+            $sourceSkills = $skillMappingsByJabatan
+                ->get((int) $pengajuan->jabatan_asal_id, collect())
+                ->keyBy('skill_id');
+
+            $pengajuan->skill_progressions = $skillMappingsByJabatan
+                ->get((int) $pengajuan->jabatan_tujuan_id, collect())
+                ->map(function (object $targetSkill) use ($sourceSkills): object {
+                    $sourceSkill = $sourceSkills->get($targetSkill->skill_id);
+
+                    return (object) [
+                        'nama_skill' => $targetSkill->nama_skill,
+                        'level_sebelum' => $sourceSkill?->level_dibutuhkan,
+                        'level_sesudah' => $targetSkill->level_dibutuhkan,
+                    ];
+                })
+                ->values();
+        });
+
+        $labelTahun = $tahun === 'semua' ? 'semua tahun' : 'tahun '.$tahun;
 
         /*
         |--------------------------------------------------------------------------
@@ -415,6 +581,7 @@ class LaporanController extends Controller
         $tingkatKelulusan = $persentaseLulus;
 
         $pengembanganTerbaru = $latestPengembangan;
+
         return view('hrd.laporan.index', compact(
             // filter
             'tahun',
@@ -440,6 +607,15 @@ class LaporanController extends Controller
             'totalDiproses',
             'totalDisetujui',
             'totalDitolak',
+            'totalPerubahanJabatan',
+            'totalPeningkatanSkill',
+            'totalPromosiStruktural',
+            'totalPemindahanAktual',
+            'labelPromosiPerUrutan',
+            'dataPromosiPerUrutan',
+            'dataDisetujuiBulanan',
+            'dataDitolakBulanan',
+            'labelTahun',
 
             // grafik
             'karyawanPerJabatan',
@@ -462,11 +638,11 @@ class LaporanController extends Controller
             'jumlahDepartemen',
             'jumlahJabatan',
             'jumlahSkill',
-            
+
             'jumlahAssessment',
             'jumlahLulus',
             'jumlahTidakLulus',
-            
+
             'totalHasilAssessment',
             'totalAssessmentLulus',
             'totalAssessmentTidakLulus',
@@ -475,7 +651,7 @@ class LaporanController extends Controller
             'totalPengembanganDiajukan',
             'totalPengembanganDiproses',
             'totalPengembanganDisetujui',
-            'totalPengembanganDitolak',   
+            'totalPengembanganDitolak',
 
             'pengembanganDiajukan',
             'pengembanganDiproses',

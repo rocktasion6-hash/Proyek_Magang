@@ -18,62 +18,82 @@
             </p>
         </div>
 
-        <form
-            action="{{ route('hrd.blockchain.verify') }}"
-            method="POST"
-        >
-            @csrf
-
-            <button
-                type="submit"
-                class="inline-flex items-center gap-2 px-5 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-sm transition"
+        <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+            <form
+                action="{{ route('hrd.blockchain.verify') }}"
+                method="POST"
             >
-                <svg
-                    class="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 12c0 5.591 3.824 10.291 9 11.622C17.176 22.291 21 17.591 21 12c0-1.032-.13-2.034-.373-2.984"
-                    />
-                </svg>
+                @csrf
 
-                Verifikasi Blockchain
-            </button>
-        </form>
+                <button
+                    type="submit"
+                    class="inline-flex w-full items-center justify-center gap-2 px-5 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-sm transition sm:w-auto"
+                >
+                    <svg
+                        class="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 12c0 5.591 3.824 10.291 9 11.622C17.176 22.291 21 17.591 21 12c0-1.032-.13-2.034-.373-2.984"
+                        />
+                    </svg>
+
+                    Verifikasi Blockchain
+                </button>
+            </form>
+
+            <form
+                action="{{ route('hrd.blockchain.verify-data') }}"
+                method="POST"
+            >
+                @csrf
+
+                <button
+                    type="submit"
+                    class="inline-flex w-full items-center justify-center gap-2 px-5 py-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 rounded-xl font-bold text-sm transition sm:w-auto"
+                >
+                    <svg
+                        class="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 12c0 5.591 3.824 10.291 9 11.622C17.176 22.291 21 17.591 21 12c0-1.032-.13-2.034-.373-2.984"
+                        />
+                    </svg>
+
+                    Verifikasi Data
+                </button>
+            </form>
+        </div>
     </div>
 
-    <form
-        action="{{ route('hrd.blockchain.verify-data') }}"
-        method="POST"
-    >
-    @csrf
-
-    <button
-        type="submit"
-        class="inline-flex items-center gap-2 px-5 py-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 rounded-xl font-bold text-sm transition"
-    >
-        <svg
-            class="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+    @if (session('success'))
+        <div
+            role="status"
+            class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800"
         >
-            <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 12c0 5.591 3.824 10.291 9 11.622C17.176 22.291 21 17.591 21 12c0-1.032-.13-2.034-.373-2.984"
-            />
-            </svg>
+            {{ session('success') }}
+        </div>
+    @endif
 
-            Verifikasi Data
-        </button>
-    </form>
+    @if (session('error'))
+        <div
+            role="alert"
+            class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800"
+        >
+            {{ session('error') }}
+        </div>
+    @endif
 
     {{-- Statistik --}}
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -115,7 +135,7 @@
         <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-5">
             <div class="flex items-start gap-3">
 
-                <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
                     <svg
                         class="w-5 h-5 text-emerald-600"
                         fill="none"
@@ -147,7 +167,7 @@
         <div class="bg-red-50 border border-red-200 rounded-2xl p-5">
             <div class="flex items-start gap-3">
 
-                <div class="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
+                <div class="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center shrink-0">
                     <svg
                         class="w-5 h-5 text-red-600"
                         fill="none"

@@ -222,7 +222,7 @@
                             </th>
 
                             <th class="px-6 py-3 text-left font-semibold text-gray-600">
-                                Skill
+                                Bank Soal
                             </th>
 
                             <th class="px-6 py-3 text-left font-semibold text-gray-600">
@@ -253,7 +253,7 @@
                                 </td>
 
                                 <td class="px-6 py-4 text-gray-600">
-                                    {{ $assessment->skill?->nama_skill ?? 'Umum' }}
+                                    {{ $assessment->soalUpload?->nama_file_tampilan ?? '-' }}
                                 </td>
 
                                 <td class="px-6 py-4 text-gray-600">

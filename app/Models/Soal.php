@@ -9,20 +9,35 @@ class Soal extends Model
 {
     use HasFactory;
 
+    public static function tipeProsedurDariNama(?string $namaProsedur): string
+    {
+        $namaProsedur = mb_strtolower(trim((string) $namaProsedur));
+
+        if (str_contains($namaProsedur, 'keselamatan')) {
+            return 'keselamatan_kerja';
+        }
+
+        if (str_contains($namaProsedur, 'peraturan perusahaan')) {
+            return 'peraturan_perusahaan';
+        }
+
+        return 'pengoperasian_jabatan';
+    }
+
     protected $fillable = [
         'jabatan_id',
-        'skill_id',
+        'upload_id',
         'pertanyaan',
         'tipe_soal',
-        'tingkat_kesulitan',
-        'bobot',
+        'tipe_prosedur',
+        'nama_prosedur',
+        'nilai_point',
         'status',
     ];
 
     protected function casts(): array
     {
         return [
-            'bobot' => 'decimal:2',
             'status' => 'boolean',
         ];
     }
@@ -33,14 +48,6 @@ class Soal extends Model
     public function jabatan()
     {
         return $this->belongsTo(Jabatan::class);
-    }
-
-    /**
-     * Relasi ke Skill.
-     */
-    public function skill()
-    {
-        return $this->belongsTo(Skill::class);
     }
 
     /**
@@ -70,7 +77,7 @@ class Soal extends Model
             'soal_id',
             'assessment_id'
         )->withPivot('nomor_soal')
-         ->withTimestamps();
+            ->withTimestamps();
     }
 
     /**

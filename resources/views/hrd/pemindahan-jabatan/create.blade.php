@@ -119,8 +119,8 @@
         <h1>Tambah Pengajuan Pemindahan Jabatan</h1>
 
         <p>
-            Pengajuan hanya dapat dibuat menggunakan hasil assessment
-            yang berstatus <strong>LULUS</strong>.
+            Pengajuan dibuat setelah karyawan aktif berjabatan Crew lulus
+            assessment untuk jabatan operasional Level 1.
         </p>
 
         @if($errors->any())
@@ -143,12 +143,17 @@
 
         <div class="info">
 
-            <strong>Aturan:</strong>
-
-            Jabatan tujuan tidak boleh sama dengan jabatan
-            karyawan saat ini.
+            <strong>Alur:</strong>
+            Crew → assessment jabatan operasional Level 1 → pengajuan pemindahan.
+            Jabatan tujuan mengikuti jabatan yang diujikan, jadi tidak dipilih terpisah.
 
         </div>
+
+        @if($hasilAssessments->isEmpty())
+            <div class="info">
+                Belum ada hasil assessment lulus yang memenuhi syarat untuk pengajuan pemindahan jabatan.
+            </div>
+        @endif
 
         <form
             method="POST"
@@ -178,6 +183,7 @@
                             $peserta = $hasil->assessmentPeserta;
                             $karyawan = $peserta->karyawan;
                             $jabatan = $karyawan->jabatan;
+                            $jabatanTujuan = $peserta->assessment->jabatan;
                         @endphp
 
                         <option
@@ -193,6 +199,10 @@
                             |
                             {{ $jabatan->nama_jabatan }}
 
+                            →
+                            {{ $jabatanTujuan->nama_jabatan }}
+                            Level {{ $jabatanTujuan->level_jabatan }}
+
                             |
                             Nilai:
                             {{ number_format(
@@ -202,44 +212,6 @@
 
                             |
                             Lulus
-
-                        </option>
-
-                    @endforeach
-
-                </select>
-
-            </div>
-
-            <div class="form-group">
-
-                <label>
-                    Jabatan Tujuan
-                </label>
-
-                <select
-                    name="jabatan_tujuan_id"
-                    required
-                >
-
-                    <option value="">
-                        -- Pilih Jabatan Tujuan --
-                    </option>
-
-                    @foreach($jabatans as $jabatan)
-
-                        <option
-                            value="{{ $jabatan->id }}"
-                            {{ old('jabatan_tujuan_id') == $jabatan->id ? 'selected' : '' }}
-                        >
-
-                            {{ $jabatan->nama_jabatan }}
-
-                            —
-                            Level {{ $jabatan->level_jabatan }}
-
-                            —
-                            Standar {{ $jabatan->standar_nilai }}
 
                         </option>
 
@@ -283,6 +255,7 @@
             <button
                 type="submit"
                 class="btn btn-primary"
+                @disabled($hasilAssessments->isEmpty())
             >
                 Simpan Pengajuan
             </button>

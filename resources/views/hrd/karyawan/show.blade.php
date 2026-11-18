@@ -201,6 +201,14 @@
             </div>
 
             <div class="label">
+                PT/Perusahaan
+            </div>
+
+            <div>
+                {{ $karyawan->pt ?: '-' }}
+            </div>
+
+            <div class="label">
                 Email
             </div>
 
@@ -237,7 +245,11 @@
                 <br>
 
                 <small>
-                    Level {{ $karyawan->jabatan->level_jabatan }}
+                    @if(mb_strtolower(trim($karyawan->jabatan->nama_jabatan)) === 'crew')
+                        Jabatan Awal
+                    @else
+                        Level {{ $karyawan->jabatan->level_jabatan }}
+                    @endif
                 </small>
 
             </div>
@@ -289,18 +301,20 @@
     </div>
 
 
+    @if($isCrew)
+
+        <div style="background:#fef3c7;color:#92400e;padding:15px;border-radius:8px;margin-bottom:20px;">
+            Karyawan masih berjabatan <strong>Crew</strong>.
+            Skill hanya dapat dikelola setelah karyawan melakukan
+            <strong>pemindahan jabatan</strong> terlebih dahulu.
+        </div>
+
+    @else
+
     <form
         method="POST"
-        action="{{ route(
-            'hrd.karyawan.skill.store',
-            $karyawan
-        ) }}"
-        style="
-            background:#f9fafb;
-            padding:20px;
-            border-radius:8px;
-            margin-bottom:20px;
-        "
+        action="{{ route('hrd.karyawan.skill.store', $karyawan) }}"
+        style="background:#f9fafb;padding:20px;border-radius:8px;margin-bottom:20px;"
     >
 
         @csrf
@@ -566,6 +580,8 @@
         </tbody>
 
     </table>
+
+    @endif
 
 </div>
 

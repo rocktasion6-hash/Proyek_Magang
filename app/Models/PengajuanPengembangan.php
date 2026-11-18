@@ -18,6 +18,8 @@ class PengajuanPengembangan extends Model
         'jabatan_asal_id',
         'jabatan_tujuan_id',
         'skill_id',
+        'level_sebelum',
+        'level_sesudah',
         'status',
         'tanggal_pengajuan',
         'tanggal_keputusan',

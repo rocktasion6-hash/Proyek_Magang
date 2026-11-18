@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\HasilAssessment;
 use App\Models\BlockchainRecord;
+use App\Models\HasilAssessment;
 use Illuminate\Http\JsonResponse;
 
 class HasilAssessmentController extends Controller
@@ -17,7 +17,7 @@ class HasilAssessmentController extends Controller
         $hasilAssessments = HasilAssessment::with([
             'assessmentPeserta.karyawan',
             'assessmentPeserta.assessment.jabatan',
-            'assessmentPeserta.assessment.skill',
+            'assessmentPeserta.assessment.soalUpload',
         ])
             ->orderByDesc('id')
             ->get();
@@ -48,70 +48,48 @@ class HasilAssessmentController extends Controller
                 'assessment' => $assessment
                     ? [
                         'id' => $assessment->id,
-                        'nama_assessment' =>
-                            $assessment->nama_assessment,
+                        'nama_assessment' => $assessment->nama_assessment,
 
                         'jabatan' => $assessment->jabatan
                             ? [
-                                'id' =>
-                                    $assessment->jabatan->id,
-                                'nama_jabatan' =>
-                                    $assessment->jabatan->nama_jabatan,
+                                'id' => $assessment->jabatan->id,
+                                'nama_jabatan' => $assessment->jabatan->nama_jabatan,
                             ]
                             : null,
 
-                        'skill' => $assessment->skill
-                            ? [
-                                'id' =>
-                                    $assessment->skill->id,
-                                'nama_skill' =>
-                                    $assessment->skill->nama_skill,
-                            ]
-                            : null,
+                        'bank_soal' => $assessment->soalUpload?->nama_file_tampilan,
                     ]
                     : null,
 
                 'assessment_peserta' => $peserta
                     ? [
                         'id' => $peserta->id,
-                        'percobaan_ke' =>
-                            $peserta->percobaan_ke,
-                        'status' =>
-                            $peserta->status,
+                        'percobaan_ke' => $peserta->percobaan_ke,
+                        'status' => $peserta->status,
                     ]
                     : null,
 
-                'nilai_akhir' =>
-                    $hasil->nilai_akhir,
+                'nilai_akhir' => $hasil->nilai_akhir,
 
-                'standar_nilai' =>
-                    $hasil->standar_nilai,
+                'standar_nilai' => $hasil->standar_nilai,
 
-                'status' =>
-                    $hasil->status,
+                'status' => $hasil->status,
 
-                'tanggal_ujian' =>
-                    $hasil->tanggal_ujian,
+                'tanggal_ujian' => $hasil->tanggal_ujian,
 
-                'waktu_mulai' =>
-                    $hasil->waktu_mulai,
+                'waktu_mulai' => $hasil->waktu_mulai,
 
-                'waktu_selesai' =>
-                    $hasil->waktu_selesai,
+                'waktu_selesai' => $hasil->waktu_selesai,
 
                 'blockchain' => $blockchain
                     ? [
-                        'block_number' =>
-                            $blockchain->block_number,
+                        'block_number' => $blockchain->block_number,
 
-                        'data_hash' =>
-                            $blockchain->data_hash,
+                        'data_hash' => $blockchain->data_hash,
 
-                        'previous_hash' =>
-                            $blockchain->previous_hash,
+                        'previous_hash' => $blockchain->previous_hash,
 
-                        'block_hash' =>
-                            $blockchain->block_hash,
+                        'block_hash' => $blockchain->block_hash,
                     ]
                     : null,
             ];
@@ -119,8 +97,7 @@ class HasilAssessmentController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' =>
-                'Data hasil assessment berhasil diambil.',
+            'message' => 'Data hasil assessment berhasil diambil.',
             'data' => $data,
         ]);
     }
@@ -133,14 +110,13 @@ class HasilAssessmentController extends Controller
         $hasil = HasilAssessment::with([
             'assessmentPeserta.karyawan',
             'assessmentPeserta.assessment.jabatan',
-            'assessmentPeserta.assessment.skill',
+            'assessmentPeserta.assessment.soalUpload',
         ])->find($id);
 
-        if (!$hasil) {
+        if (! $hasil) {
             return response()->json([
                 'success' => false,
-                'message' =>
-                    'Hasil assessment tidak ditemukan.',
+                'message' => 'Hasil assessment tidak ditemukan.',
                 'data' => null,
             ], 404);
         }
@@ -169,37 +145,23 @@ class HasilAssessmentController extends Controller
             'assessment' => $assessment
                 ? [
                     'id' => $assessment->id,
-                    'nama_assessment' =>
-                        $assessment->nama_assessment,
+                    'nama_assessment' => $assessment->nama_assessment,
 
                     'jabatan' => $assessment->jabatan
                         ? [
-                            'id' =>
-                                $assessment->jabatan->id,
-                            'nama_jabatan' =>
-                                $assessment->jabatan->nama_jabatan,
-                            'level_jabatan' =>
-                                $assessment->jabatan->level_jabatan,
+                            'id' => $assessment->jabatan->id,
+                            'nama_jabatan' => $assessment->jabatan->nama_jabatan,
+                            'level_jabatan' => $assessment->jabatan->level_jabatan,
                         ]
                         : null,
 
-                    'skill' => $assessment->skill
-                        ? [
-                            'id' =>
-                                $assessment->skill->id,
-                            'nama_skill' =>
-                                $assessment->skill->nama_skill,
-                        ]
-                        : null,
+                    'bank_soal' => $assessment->soalUpload?->nama_file_tampilan,
 
-                    'standar_nilai' =>
-                        $assessment->standar_nilai,
+                    'standar_nilai' => $assessment->standar_nilai,
 
-                    'durasi' =>
-                        $assessment->durasi,
+                    'durasi' => $assessment->durasi,
 
-                    'status' =>
-                        $assessment->status,
+                    'status' => $assessment->status,
                 ]
                 : null,
 
@@ -207,61 +169,46 @@ class HasilAssessmentController extends Controller
                 ? [
                     'id' => $peserta->id,
 
-                    'percobaan_ke' =>
-                        $peserta->percobaan_ke,
+                    'percobaan_ke' => $peserta->percobaan_ke,
 
-                    'status' =>
-                        $peserta->status,
+                    'status' => $peserta->status,
 
-                    'waktu_mulai' =>
-                        $peserta->waktu_mulai,
+                    'waktu_mulai' => $peserta->waktu_mulai,
 
-                    'waktu_selesai' =>
-                        $peserta->waktu_selesai,
+                    'waktu_selesai' => $peserta->waktu_selesai,
                 ]
                 : null,
 
             'hasil' => [
-                'nilai_akhir' =>
-                    $hasil->nilai_akhir,
+                'nilai_akhir' => $hasil->nilai_akhir,
 
-                'standar_nilai' =>
-                    $hasil->standar_nilai,
+                'standar_nilai' => $hasil->standar_nilai,
 
-                'status' =>
-                    $hasil->status,
+                'status' => $hasil->status,
 
-                'tanggal_ujian' =>
-                    $hasil->tanggal_ujian,
+                'tanggal_ujian' => $hasil->tanggal_ujian,
 
-                'waktu_mulai' =>
-                    $hasil->waktu_mulai,
+                'waktu_mulai' => $hasil->waktu_mulai,
 
-                'waktu_selesai' =>
-                    $hasil->waktu_selesai,
+                'waktu_selesai' => $hasil->waktu_selesai,
             ],
 
             'blockchain' => $blockchain
                 ? [
-                    'block_number' =>
-                        $blockchain->block_number,
+                    'block_number' => $blockchain->block_number,
 
-                    'data_hash' =>
-                        $blockchain->data_hash,
+                    'data_hash' => $blockchain->data_hash,
 
-                    'previous_hash' =>
-                        $blockchain->previous_hash,
+                    'previous_hash' => $blockchain->previous_hash,
 
-                    'block_hash' =>
-                        $blockchain->block_hash,
+                    'block_hash' => $blockchain->block_hash,
                 ]
                 : null,
         ];
 
         return response()->json([
             'success' => true,
-            'message' =>
-                'Detail hasil assessment berhasil diambil.',
+            'message' => 'Detail hasil assessment berhasil diambil.',
             'data' => $data,
         ]);
     }

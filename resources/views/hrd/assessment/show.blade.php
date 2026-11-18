@@ -37,6 +37,13 @@
                 Detail assessment dan peserta.
             </p>
 
+            <a
+                href="{{ route('hrd.assessment.edit', $assessment) }}"
+                class="mt-4 inline-flex rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700"
+            >
+                Edit Assessment
+            </a>
+
         </div>
 
         <div class="mt-8 bg-white rounded-2xl border border-slate-200 p-6">
@@ -67,12 +74,7 @@
                 class="w-full rounded-xl border-slate-300"
                 required
                 >
-                    @foreach(
-                        \App\Models\Karyawan::where('status', 'aktif')
-                        ->orderBy('nama')
-                            ->get()
-                        as $karyawan
-                    )
+                    @foreach($karyawans as $karyawan)
                         <option value="{{ $karyawan->id }}">
                             {{ $karyawan->nama }}
                             - {{ $karyawan->nik }}
@@ -101,6 +103,18 @@
                 <div>
 
                     <p class="text-sm text-gray-500">
+                        Departemen
+                    </p>
+
+                    <p class="font-semibold text-gray-800 mt-1">
+                        {{ $assessment->departemen?->nama_departemen ?? '-' }}
+                    </p>
+
+                </div>
+
+                <div>
+
+                    <p class="text-sm text-gray-500">
                         Jabatan
                     </p>
 
@@ -114,11 +128,14 @@
                 <div>
 
                     <p class="text-sm text-gray-500">
-                        Skill
+                        File Bank Soal
                     </p>
 
                     <p class="font-semibold text-gray-800 mt-1">
-                        {{ $assessment->skill?->nama_skill ?? 'Umum' }}
+                        {{ $assessment->soalUpload?->nama_file_tampilan ?? '-' }}
+                    </p>
+                    <p class="text-xs text-gray-500 mt-1">
+                        Kumpulan soal: Level 1 sampai Level {{ $assessment->jabatan?->level_jabatan ?? '-' }}
                     </p>
 
                 </div>
@@ -179,6 +196,62 @@
 
         </div>
 
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mt-6">
+
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">
+                Konfigurasi Jumlah Soal
+            </h2>
+
+            @php
+                $labelProsedur = [
+                    'pengoperasian_jabatan' => 'Prosedur Pengoperasian Jabatan',
+                    'keselamatan_kerja' => 'Prosedur Pengoperasian Keselamatan',
+                    'peraturan_perusahaan' => 'Peraturan Perusahaan',
+                ];
+                $labelTipeSoal = [
+                    'pilihan_ganda' => 'Pilihan Ganda / Pilihan Tunggal',
+                    'multi_jawaban' => 'Multi Jawaban',
+                    'benar_salah' => 'Benar / Salah',
+                ];
+            @endphp
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left">Level/SOP</th>
+                            <th class="px-4 py-3 text-left">Prosedur</th>
+                            <th class="px-4 py-3 text-left">Tipe Soal</th>
+                            <th class="px-4 py-3 text-right">Jumlah</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @forelse ($assessment->konfigurasiSoals as $konfigurasi)
+                            <tr>
+                                <td class="px-4 py-3">
+                                    {{ $konfigurasi->level_soal ? 'Level '.$konfigurasi->level_soal : 'Gabungan (data lama)' }}
+                                </td>
+                                <td class="px-4 py-3">
+                                    {{ $labelProsedur[$konfigurasi->tipe_prosedur] ?? $konfigurasi->tipe_prosedur }}
+                                </td>
+                                <td class="px-4 py-3">
+                                    {{ $labelTipeSoal[$konfigurasi->tipe_soal] ?? $konfigurasi->tipe_soal }}
+                                </td>
+                                <td class="px-4 py-3 text-right">{{ $konfigurasi->jumlah_soal }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="4" class="px-4 py-3 text-center text-gray-500">
+                                    Tidak ada konfigurasi soal.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+
 
         <!-- Soal -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mt-6">
@@ -207,6 +280,9 @@
 
                                 <p class="text-xs text-gray-500 mt-1">
                                     {{ ucwords(str_replace('_', ' ', $soal->tipe_soal)) }}
+                                    @if ($soal->nama_prosedur)
+                                        · {{ $soal->nama_prosedur }}
+                                    @endif
                                 </p>
 
                             </div>

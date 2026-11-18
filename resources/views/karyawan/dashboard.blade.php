@@ -105,6 +105,10 @@
                     {{ $karyawan->departemen->nama_departemen }}
                 </p>
 
+                <p class="text-sm text-gray-500 mt-1">
+                    PT: {{ $karyawan->pt ?: '-' }}
+                </p>
+
             </div>
 
 
@@ -202,7 +206,7 @@
                                 </td>
 
                                 <td class="px-6 py-4 text-gray-600">
-                                    {{ $peserta->assessment->skill?->nama_skill ?? 'Umum' }}
+                                    {{ $peserta->assessment->soalUpload?->nama_file_tampilan ?? '-' }}
                                 </td>
 
                                 <td class="px-6 py-4 text-gray-600">

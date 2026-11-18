@@ -25,39 +25,33 @@ class JabatanController extends Controller
                 $q->where(
                     'nama_jabatan',
                     'like',
-                    '%' . $search . '%'
+                    '%'.$search.'%'
                 )->orWhere(
                     'deskripsi',
                     'like',
-                    '%' . $search . '%'
+                    '%'.$search.'%'
                 );
             });
         }
 
-        if ($request->filled('level_jabatan')) {
+        if ($request->filled('tipe_jabatan')) {
             $query->where(
-                'level_jabatan',
-                $request->level_jabatan
+                'tipe_jabatan',
+                $request->tipe_jabatan
             );
         }
 
         $jabatans = $query
+            ->orderBy('tipe_jabatan')
+            ->orderBy('urutan_struktural')
             ->orderBy('level_jabatan')
             ->orderBy('nama_jabatan')
             ->paginate(10)
             ->withQueryString();
 
-        $levels = Jabatan::select('level_jabatan')
-            ->distinct()
-            ->orderBy('level_jabatan')
-            ->pluck('level_jabatan');
-
         return view(
             'hrd.jabatan.index',
-            compact(
-                'jabatans',
-                'levels'
-            )
+            compact('jabatans')
         );
     }
 
@@ -76,10 +70,24 @@ class JabatanController extends Controller
                 'unique:jabatans,nama_jabatan',
             ],
 
-            'level_jabatan' => [
+            'tipe_jabatan' => [
                 'required',
+                Rule::in(['operasional', 'struktural']),
+            ],
+
+            'urutan_struktural' => [
+                'nullable',
                 'integer',
                 'min:1',
+                'max:6',
+                'required_if:tipe_jabatan,struktural',
+            ],
+
+            'level_jabatan' => [
+                'nullable',
+                'integer',
+                'min:0',
+                'required_if:tipe_jabatan,operasional',
             ],
 
             'standar_nilai' => [
@@ -94,6 +102,10 @@ class JabatanController extends Controller
                 'string',
             ],
         ]);
+
+        if ($validated['tipe_jabatan'] === 'struktural') {
+            $validated['level_jabatan'] = null;
+        }
 
         Jabatan::create($validated);
 
@@ -157,10 +169,24 @@ class JabatanController extends Controller
                 )->ignore($jabatan->id),
             ],
 
-            'level_jabatan' => [
+            'tipe_jabatan' => [
                 'required',
+                Rule::in(['operasional', 'struktural']),
+            ],
+
+            'urutan_struktural' => [
+                'nullable',
                 'integer',
                 'min:1',
+                'max:6',
+                'required_if:tipe_jabatan,struktural',
+            ],
+
+            'level_jabatan' => [
+                'nullable',
+                'integer',
+                'min:0',
+                'required_if:tipe_jabatan,operasional',
             ],
 
             'standar_nilai' => [
@@ -175,6 +201,10 @@ class JabatanController extends Controller
                 'string',
             ],
         ]);
+
+        if ($validated['tipe_jabatan'] === 'struktural') {
+            $validated['level_jabatan'] = null;
+        }
 
         $jabatan->update($validated);
 

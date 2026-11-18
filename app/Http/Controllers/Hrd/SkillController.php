@@ -4,48 +4,32 @@ namespace App\Http\Controllers\Hrd;
 
 use App\Http\Controllers\Controller;
 use App\Models\Jabatan;
-use App\Models\Karyawan;
 use App\Models\Skill;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class SkillController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Skill::withCount([
-            'jabatanSkills',
-            'karyawanSkills',
-            'soals',
-            'assessments',
-        ]);
+        // Manajemen Skill = jalur karir jabatan operasional level 2-5
+        $query = Jabatan::where('tipe_jabatan', 'operasional')
+            ->whereRaw('LOWER(TRIM(nama_jabatan)) != ?', ['crew'])
+            ->whereBetween('level_jabatan', [2, 5]);
 
         if ($request->filled('search')) {
-            $search = $request->search;
-
-            $query->where(function ($q) use ($search) {
-                $q->where(
-                    'nama_skill',
-                    'like',
-                    '%' . $search . '%'
-                )->orWhere(
-                    'deskripsi',
-                    'like',
-                    '%' . $search . '%'
-                );
-            });
+            $query->where('nama_jabatan', 'like', '%'.$request->search.'%');
         }
 
-        $skills = $query
-            ->orderBy('nama_skill')
-            ->paginate(10)
+        // Group by nama jabatan, tampilkan semua level per nama
+        $jabatans = $query
+            ->withCount('karyawans')
+            ->orderByRaw('LOWER(TRIM(nama_jabatan))')
+            ->orderBy('level_jabatan')
+            ->paginate(15)
             ->withQueryString();
 
-        return view(
-            'hrd.skill.index',
-            compact('skills')
-        );
+        return view('hrd.skill.index', compact('jabatans'));
     }
 
     public function create()

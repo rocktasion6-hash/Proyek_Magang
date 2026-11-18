@@ -44,12 +44,7 @@
 
     <form
         method="GET"
-        style="
-            display:flex;
-            gap:10px;
-            margin-bottom:20px;
-            flex-wrap:wrap;
-        "
+        style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;"
     >
 
         <input
@@ -57,50 +52,19 @@
             name="search"
             value="{{ request('search') }}"
             placeholder="Cari jabatan..."
-            style="
-                padding:10px;
-                border:1px solid #d1d5db;
-                border-radius:6px;
-                min-width:250px;
-            "
+            style="padding:10px;border:1px solid #d1d5db;border-radius:6px;min-width:250px;"
         >
 
         <select
-            name="level_jabatan"
-            style="
-                padding:10px;
-                border:1px solid #d1d5db;
-                border-radius:6px;
-            "
+            name="tipe_jabatan"
+            style="padding:10px;border:1px solid #d1d5db;border-radius:6px;"
         >
-
-            <option value="">
-                Semua Level
-            </option>
-
-            @foreach($levels as $level)
-
-                <option
-                    value="{{ $level }}"
-                    {{ request('level_jabatan') == $level
-                        ? 'selected'
-                        : '' }}
-                >
-                    Level {{ $level }}
-                </option>
-
-            @endforeach
-
+            <option value="">Semua Tipe</option>
+            <option value="operasional" {{ request('tipe_jabatan') === 'operasional' ? 'selected' : '' }}>Operasional</option>
+            <option value="struktural" {{ request('tipe_jabatan') === 'struktural' ? 'selected' : '' }}>Struktural</option>
         </select>
 
-        <button
-            type="submit"
-            class="btn"
-            style="
-                background:#2563eb;
-                color:white;
-            "
-        >
+        <button type="submit" class="btn" style="background:#2563eb;color:white;">
             Filter
         </button>
 
@@ -127,6 +91,10 @@
                 </th>
 
                 <th style="padding:12px; text-align:left; border-bottom:1px solid #e5e7eb;">
+                    Tipe
+                </th>
+
+                <th style="padding:12px; text-align:left; border-bottom:1px solid #e5e7eb;">
                     Level
                 </th>
 
@@ -136,10 +104,6 @@
 
                 <th style="padding:12px; text-align:left; border-bottom:1px solid #e5e7eb;">
                     Karyawan
-                </th>
-
-                <th style="padding:12px; text-align:left; border-bottom:1px solid #e5e7eb;">
-                    Skill
                 </th>
 
                 <th style="padding:12px; text-align:left; border-bottom:1px solid #e5e7eb;">
@@ -172,7 +136,40 @@
 
                 <td style="padding:12px; border-bottom:1px solid #e5e7eb;">
 
-                    Level {{ $jabatan->level_jabatan }}
+                    @if($jabatan->tipe_jabatan === 'struktural')
+                        <span style="background:#fef3c7;color:#92400e;padding:3px 8px;border-radius:4px;font-size:13px;">
+                            Struktural
+                            @if($jabatan->urutan_struktural)
+                                ({{ $jabatan->urutan_struktural }})
+                            @endif
+                        </span>
+                    @else
+                        <span style="background:#eff6ff;color:#1e40af;padding:3px 8px;border-radius:4px;font-size:13px;">
+                            Operasional
+                        </span>
+                    @endif
+
+                </td>
+
+                <td style="padding:12px; border-bottom:1px solid #e5e7eb;">
+
+                    @if($jabatan->tipe_jabatan === 'struktural')
+                        @php
+                            $labelUrutan = [
+                                1 => 'Wakil Foreman',
+                                2 => 'Foreman',
+                                3 => 'Wakil Supervisor',
+                                4 => 'Supervisor',
+                                5 => 'Wakil General Manager',
+                                6 => 'Manager',
+                            ];
+                        @endphp
+                        {{ $labelUrutan[$jabatan->urutan_struktural] ?? '-' }}
+                    @elseif(mb_strtolower(trim($jabatan->nama_jabatan)) === 'crew')
+                        Crew
+                    @else
+                        Level {{ $jabatan->level_jabatan }}
+                    @endif
 
                 </td>
 
@@ -196,40 +193,66 @@
 
                 <td style="padding:12px; border-bottom:1px solid #e5e7eb;">
 
-                    {{ $jabatan->skills_count }}
-                    skill
-
-                </td>
-
-                <td style="padding:12px; border-bottom:1px solid #e5e7eb;">
-
-                    <a
-                        href="{{ route(
-                            'hrd.jabatan.show',
-                            $jabatan
-                        ) }}"
-                        class="btn"
+                    <div
                         style="
-                            background:#111827;
-                            color:white;
+                            display:flex;
+                            align-items:center;
+                            gap:8px;
+                            flex-wrap:wrap;
                         "
                     >
-                        Detail
-                    </a>
 
-                    <a
-                        href="{{ route(
-                            'hrd.jabatan.edit',
-                            $jabatan
-                        ) }}"
-                        class="btn"
-                        style="
-                            background:#f59e0b;
-                            color:white;
-                        "
-                    >
-                        Edit
-                    </a>
+                        <a
+                            href="{{ route(
+                                'hrd.jabatan.show',
+                                $jabatan
+                            ) }}"
+                            class="btn"
+                            style="
+                                background:#111827;
+                                color:white;
+                            "
+                        >
+                            Detail
+                        </a>
+
+                        <a
+                            href="{{ route(
+                                'hrd.jabatan.edit',
+                                $jabatan
+                            ) }}"
+                            class="btn"
+                            style="
+                                background:#f59e0b;
+                                color:white;
+                            "
+                        >
+                            Edit
+                        </a>
+
+                        <form
+                            method="POST"
+                            action="{{ route(
+                                'hrd.jabatan.destroy',
+                                $jabatan
+                            ) }}"
+                            onsubmit="return confirm('Yakin ingin menghapus jabatan ini?')"
+                        >
+                            @csrf
+                            @method('DELETE')
+
+                            <button
+                                type="submit"
+                                class="btn"
+                                style="
+                                    background:#dc2626;
+                                    color:white;
+                                "
+                            >
+                                Hapus
+                            </button>
+                        </form>
+                    </div>
 
                 </td>
 
@@ -240,7 +263,7 @@
             <tr>
 
                 <td
-                    colspan="7"
+                    colspan="6"
                     style="
                         padding:25px;
                         text-align:center;

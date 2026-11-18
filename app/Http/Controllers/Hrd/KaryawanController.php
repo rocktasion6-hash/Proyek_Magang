@@ -7,12 +7,15 @@ use App\Models\Departemen;
 use App\Models\Jabatan;
 use App\Models\Karyawan;
 use App\Models\RiwayatJabatan;
+use App\Models\Skill;
 use App\Models\User;
+use App\Services\BlockchainService;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
-use App\Models\Skill;
 
 class KaryawanController extends Controller
 {
@@ -28,8 +31,8 @@ class KaryawanController extends Controller
             $search = $request->search;
 
             $query->where(function ($q) use ($search) {
-                $q->where('nama', 'like', '%' . $search . '%')
-                    ->orWhere('nik', 'like', '%' . $search . '%');
+                $q->where('nama', 'like', '%'.$search.'%')
+                    ->orWhere('nik', 'like', '%'.$search.'%');
             });
         }
 
@@ -71,18 +74,9 @@ class KaryawanController extends Controller
             'nama_departemen'
         )->get();
 
-        $jabatans = Jabatan::orderBy(
-            'level_jabatan'
-        )
-            ->orderBy('nama_jabatan')
-            ->get();
-
         return view(
             'hrd.karyawan.create',
-            compact(
-                'departemens',
-                'jabatans'
-            )
+            compact('departemens')
         );
     }
 
@@ -98,6 +92,12 @@ class KaryawanController extends Controller
 
             'nama' => [
                 'required',
+                'string',
+                'max:255',
+            ],
+
+            'pt' => [
+                'nullable',
                 'string',
                 'max:255',
             ],
@@ -128,11 +128,6 @@ class KaryawanController extends Controller
                 'exists:departemens,id',
             ],
 
-            'jabatan_id' => [
-                'required',
-                'exists:jabatans,id',
-            ],
-
             'tanggal_masuk' => [
                 'required',
                 'date',
@@ -140,14 +135,29 @@ class KaryawanController extends Controller
 
             'status' => [
                 'required',
-                    Rule::in([
-                        'aktif',
-                        'nonaktif',
-                    ]),
-                ],
-            ]);
+                Rule::in([
+                    'aktif',
+                    'nonaktif',
+                ]),
+            ],
+        ]);
 
-        DB::transaction(function () use ($validated) {
+        // Jabatan awal karyawan baru selalu "Crew".
+        $jabatanCrew = Jabatan::whereRaw(
+            'LOWER(TRIM(nama_jabatan)) = ?',
+            ['crew']
+        )->first();
+
+        if (! $jabatanCrew) {
+            return back()
+                ->with(
+                    'error',
+                    'Jabatan "Crew" belum ada di database. Silakan tambahkan jabatan Crew terlebih dahulu.'
+                )
+                ->withInput();
+        }
+
+        DB::transaction(function () use ($validated, $jabatanCrew) {
 
             /*
             |--------------------------------------------------------------------------
@@ -175,13 +185,10 @@ class KaryawanController extends Controller
                 'user_id' => $user->id,
                 'nik' => $validated['nik'],
                 'nama' => $validated['nama'],
+                'pt' => $validated['pt'] ?? null,
                 'departemen_id' => $validated['departemen_id'],
-                'jabatan_id' => $validated['jabatan_id'],
-
-                // Tidak lagi digunakan karena level
-                // sudah berasal dari jabatan.
+                'jabatan_id' => $jabatanCrew->id,
                 'level' => null,
-
                 'tanggal_masuk' => $validated['tanggal_masuk'],
                 'status' => $validated['status'],
             ]);
@@ -200,8 +207,7 @@ class KaryawanController extends Controller
                 'hasil_assessment_id' => null,
                 'tanggal_mulai' => $karyawan->tanggal_masuk,
                 'tanggal_selesai' => null,
-                'keterangan' =>
-                'Jabatan awal saat karyawan mulai bekerja.',
+                'keterangan' => 'Jabatan awal saat karyawan mulai bekerja.',
             ]);
         });
 
@@ -228,19 +234,35 @@ class KaryawanController extends Controller
         $skillIds = $karyawan->skills
             ->pluck('id');
 
-        $availableSkills = Skill::whereNotIn(
-            'id',
-            $skillIds
-        )
-            ->orderBy('nama_skill')
-            ->get();
+        $isCrew = $karyawan->jabatan &&
+            mb_strtolower(trim($karyawan->jabatan->nama_jabatan)) === 'crew';
+
+        $availableSkills = $isCrew
+            ? collect()
+            : Skill::whereNotIn('id', $skillIds)
+                ->orderBy('nama_skill')
+                ->get();
 
         return view(
             'hrd.karyawan.show',
             compact(
                 'karyawan',
-                'availableSkills'
+                'availableSkills',
+                'isCrew'
             )
+        );
+    }
+
+    public function edit(Karyawan $karyawan): View
+    {
+        $departemens = Departemen::orderBy('nama_departemen')->get();
+        $jabatans = Jabatan::orderBy('level_jabatan')
+            ->orderBy('nama_jabatan')
+            ->get();
+
+        return view(
+            'hrd.karyawan.edit',
+            compact('karyawan', 'departemens', 'jabatans')
         );
     }
 
@@ -253,7 +275,7 @@ class KaryawanController extends Controller
                 'required',
                 'string',
                 'max:50',
-            Rule::unique(
+                Rule::unique(
                     'karyawans',
                     'nik'
                 )->ignore($karyawan->id),
@@ -261,6 +283,12 @@ class KaryawanController extends Controller
 
             'nama' => [
                 'required',
+                'string',
+                'max:255',
+            ],
+
+            'pt' => [
+                'nullable',
                 'string',
                 'max:255',
             ],
@@ -287,6 +315,7 @@ class KaryawanController extends Controller
         $karyawan->update([
             'nik' => $validated['nik'],
             'nama' => $validated['nama'],
+            'pt' => $validated['pt'] ?? null,
             'departemen_id' => $validated['departemen_id'],
             'tanggal_masuk' => $validated['tanggal_masuk'],
             'status' => $validated['status'],
@@ -303,23 +332,54 @@ class KaryawanController extends Controller
             );
     }
 
-    public function destroy(Karyawan $karyawan)
+    public function destroy(Karyawan $karyawan): RedirectResponse
     {
-        /*
-        |--------------------------------------------------------------------------
-        | Jangan sembarang menghapus data karyawan
-        |--------------------------------------------------------------------------
-        */
+        $user = $karyawan->user;
 
-        $karyawan->update([
-            'status' => 'nonaktif',
-        ]);
+        DB::transaction(function () use ($karyawan, $user): void {
+            $blockchain = app(BlockchainService::class);
+
+            foreach ($karyawan->pengajuanPengembangans()->lockForUpdate()->get() as $application) {
+                $blockchain->recordPengembanganEvent(
+                    'pengajuan_pengembangan_dihapus',
+                    $application,
+                    true
+                );
+            }
+
+            foreach (
+                $karyawan->assessmentPeserta()
+                    ->with('hasilAssessment')
+                    ->lockForUpdate()
+                    ->get() as $participant
+            ) {
+                if ($participant->hasilAssessment) {
+                    $blockchain->recordAssessmentResultEvent(
+                        $participant->hasilAssessment,
+                        'hasil_assessment_dihapus',
+                        true
+                    );
+                }
+
+                $blockchain->recordAssessmentParticipantEvent(
+                    'assessment_peserta_dihapus',
+                    $participant,
+                    true
+                );
+            }
+
+            $blockchain->recordKaryawanDeletionEvent($karyawan);
+
+            $karyawan->pengajuanPengembangans()->delete();
+            $karyawan->delete();
+            $user?->delete();
+        });
 
         return redirect()
             ->route('hrd.karyawan.index')
             ->with(
                 'success',
-                'Karyawan berhasil dinonaktifkan.'
+                'Karyawan beserta seluruh akun dan data terkait berhasil dihapus.'
             );
     }
 }
