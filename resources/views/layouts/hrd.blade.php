@@ -14,8 +14,12 @@
         @yield('title', 'HRD')
     </title>
 
-    <style>
+    <!-- Tailwind CSS (Diperlukan untuk dropdown dan styling logo ET) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Alpine.js (Diperlukan agar fungsi klik x-data & x-show dropdown berfungsi) -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
+    <style>
         * {
             box-sizing: border-box;
         }
@@ -127,14 +131,14 @@
             min-height: 100vh;
         }
 
-        .topbar {
-            height: 70px;
+      .topbar {
+            height: 70px; /* Tinggi topbar dibuat lebih ringkas */
             background: white;
             border-bottom: 1px solid #e5e7eb;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 25px;
+            padding: 0 20px;
             position: sticky;
             top: 0;
             z-index: 900;
@@ -143,20 +147,6 @@
         .page-title {
             font-size: 18px;
             font-weight: bold;
-        }
-
-        .user-info {
-            text-align: right;
-        }
-
-        .user-info strong {
-            display: block;
-            font-size: 14px;
-        }
-
-        .user-info span {
-            font-size: 12px;
-            color: #6b7280;
         }
 
         .content {
@@ -191,41 +181,32 @@
         }
 
         @media (max-width: 900px) {
-
             .sidebar {
                 width: 220px;
             }
-
             .main {
                 margin-left: 220px;
                 width: calc(100% - 220px);
             }
-
         }
 
         @media (max-width: 700px) {
-
             .sidebar {
                 position: static;
                 width: 100%;
                 min-height: auto;
             }
-
             .app {
                 display: block;
             }
-
             .main {
                 margin-left: 0;
                 width: 100%;
             }
-
             .topbar {
                 position: static;
             }
-
         }
-
     </style>
 
     @stack('styles')
@@ -410,34 +391,18 @@
                 ? 'active'
                 : '' }}"
             >
-                
-            Laporan & Analitik
+                Laporan & Analitik
             </a>
 
             <a
                 href="{{ route('hrd.blockchain.index') }}"
-                class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition
+                class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-bold transition
                 {{ request()->routeIs('hrd.blockchain.*')
-                ? 'bg-slate-900 text-white'
-                    : 'text-slate-600 hover:bg-slate-100' }}"
-        >
-            <svg
-            class="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-        >
-            <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a2 2 0 011.414.586l4.414 4.414A2 2 0 0117 11.414V19a2 2 0 01-2 2z"
-        />
-        </svg>
-
-        Blockchain Explorer
-    </a>
-
+                ? 'bg-blue-600 text-white'
+                    : 'text-gray-300 hover:bg-gray-800' }}"
+            >
+                Blockchain Explorer
+            </a>
 
         </div>
 
@@ -484,16 +449,34 @@
             </div>
 
 
-            <div class="user-info">
+            <!-- User Dropdown Menu (ET) di Pojok Kanan Atas -->
+            <div class="relative" x-data="{ open: false }">
+                <button @click="open = !open" class="flex items-center gap-2 focus:outline-none bg-white border border-gray-200 hover:bg-gray-50 px-3 py-1.5 rounded-lg shadow-sm transition">
+                    <div class="w-8 h-8 rounded-full bg-gray-200 text-gray-700 font-semibold flex items-center justify-center text-sm">
+                        ET
+                    </div>
+                    <div class="text-left hidden sm:block">
+                        <strong class="text-sm font-semibold text-gray-800 leading-tight block">
+                            {{ auth()->user()->name }}
+                        </strong>
+                        <span class="text-xs text-gray-500 leading-tight">
+                            HRD
+                        </span>
+                    </div>
+                    <svg class="w-4 h-4 text-gray-500 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </button>
 
-                <strong>
-                    {{ auth()->user()->name }}
-                </strong>
-
-                <span>
-                    HRD
-                </span>
-
+                <!-- Dropdown Box (Muncul saat ditekan, berisi tombol Logout) -->
+                <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50 text-sm text-gray-700">
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600 font-medium cursor-pointer">
+                            Log out
+                        </button>
+                    </form>
+                </div>
             </div>
 
         </header>
