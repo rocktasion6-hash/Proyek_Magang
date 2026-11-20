@@ -14,126 +14,192 @@
         @yield('title', 'HRD')
     </title>
 
-    <!-- Tailwind CSS (Diperlukan untuk dropdown dan styling logo ET) -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Alpine.js (Diperlukan agar fungsi klik x-data & x-show dropdown berfungsi) -->
+    <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     <style>
-        * {
+        [x-cloak] {
+            display: none !important;
+        }
+
+        *, *::before, *::after {
             box-sizing: border-box;
         }
 
         body {
             margin: 0;
             font-family: Arial, sans-serif;
-            background: #f3f4f6;
+            background: #fdfdfc;
             color: #111827;
+            overflow-x: hidden;
         }
 
         .app {
             display: flex;
             min-height: 100vh;
+            width: 100%;
         }
 
         /* ==========================================
-           SIDEBAR
+           SIDEBAR (TERSEMBUNYI AWALNYA)
         ========================================== */
 
         .sidebar {
-            width: 250px;
-            background: #111827;
-            color: white;
+            width: 260px;
+            background: #2c4a3e;
+            color: #fdfdfc;
             position: fixed;
             top: 0;
             left: 0;
             bottom: 0;
             overflow-y: auto;
             z-index: 1000;
+            transform: translateX(-100%);
+            transition: transform 0.22s ease;
+            border-right: 1px solid rgba(253, 253, 252, 0.14);
+        }
+
+        .sidebar.is-open {
+            transform: translateX(0);
         }
 
         .brand {
-            padding: 22px 20px;
-            border-bottom: 1px solid #374151;
+            padding: 20px;
+            border-bottom: 1px solid rgba(253, 253, 252, 0.14);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
         }
 
         .brand h2 {
             margin: 0;
-            font-size: 20px;
+            font-size: 18px;
+            font-weight: 700;
+            color: #fdfdfc;
         }
 
         .brand p {
-            margin: 6px 0 0;
-            color: #9ca3af;
-            font-size: 13px;
+            margin: 4px 0 0;
+            color: #f4f6f4;
+            font-size: 12px;
+            opacity: 0.85;
+        }
+
+        .close-sidebar-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: #4a7c59;
+            color: #fdfdfc;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 700;
+            line-height: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .close-sidebar-btn:hover {
+            background: #e3b535;
+            color: #111827;
         }
 
         .menu-title {
-            padding: 18px 20px 8px;
-            color: #9ca3af;
+            padding: 16px 20px 6px;
+            color: #e3b535;
             font-size: 11px;
-            font-weight: bold;
+            font-weight: 700;
             text-transform: uppercase;
+            letter-spacing: 0.06em;
         }
 
         .menu {
-            padding: 0 10px 10px;
+            padding: 0 12px 8px;
         }
 
         .menu a {
             display: block;
-            padding: 11px 12px;
-            color: #d1d5db;
+            padding: 10px 12px;
+            color: #f4f6f4;
             text-decoration: none;
-            border-radius: 7px;
+            border-radius: 8px;
             margin-bottom: 3px;
             font-size: 14px;
+            font-weight: 500;
         }
 
         .menu a:hover {
-            background: #1f2937;
-            color: white;
+            background: #4a7c59;
+            color: #fdfdfc;
         }
 
         .menu a.active {
-            background: #2563eb;
-            color: white;
+            background: #4a7c59;
+            color: #fdfdfc;
+            font-weight: 700;
+            border-left: 3px solid #e3b535;
         }
 
         .logout-section {
-            margin-top: 20px;
-            padding: 15px 10px;
-            border-top: 1px solid #374151;
+            margin-top: 16px;
+            padding: 14px 12px 20px;
+            border-top: 1px solid rgba(253, 253, 252, 0.14);
         }
 
         .logout-button {
             width: 100%;
-            padding: 11px 12px;
-            background: #dc2626;
-            color: white;
+            padding: 10px 12px;
+            background: #991b1b;
+            color: #fdfdfc;
             border: none;
-            border-radius: 7px;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 14px;
+            font-weight: 600;
         }
 
         .logout-button:hover {
-            background: #b91c1c;
+            background: #7f1d1d;
         }
 
         /* ==========================================
-           MAIN CONTENT
+           MAIN CONTENT (MENYESUAIKAN KE SAMPING)
         ========================================== */
 
         .main {
-            margin-left: 250px;
-            width: calc(100% - 250px);
+            margin-left: 0;
+            width: 100%;
             min-height: 100vh;
+            background: #fdfdfc;
+            transition: margin-left 0.22s ease, width 0.22s ease;
         }
 
-      .topbar {
-            height: 70px; /* Tinggi topbar dibuat lebih ringkas */
-            background: white;
+        @media (min-width: 701px) {
+            .app.sidebar-open .main {
+                margin-left: 260px;
+                width: calc(100% - 260px);
+            }
+        }
+
+        @media (max-width: 700px) {
+            .sidebar {
+                width: 230px;
+            }
+            .app.sidebar-open .main {
+                margin-left: 230px;
+                width: calc(100% - 230px);
+            }
+        }
+
+        .topbar {
+            height: 68px;
+            background: #ffffff;
             border-bottom: 1px solid #e5e7eb;
             display: flex;
             align-items: center;
@@ -142,15 +208,52 @@
             position: sticky;
             top: 0;
             z-index: 900;
+            gap: 12px;
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .hamburger-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: #f4f6f4;
+            color: #2c4a3e;
+            border: 1px solid #e2e8e4;
+            cursor: pointer;
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        .hamburger-btn:hover {
+            background: #2c4a3e;
+            color: #fdfdfc;
+            border-color: #2c4a3e;
+        }
+
+        .hamburger-line {
+            width: 16px;
+            height: 2px;
+            background: currentColor;
+            display: block;
         }
 
         .page-title {
             font-size: 18px;
-            font-weight: bold;
+            font-weight: 700;
+            color: #2c4a3e;
         }
 
         .content {
-            padding: 25px;
+            padding: 24px;
         }
 
         /* ==========================================
@@ -158,54 +261,31 @@
         ========================================== */
 
         .card {
-            background: white;
-            border-radius: 10px;
+            background: #ffffff;
+            border-radius: 12px;
             padding: 20px;
             margin-bottom: 20px;
+            border: 1px solid #e5e7eb;
         }
 
         .alert {
-            padding: 12px 15px;
-            border-radius: 7px;
+            padding: 12px 16px;
+            border-radius: 8px;
             margin-bottom: 20px;
+            font-size: 14px;
+            font-weight: 500;
         }
 
         .alert-success {
-            background: #dcfce7;
-            color: #166534;
+            background: #f4f6f4;
+            color: #2c4a3e;
+            border: 1px solid #4a7c59;
         }
 
         .alert-error {
-            background: #fee2e2;
+            background: #fef2f2;
             color: #991b1b;
-        }
-
-        @media (max-width: 900px) {
-            .sidebar {
-                width: 220px;
-            }
-            .main {
-                margin-left: 220px;
-                width: calc(100% - 220px);
-            }
-        }
-
-        @media (max-width: 700px) {
-            .sidebar {
-                position: static;
-                width: 100%;
-                min-height: auto;
-            }
-            .app {
-                display: block;
-            }
-            .main {
-                margin-left: 0;
-                width: 100%;
-            }
-            .topbar {
-                position: static;
-            }
+            border: 1px solid #fecaca;
         }
     </style>
 
@@ -215,220 +295,167 @@
 
 <body>
 
-<div class="app">
-
+<div id="hrd-app" class="app">
 
     {{-- ================================================= --}}
     {{-- SIDEBAR --}}
     {{-- ================================================= --}}
 
-    <aside class="sidebar">
+    <aside id="hrd-sidebar" class="sidebar">
 
         <div class="brand">
-
-            <h2>SIM Penilaian</h2>
-
-            <p>
-                Panel HRD
-            </p>
-
+            <div>
+                <h2>SIM Penilaian</h2>
+                <p>Panel HRD</p>
+            </div>
+            <button
+                type="button"
+                class="close-sidebar-btn"
+                onclick="toggleSidebar(false)"
+                aria-label="Tutup menu"
+            >
+                &times;
+            </button>
         </div>
-
 
         <div class="menu-title">
             Utama
         </div>
 
         <div class="menu">
-
             <a
                 href="{{ route('hrd.dashboard') }}"
-                class="{{ request()->routeIs('hrd.dashboard')
-                    ? 'active'
-                    : '' }}"
+                class="{{ request()->routeIs('hrd.dashboard') ? 'active' : '' }}"
             >
                 Dashboard
             </a>
-
         </div>
-
 
         <div class="menu-title">
             Data Master
         </div>
 
         <div class="menu">
-
             <a
                 href="{{ route('hrd.karyawan.index') }}"
-                class="{{ request()->routeIs('hrd.karyawan.*')
-                    ? 'active'
-                    : '' }}"
+                class="{{ request()->routeIs('hrd.karyawan.*') ? 'active' : '' }}"
             >
                 Manajemen Karyawan
             </a>
 
-            <a 
+            <a
                 href="{{ route('hrd.departemen.index') }}"
-                class="{{ request()->routeIs('hrd.departemen.*')
-                    ? 'active'
-                    : '' }}"
+                class="{{ request()->routeIs('hrd.departemen.*') ? 'active' : '' }}"
             >
                 Manajemen Departemen
             </a>
 
-            <a 
+            <a
                 href="{{ route('hrd.jabatan.index') }}"
-                class="{{ request()->routeIs('hrd.jabatan.*')
-                    ? 'active'
-                    : '' }}"
+                class="{{ request()->routeIs('hrd.jabatan.*') ? 'active' : '' }}"
             >
                 Manajemen Jabatan
             </a>
 
-            <a 
+            <a
                 href="{{ route('hrd.skill.index') }}"
-                class="{{ request()->routeIs('hrd.skill.*')
-                    ? 'active'
-                    : '' }}"
+                class="{{ request()->routeIs('hrd.skill.*') ? 'active' : '' }}"
             >
                 Manajemen Skill
             </a>
-
         </div>
-
 
         <div class="menu-title">
             Penilaian
         </div>
 
         <div class="menu">
-
             <a
                 href="{{ route('hrd.soal.index') }}"
-                class="{{ request()->routeIs('hrd.soal.*')
-                    ? 'active'
-                    : '' }}"
+                class="{{ request()->routeIs('hrd.soal.*') ? 'active' : '' }}"
             >
                 Bank Soal
             </a>
 
             <a
                 href="{{ route('hrd.assessment.index') }}"
-                class="{{ request()->routeIs('hrd.assessment.*')
-                    ? 'active'
-                    : '' }}"
+                class="{{ request()->routeIs('hrd.assessment.*') ? 'active' : '' }}"
             >
                 Assessment
             </a>
 
             <a
                 href="{{ route('hrd.hasil-assessment.index') }}"
-                class="{{ request()->routeIs('hrd.hasil-assessment.*')
-                    ? 'active'
-                    : '' }}"
+                class="{{ request()->routeIs('hrd.hasil-assessment.*') ? 'active' : '' }}"
             >
                 Hasil Penilaian
             </a>
-
         </div>
-
 
         <div class="menu-title">
             Pengembangan
         </div>
 
         <div class="menu">
-
             <a
                 href="{{ route('hrd.kenaikan-jabatan.index') }}"
-                class="{{ request()->routeIs('hrd.kenaikan-jabatan.*')
-                    ? 'active'
-                    : '' }}"
+                class="{{ request()->routeIs('hrd.kenaikan-jabatan.*') ? 'active' : '' }}"
             >
                 Kenaikan Jabatan
             </a>
 
             <a
                 href="{{ route('hrd.pemindahan-jabatan.index') }}"
-                class="{{ request()->routeIs('hrd.pemindahan-jabatan.*')
-                    ? 'active'
-                    : '' }}"
+                class="{{ request()->routeIs('hrd.pemindahan-jabatan.*') ? 'active' : '' }}"
             >
                 Pemindahan Jabatan
             </a>
 
             <a
                 href="{{ route('hrd.peningkatan-skill.index') }}"
-                class="{{ request()->routeIs('hrd.peningkatan-skill.*')
-                    ? 'active'
-                    : '' }}"
+                class="{{ request()->routeIs('hrd.peningkatan-skill.*') ? 'active' : '' }}"
             >
                 Peningkatan Skill
             </a>
-
         </div>
 
-
         <div class="menu-title">
-            Riwayat & Laporan
+            Riwayat &amp; Laporan
         </div>
 
         <div class="menu">
-
             <a
                 href="{{ route('hrd.riwayat.index') }}"
-                class="{{ request()->routeIs('hrd.riwayat.*')
-                    ? 'active'
-                    : '' }}"
+                class="{{ request()->routeIs('hrd.riwayat.*') ? 'active' : '' }}"
             >
                 Riwayat
             </a>
 
             <a
                 href="{{ route('hrd.laporan.index') }}"
-                class="{{ request()->routeIs('hrd.laporan.*')
-                ? 'active'
-                : '' }}"
+                class="{{ request()->routeIs('hrd.laporan.*') ? 'active' : '' }}"
             >
-                Laporan & Analitik
+                Laporan &amp; Analitik
             </a>
 
             <a
                 href="{{ route('hrd.blockchain.index') }}"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-bold transition
-                {{ request()->routeIs('hrd.blockchain.*')
-                ? 'bg-blue-600 text-white'
-                    : 'text-gray-300 hover:bg-gray-800' }}"
+                class="{{ request()->routeIs('hrd.blockchain.*') ? 'active' : '' }}"
             >
                 Blockchain Explorer
             </a>
-
         </div>
 
-
         <div class="logout-section">
-
-            <form
-                method="POST"
-                action="{{ route('logout') }}"
-            >
-
+            <form method="POST" action="{{ route('logout') }}">
                 @csrf
-
-                <button
-                    type="submit"
-                    class="logout-button"
-                >
+                <button type="submit" class="logout-button">
                     Keluar
                 </button>
-
             </form>
-
         </div>
 
     </aside>
-
 
     {{-- ================================================= --}}
     {{-- MAIN --}}
@@ -436,25 +463,28 @@
 
     <main class="main">
 
-
         <header class="topbar">
 
-            <div class="page-title">
+            <div class="topbar-left">
+                <button
+                    type="button"
+                    class="hamburger-btn"
+                    onclick="toggleSidebar()"
+                    aria-label="Buka menu navigasi"
+                >
+                    <span class="hamburger-line"></span>
+                    <span class="hamburger-line"></span>
+                    <span class="hamburger-line"></span>
+                </button>
 
-                @yield(
-                    'page_title',
-                    'Dashboard HRD'
-                )
-
+                <div class="page-title">
+                    @yield('page_title', 'Dashboard HRD')
+                </div>
             </div>
-
 
             <!-- User Dropdown Menu (ET) di Pojok Kanan Atas -->
             <div class="relative" x-data="{ open: false }">
-                <button @click="open = !open" class="flex items-center gap-2 focus:outline-none bg-white border border-gray-200 hover:bg-gray-50 px-3 py-1.5 rounded-lg shadow-sm transition">
-                    <div class="w-8 h-8 rounded-full bg-gray-200 text-gray-700 font-semibold flex items-center justify-center text-sm">
-                        ET
-                    </div>
+                <button @click="open = !open" class="flex items-center gap-2 focus:outline-none bg-white border border-gray-200 hover:bg-[#f4f6f4] px-3 py-1.5 rounded-lg shadow-sm transition">
                     <div class="text-left hidden sm:block">
                         <strong class="text-sm font-semibold text-gray-800 leading-tight block">
                             {{ auth()->user()->name }}
@@ -481,25 +511,19 @@
 
         </header>
 
-
         <section class="content">
 
             @if(session('success'))
-
                 <div class="alert alert-success">
                     {{ session('success') }}
                 </div>
-
             @endif
 
             @if(session('error'))
-
                 <div class="alert alert-error">
                     {{ session('error') }}
                 </div>
-
             @endif
-
 
             @yield('content')
 
@@ -509,6 +533,28 @@
 
 </div>
 
+<script>
+    function toggleSidebar(forceState = null) {
+        const app = document.getElementById('hrd-app');
+        const sidebar = document.getElementById('hrd-sidebar');
+        const isOpen = sidebar.classList.contains('is-open');
+        const shouldOpen = forceState !== null ? forceState : !isOpen;
+
+        if (shouldOpen) {
+            sidebar.classList.add('is-open');
+            app.classList.add('sidebar-open');
+        } else {
+            sidebar.classList.remove('is-open');
+            app.classList.remove('sidebar-open');
+        }
+    }
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            toggleSidebar(false);
+        }
+    });
+</script>
 
 @stack('scripts')
 

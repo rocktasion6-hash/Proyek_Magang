@@ -8,71 +8,64 @@
     <!-- Content -->
     <div class="max-w-7xl mx-auto space-y-6">
 
-        <!-- Bagian Judul dan Tanggal -->
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white px-6 py-5 rounded-xl border border-gray-100 shadow-sm">
-            <div>
-                <h2 class="text-xl font-bold text-gray-800">
-                    Dashboard HRD
-                </h2>
-                <p class="text-gray-500 mt-0.5 text-sm">
-                    Ringkasan data sistem penilaian dan pengembangan jabatan.
-                </p>
-            </div>
-            <div class="bg-[#f4f6f4] text-[#2c4a3e] px-3.5 py-1.5 rounded-lg font-medium text-xs border border-[#e2e8e4]">
-                {{ date('d M Y') }}
-            </div>
-        </div>
-
 
         <!-- Bagian Statistik Utama: Tampilan Panel Terpadu (Bukan Kotak Terpisah) -->
         <div class="bg-white rounded-xl p-6 border border-gray-100 shadow-sm space-y-6">
             <div class="flex justify-between items-center border-b border-gray-100 pb-4">
                 <div>
-                    <h3 class="text-sm font-bold uppercase tracking-wider text-gray-500">
-                        Ringkasan Metrik Sistem
-                    </h3>
-                    <p class="text-xs text-gray-400 mt-0.5">Data akumulatif master dan operasional HRD</p>
+                   <h2 class="text-xl font-bold text-gray-800">
+                    Rekap Hasil
+                </h2>
+                     <p class="text-gray-500 mt-0.5 text-sm">
+                    Ringkasan data sistem penilaian dan pengembangan jabatan.</p>
                 </div>
-                <span class="text-xs font-semibold text-[#2c4a3e] bg-[#f4f6f4] px-3 py-1 rounded-md border border-[#e2e8e4]">
-                    Real-time
+                <span class="bg-[#f4f6f4] text-[#2c4a3e] px-3.5 py-1.5 rounded-lg font-medium text-xs border border-[#e2e8e4]">
+                {{ date('d M Y') }}
                 </span>
             </div>
 
-            <!-- Grid Data Metrik (Clean Minimalist List) -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-                <div class="border-r border-gray-100 last:border-r-0 pr-4">
-                    <p class="text-xs text-gray-400 font-semibold uppercase tracking-wider">Total Karyawan</p>
-                    <p class="text-3xl font-extrabold text-gray-800 mt-2">{{ $totalKaryawan }}</p>
-                    <div class="w-full bg-gray-100 h-1 rounded-full mt-3">
-                        <div class="bg-[#2c4a3e] h-full rounded-full" style="width: 100%;"></div>
-                    </div>
-                </div>
+          <!-- Grid Data Metrik (Clean Minimalist List) -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+    @php
+        $acuanDasar = max($totalKaryawan, $totalJabatan, $totalSkill, $assessmentAktif, 1);
+        $persenKaryawan = min(($totalKaryawan / $acuanDasar) * 100, 100);
+        $persenJabatan = min(($totalJabatan / $acuanDasar) * 100, 100);
+        $persenSkill = min(($totalSkill / $acuanDasar) * 100, 100);
+        $persenAssessment = min(($assessmentAktif / $acuanDasar) * 100, 100);
+    @endphp
 
-                <div class="border-r border-gray-100 last:border-r-0 pr-4">
-                    <p class="text-xs text-gray-400 font-semibold uppercase tracking-wider">Total Jabatan</p>
-                    <p class="text-3xl font-extrabold text-gray-800 mt-2">{{ $totalJabatan }}</p>
-                    <div class="w-full bg-gray-100 h-1 rounded-full mt-3">
-                        <div class="bg-[#4a7c59] h-full rounded-full" style="width: 75%;"></div>
-                    </div>
-                </div>
-
-                <div class="border-r border-gray-100 last:border-r-0 pr-4">
-                    <p class="text-xs text-gray-400 font-semibold uppercase tracking-wider">Total Skill</p>
-                    <p class="text-3xl font-extrabold text-gray-800 mt-2">{{ $totalSkill }}</p>
-                    <div class="w-full bg-gray-100 h-1 rounded-full mt-3">
-                        <div class="bg-[#e3b535] h-full rounded-full" style="width: 60%;"></div>
-                    </div>
-                </div>
-
-                <div>
-                    <p class="text-xs text-gray-400 font-semibold uppercase tracking-wider">Assessment Aktif</p>
-                    <p class="text-3xl font-extrabold text-gray-800 mt-2">{{ $assessmentAktif }}</p>
-                    <div class="w-full bg-gray-100 h-1 rounded-full mt-3">
-                        <div class="bg-[#2c4a3e] h-full rounded-full" style="width: 45%;"></div>
-                    </div>
-                </div>
-            </div>
+    <div class="border-r border-gray-100 last:border-r-0 pr-4">
+        <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider">Total Karyawan</p>
+        <p class="text-3xl font-extrabold text-[#2c4a3e] mt-2">{{ $totalKaryawan }}</p>
+        <div class="w-full bg-[#f4f6f4] h-1.5 rounded-full mt-3 overflow-hidden">
+            <div class="bg-[#2c4a3e] h-full rounded-full" style="width: {{ $persenKaryawan }}%;"></div>
         </div>
+    </div>
+
+    <div class="border-r border-gray-100 last:border-r-0 pr-4">
+        <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider">Total Jabatan</p>
+        <p class="text-3xl font-extrabold text-[#2c4a3e] mt-2">{{ $totalJabatan }}</p>
+        <div class="w-full bg-[#f4f6f4] h-1.5 rounded-full mt-3 overflow-hidden">
+            <div class="bg-[#4a7c59] h-full rounded-full" style="width: {{ $persenJabatan }}%;"></div>
+        </div>
+    </div>
+
+    <div class="border-r border-gray-100 last:border-r-0 pr-4">
+        <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider">Total Skill</p>
+        <p class="text-3xl font-extrabold text-[#2c4a3e] mt-2">{{ $totalSkill }}</p>
+        <div class="w-full bg-[#f4f6f4] h-1.5 rounded-full mt-3 overflow-hidden">
+            <div class="bg-[#e3b535] h-full rounded-full" style="width: {{ $persenSkill }}%;"></div>
+        </div>
+    </div>
+
+    <div>
+        <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider">Assessment Aktif</p>
+        <p class="text-3xl font-extrabold text-[#2c4a3e] mt-2">{{ $assessmentAktif }}</p>
+        <div class="w-full bg-[#f4f6f4] h-1.5 rounded-full mt-3 overflow-hidden">
+            <div class="bg-[#4a7c59] h-full rounded-full" style="width: {{ $persenAssessment }}%;"></div>
+        </div>
+    </div>
+</div>
 
 
         <!-- Bagian Sekunder: Layout Asimetris (Performa & Pengajuan) -->
