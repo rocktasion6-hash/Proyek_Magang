@@ -252,6 +252,103 @@
             color: #2c4a3e;
         }
 
+        /* ==========================================
+           USER DROPDOWN
+        ========================================== */
+
+        .hrd-account-wrap {
+            position: relative;
+            display: inline-block;
+        }
+
+        .hrd-account-trigger {
+            display: inline-flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 8px 16px;
+            border-radius: 12px;
+            border: 1px solid #233c32;
+            background: #ffffff;
+            color: #111827;
+            cursor: pointer;
+            text-align: left;
+            transition: background-color 0.15s ease;
+        }
+
+        .hrd-account-trigger:hover {
+            background: #f9fafb;
+        }
+
+        .hrd-account-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .hrd-account-name {
+            display: block;
+            font-size: 14.5px;
+            font-weight: 700;
+            color: #111827;
+            line-height: 1.2;
+        }
+
+        .hrd-account-role {
+            display: block;
+            margin-top: 2px;
+            font-size: 12.5px;
+            font-weight: 400;
+            color: #4b5563;
+            line-height: 1.2;
+        }
+
+        .hrd-caret {
+            font-size: 9px;
+            color: #111827;
+            line-height: 1;
+            margin-top: 3px;
+        }
+
+        .hrd-dropdown-menu {
+            position: absolute;
+            top: calc(100% + 6px);
+            right: 0;
+            left: 0;
+            width: 100%;
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 14px;
+            padding: 8px;
+            z-index: 50;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .hrd-btn-logout {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 9px 14px;
+            border-radius: 10px;
+            border: 1px solid #8f1919;
+            background: #fffafa;
+            color: #8f1919;
+            font-size: 14.5px;
+            font-weight: 700;
+            cursor: pointer;
+            line-height: 1.25;
+            white-space: nowrap;
+            transition: background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+        }
+
+        .hrd-btn-logout:hover,
+        .hrd-btn-logout:active {
+            background: #8f1919;
+            border-color: #8f1919;
+            color: #ffffff;
+        }
+
         .content {
             padding: 24px;
         }
@@ -482,28 +579,33 @@
                 </div>
             </div>
 
-            <!-- User Dropdown Menu (ET) di Pojok Kanan Atas -->
-            <div class="relative" x-data="{ open: false }">
-                <button @click="open = !open" class="flex items-center gap-2 focus:outline-none bg-white border border-gray-200 hover:bg-[#f4f6f4] px-3 py-1.5 rounded-lg shadow-sm transition">
-                    <div class="text-left hidden sm:block">
-                        <strong class="text-sm font-semibold text-gray-800 leading-tight block">
-                            {{ auth()->user()->name }}
-                        </strong>
-                        <span class="text-xs text-gray-500 leading-tight">
-                            HRD
-                        </span>
-                    </div>
-                    <svg class="w-4 h-4 text-gray-500 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
+            <!-- User Dropdown Menu di Pojok Kanan Atas -->
+            <div class="hrd-account-wrap" x-data="{ open: false }" @keydown.escape.window="open = false">
+                <button
+                    type="button"
+                    @click="open = !open"
+                    :aria-expanded="open.toString()"
+                    class="hrd-account-trigger"
+                >
+                    <span class="hrd-account-info">
+                        <span class="hrd-account-name">{{ auth()->user()->name }}</span>
+                        <span class="hrd-account-role">HRD</span>
+                    </span>
+                    <span class="hrd-caret" aria-hidden="true">&#9662;</span>
                 </button>
 
                 <!-- Dropdown Box (Muncul saat ditekan, berisi tombol Logout) -->
-                <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50 text-sm text-gray-700">
+                <div
+                    x-show="open"
+                    @click.outside="open = false"
+                    x-cloak
+                    class="hrd-dropdown-menu"
+                    role="menu"
+                >
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
-                        <button type="submit" class="w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600 font-medium cursor-pointer">
-                            Log out
+                        <button type="submit" class="hrd-btn-logout">
+                            Logout
                         </button>
                     </form>
                 </div>
