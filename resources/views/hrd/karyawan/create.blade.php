@@ -1,451 +1,389 @@
-<!DOCTYPE html>
-<html lang="id">
-
-<head>
-
-    <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>Tambah Karyawan</title>
-
-    <style>
-
-        body {
-            font-family: Arial, sans-serif;
-            background: #f4f6f8;
-            margin: 0;
-            padding: 30px;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: auto;
-        }
-
-        .card {
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-        }
-
-        .section {
-            margin-top: 30px;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        .section h2 {
-            margin-bottom: 5px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 7px;
-            font-weight: bold;
-        }
-
-        input,
-        select {
-            width: 100%;
-            box-sizing: border-box;
-            padding: 11px;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
-        }
-
-        .hint {
-            display: block;
-            margin-top: 5px;
-            color: #6b7280;
-            font-size: 13px;
-        }
-
-        .btn {
-            display: inline-block;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 6px;
-            text-decoration: none;
-            cursor: pointer;
-        }
-
-        .btn-primary {
-            background: #2563eb;
-            color: white;
-        }
-
-        .btn-secondary {
-            background: #6b7280;
-            color: white;
-        }
-
-        .alert {
-            background: #fee2e2;
-            color: #991b1b;
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-        }
-
-        .info {
-            background: #eff6ff;
-            color: #1e40af;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-
-    </style>
-
-</head>
-
-<body>
 @extends('layouts.hrd')
+
 @section('title', 'Tambah Karyawan')
 @section('page_title', 'Tambah Karyawan')
+
+@push('styles')
+<style>
+    .tambah-wrap {
+        width: 100%;
+        max-width: 1220px;
+        margin: 0 auto;
+    }
+
+    .tambah-card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 26px 28px;
+    }
+
+    .catatan-bar {
+        background: #f8faf9;
+        color: #1f2937;
+        border: 1px solid #e5e7eb;
+        border-left: 4px solid #e3b535;
+        border-radius: 10px;
+        padding: 13px 16px;
+        margin-bottom: 22px;
+        font-size: 13.5px;
+        line-height: 1.5;
+    }
+
+    .catatan-bar strong {
+        color: #111827;
+    }
+
+    .error-bar {
+        background: #fef2f2;
+        color: #991b1b;
+        border: 1px solid #fecaca;
+        border-left: 4px solid #991b1b;
+        border-radius: 10px;
+        padding: 13px 16px;
+        margin-bottom: 22px;
+        font-size: 13.5px;
+    }
+
+    .error-bar ul {
+        margin: 6px 0 0 18px;
+        padding: 0;
+    }
+
+    .section-strip {
+        background: #f4f6f4;
+        border-left: 4px solid #4a7c59;
+        border-radius: 6px;
+        padding: 9px 14px;
+        margin: 26px 0 18px;
+        font-size: 14px;
+        font-weight: 700;
+        color: #1f2937;
+    }
+
+    .section-strip:first-of-type {
+        margin-top: 4px;
+    }
+
+    .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px 24px;
+    }
+
+    .span-2 {
+        grid-column: 1 / -1;
+    }
+
+    .input-item label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 13.5px;
+        font-weight: 700;
+        color: #111827;
+    }
+
+    .input-item input,
+    .input-item select {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 11px 14px;
+        font-size: 14px;
+        color: #111827;
+        background: #ffffff;
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+    }
+
+    .input-item input:focus,
+    .input-item select:focus {
+        outline: none;
+        border-color: #2c4a3e;
+    }
+
+    .input-item input:disabled,
+    .input-item select:disabled {
+        background: #f3f4f6;
+        color: #6b7280;
+        border-color: #e5e7eb;
+        cursor: not-allowed;
+    }
+
+    .sub-hint {
+        display: block;
+        margin-top: 6px;
+        font-size: 12.5px;
+        color: #6b7280;
+    }
+
+    .field-err {
+        display: block;
+        margin-top: 6px;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: #991b1b;
+    }
+
+    .form-actions {
+        margin-top: 28px;
+        padding-top: 18px;
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .btn-simpan-utama {
+        padding: 10px 20px;
+        border-radius: 8px;
+        border: none;
+        background: #2c4a3e;
+        color: #fdfdfc;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .btn-simpan-utama:hover {
+        background: #4a7c59;
+    }
+
+    .btn-batal-link {
+        padding: 10px 16px;
+        border-radius: 8px;
+        border: 1px solid #d1d5db;
+        background: #ffffff;
+        color: #374151;
+        font-size: 14px;
+        text-decoration: none;
+    }
+
+    .btn-batal-link:hover {
+        background: #f4f6f4;
+    }
+
+    @media (max-width: 768px) {
+        .grid-2 {
+            grid-template-columns: 1fr;
+        }
+
+        .tambah-card {
+            padding: 18px;
+        }
+    }
+</style>
+@endpush
+
 @section('content')
-<div class="container">
-
-    <div style="margin-bottom:20px;">
-
-        <a
-            href="{{ route('hrd.karyawan.index') }}"
-            class="btn btn-secondary"
-        >
-            ← Kembali
-        </a>
-
-    </div>
-
-    <div class="card">
-
-        <h1>Tambah Karyawan</h1>
-
-        <p>
-            Tambahkan data karyawan sekaligus membuat akun login.
-        </p>
+<div class="tambah-wrap">
+    <div class="tambah-card">
 
         @if($errors->any())
-
-            <div class="alert">
-
+            <div class="error-bar">
                 <strong>Terjadi kesalahan:</strong>
-
                 <ul>
-
                     @foreach($errors->all() as $error)
-
                         <li>{{ $error }}</li>
-
                     @endforeach
-
                 </ul>
-
             </div>
-
         @endif
 
-        <div class="info">
 
-            Karyawan baru akan otomatis mendapatkan jabatan
-            <strong>Crew</strong> sebagai jabatan awal.
-            Untuk berpindah jabatan, karyawan harus mengikuti
-            ujian pemindahan jabatan terlebih dahulu.
-
-        </div>
-
-        <form
-            method="POST"
-            action="{{ route('hrd.karyawan.store') }}"
-        >
-
+        <form method="POST" action="{{ route('hrd.karyawan.store') }}">
             @csrf
-
 
             {{-- ===================================================== --}}
             {{-- DATA KARYAWAN --}}
             {{-- ===================================================== --}}
+            <div class="section-strip">Data Karyawan</div>
 
-            <div class="section">
+            <div class="grid-2">
+                <div class="input-item">
+                    <label for="nik">NIK</label>
+                    <input
+                        type="text"
+                        id="nik"
+                        name="nik"
+                        value="{{ old('nik') }}"
+                        required
+                        placeholder="Contoh: KRY003"
+                    >
+                    @error('nik')
+                        <span class="field-err">{{ $message }}</span>
+                    @enderror
+                </div>
 
-                <h2>Data Karyawan</h2>
+                <div class="input-item">
+                    <label for="nama">Nama Karyawan</label>
+                    <input
+                        type="text"
+                        id="nama"
+                        name="nama"
+                        value="{{ old('nama') }}"
+                        required
+                        placeholder="Nama lengkap karyawan"
+                    >
+                    @error('nama')
+                        <span class="field-err">{{ $message }}</span>
+                    @enderror
+                </div>
 
-                <p>
-                    Informasi dasar karyawan.
-                </p>
-
+                <div class="input-item span-2">
+                    <label for="pt">PT/Perusahaan</label>
+                    <input
+                        type="text"
+                        id="pt"
+                        name="pt"
+                        value="{{ old('pt') }}"
+                        maxlength="255"
+                        placeholder="Contoh: OSMI atau GCNS"
+                    >
+                    @error('pt')
+                        <span class="field-err">{{ $message }}</span>
+                    @enderror
+                </div>
             </div>
-
-            <div class="form-group">
-
-                <label>
-                    NIK
-                </label>
-
-                <input
-                    type="text"
-                    name="nik"
-                    value="{{ old('nik') }}"
-                    required
-                    placeholder="Contoh: KRY003"
-                >
-
-            </div>
-
-            <div class="form-group">
-
-                <label>
-                    Nama Karyawan
-                </label>
-
-                <input
-                    type="text"
-                    name="nama"
-                    value="{{ old('nama') }}"
-                    required
-                    placeholder="Nama lengkap karyawan"
-                >
-
-            </div>
-
-            <div class="form-group">
-
-                <label for="pt">
-                    PT/Perusahaan
-                </label>
-
-                <input
-                    type="text"
-                    id="pt"
-                    name="pt"
-                    value="{{ old('pt') }}"
-                    maxlength="255"
-                    placeholder="Contoh: OSMI atau GCNS"
-                >
-
-            </div>
-
 
             {{-- ===================================================== --}}
             {{-- AKUN LOGIN --}}
             {{-- ===================================================== --}}
+            <div class="section-strip">Akun Login</div>
 
-            <div class="section">
+            <div class="grid-2">
+                <div class="input-item">
+                    <label for="username">Username</label>
+                    <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        value="{{ old('username') }}"
+                        required
+                        placeholder="Contoh: karyawan003"
+                    >
+                    <small class="sub-hint">Username digunakan saat login.</small>
+                    @error('username')
+                        <span class="field-err">{{ $message }}</span>
+                    @enderror
+                </div>
 
-                <h2>Akun Login</h2>
+                <div class="input-item">
+                    <label for="email">Email</label>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        value="{{ old('email') }}"
+                        required
+                        placeholder="Contoh: karyawan@gmail.com"
+                    >
+                    @error('email')
+                        <span class="field-err">{{ $message }}</span>
+                    @enderror
+                </div>
 
-                <p>
-                    Akun ini digunakan karyawan untuk masuk ke sistem.
-                </p>
+                <div class="input-item">
+                    <label for="password">Password</label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        required
+                        minlength="8"
+                        placeholder="Minimal 8 karakter"
+                    >
+                    @error('password')
+                        <span class="field-err">{{ $message }}</span>
+                    @enderror
+                </div>
 
+                <div class="input-item">
+                    <label for="password_confirmation">Konfirmasi Password</label>
+                    <input
+                        type="password"
+                        id="password_confirmation"
+                        name="password_confirmation"
+                        required
+                        minlength="8"
+                        placeholder="Ulangi password"
+                    >
+                </div>
             </div>
-
-            <div class="form-group">
-
-                <label>
-                    Email
-                </label>
-
-                <input
-                    type="email"
-                    name="email"
-                    value="{{ old('email') }}"
-                    required
-                    placeholder="Contoh: karyawan@gmail.com"
-                >
-
-            </div>
-
-            <div class="form-group">
-
-                <label>
-                    Username
-                </label>
-
-                <input
-                    type="text"
-                    name="username"
-                    value="{{ old('username') }}"
-                    required
-                    placeholder="Contoh: karyawan003"
-                >
-
-                <small class="hint">
-                    Username digunakan saat login.
-                </small>
-
-            </div>
-
-            <div class="form-group">
-
-                <label>
-                    Password
-                </label>
-
-                <input
-                    type="password"
-                    name="password"
-                    required
-                    minlength="8"
-                    placeholder="Minimal 8 karakter"
-                >
-
-            </div>
-
-            <div class="form-group">
-
-                <label>
-                    Konfirmasi Password
-                </label>
-
-                <input
-                    type="password"
-                    name="password_confirmation"
-                    required
-                    minlength="8"
-                    placeholder="Ulangi password"
-                >
-
-            </div>
-
 
             {{-- ===================================================== --}}
             {{-- DATA PEKERJAAN --}}
             {{-- ===================================================== --}}
+            <div class="section-strip">Data Pekerjaan</div>
 
-            <div class="section">
+            <div class="grid-2">
+                <div class="input-item">
+                    <label for="departemen_id">Departemen</label>
+                    <select id="departemen_id" name="departemen_id" required>
+                        <option value="">-- Pilih Departemen --</option>
+                        @foreach($departemens as $departemen)
+                            <option
+                                value="{{ $departemen->id }}"
+                                {{ old('departemen_id') == $departemen->id ? 'selected' : '' }}
+                            >
+                                {{ $departemen->nama_departemen }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('departemen_id')
+                        <span class="field-err">{{ $message }}</span>
+                    @enderror
+                </div>
 
-                <h2>Data Pekerjaan</h2>
-
-                <p>
-                    Tentukan departemen dan jabatan awal karyawan.
-                </p>
-
-            </div>
-
-            <div class="form-group">
-
-                <label>
-                    Departemen
-                </label>
-
-                <select
-                    name="departemen_id"
-                    required
-                >
-
-                    <option value="">
-                        -- Pilih Departemen --
-                    </option>
-
-                    @foreach($departemens as $departemen)
-
-                        <option
-                            value="{{ $departemen->id }}"
-                            {{ old('departemen_id') == $departemen->id ? 'selected' : '' }}
-                        >
-
-                            {{ $departemen->nama_departemen }}
-
+                <div class="input-item">
+                    <label for="status">Status</label>
+                    <select id="status" name="status" required>
+                        <option value="aktif" {{ old('status', 'aktif') === 'aktif' ? 'selected' : '' }}>
+                            Aktif
                         </option>
+                        <option value="nonaktif" {{ old('status') === 'nonaktif' ? 'selected' : '' }}>
+                            Nonaktif
+                        </option>
+                    </select>
+                    @error('status')
+                        <span class="field-err">{{ $message }}</span>
+                    @enderror
+                </div>
 
-                    @endforeach
-
-                </select>
-
-            </div>
-
-            <div class="form-group">
-
-                <label>Jabatan Awal</label>
-
-                <input
-                    type="text"
-                    value="Crew"
-                    disabled
-                    style="background:#f3f4f6;color:#6b7280;"
-                >
-
-                <small class="hint">
-                    Jabatan awal karyawan baru selalu Crew.
-                    Perubahan jabatan dilakukan melalui ujian pemindahan jabatan.
-                </small>
-
-            </div>
-
-            <div class="form-group">
-
-                <label>
-                    Tanggal Masuk
-                </label>
-
-                <input
-                    type="date"
-                    name="tanggal_masuk"
-                    value="{{ old(
-                        'tanggal_masuk',
-                        now()->toDateString()
-                    ) }}"
-                    required
-                >
-
-            </div>
-
-            <div class="form-group">
-
-                <label>
-                    Status
-                </label>
-
-                <select
-                    name="status"
-                    required
-                >
-
-                    <option
-                        value="aktif"
-                        {{ old('status', 'aktif') === 'aktif'
-                            ? 'selected'
-                            : '' }}
+                <div class="input-item">
+                    <label for="tanggal_masuk">Tanggal Masuk</label>
+                    <input
+                        type="date"
+                        id="tanggal_masuk"
+                        name="tanggal_masuk"
+                        value="{{ old('tanggal_masuk', now()->toDateString()) }}"
+                        required
                     >
-                        Aktif
-                    </option>
+                    @error('tanggal_masuk')
+                        <span class="field-err">{{ $message }}</span>
+                    @enderror
+                </div>
 
-                    <option
-                        value="nonaktif"
-                        {{ old('status') === 'nonaktif'
-                            ? 'selected'
-                            : '' }}
+                <div class="input-item">
+                    <label for="jabatan_awal">Jabatan Awal</label>
+                    <input
+                        type="text"
+                        id="jabatan_awal"
+                        value="Crew"
+                        disabled
                     >
-                        Nonaktif
-                    </option>
-
-                </select>
-
+                    <small class="sub-hint">
+                        Jabatan awal karyawan baru selalu Crew.
+                        Perubahan jabatan dilakukan melalui ujian pemindahan jabatan.
+                    </small>
+                </div>
             </div>
 
-            <button
-                type="submit"
-                class="btn btn-primary"
-            >
-                Simpan Karyawan
-            </button>
-
+            <div class="form-actions">
+                <button type="submit" class="btn-simpan-utama">Simpan Karyawan</button>
+                <a href="{{ route('hrd.karyawan.index') }}" class="btn-batal-link">Kembali</a>
+            </div>
         </form>
 
     </div>
-
 </div>
 @endsection
-</body>
-
-</html>
