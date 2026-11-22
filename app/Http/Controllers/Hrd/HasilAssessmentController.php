@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Hrd;
 use App\Http\Controllers\Controller;
 use App\Models\HasilAssessment;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class HasilAssessmentController extends Controller
 {
@@ -65,4 +66,35 @@ class HasilAssessmentController extends Controller
             compact('hasilAssessment')
         );
     }
+
+/**
+ * Mengunduh laporan hasil assessment dalam PDF A4.
+ */
+public function downloadPdf(HasilAssessment $hasilAssessment)
+{
+    $hasilAssessment->load([
+        'assessmentPeserta.karyawan.jabatan',
+        'assessmentPeserta.assessment.jabatan',
+        'assessmentPeserta.assessment.soalUpload',
+        'assessmentPeserta.assessment.soals.pilihanJawabans',
+        'assessmentPeserta.jawabans.pilihanJawaban',
+    ]);
+
+    $pdf = Pdf::loadView(
+        'hrd.hasil-assessment.pdf',
+        compact('hasilAssessment')
+    )->setPaper('a4', 'portrait');
+
+    $namaKaryawan = $hasilAssessment
+        ->assessmentPeserta
+        ->karyawan
+        ->nama ?? 'Karyawan';
+
+    $namaFile = 'Hasil_Assessment_' .
+        preg_replace('/[^A-Za-z0-9_-]+/', '_', $namaKaryawan) .
+        '_' . $hasilAssessment->id . '.pdf';
+
+    return $pdf->download($namaFile);
+}
+
 }

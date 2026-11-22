@@ -1,45 +1,32 @@
-<!DOCTYPE html>
-<html lang="id">
-
-<head>
-    <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>Buat Assessment - HRD</title>
-
-    @vite([
-        'resources/css/app.css',
-        'resources/js/app.js'
-    ])
-</head>
-
-<body class="bg-gray-100 min-h-screen">
 @extends('layouts.hrd')
 @section('title', 'Tambah Assessment')
 @section('page_title', 'Tambah Assessment')
 @section('content')
-    <main class="max-w-6xl mx-auto px-6 py-10">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 py-7 pb-12">
 
-        <div class="mb-6">
-
-            <h1 class="text-2xl font-bold text-gray-800">
-                Buat Assessment
-            </h1>
-
-            <p class="text-gray-500 mt-1">
-                Pilih departemen, jabatan tujuan, dan bank soal dari departemen yang sama.
-            </p>
-
+        {{-- Header Buat Assessment --}}
+        <div class="relative overflow-hidden bg-white rounded-2xl border border-gray-200 shadow-sm px-6 py-5 mb-5">
+            <div class="absolute -right-14 -bottom-24 w-96 h-40 rounded-[100%] bg-[#e8f5eb] opacity-70 pointer-events-none"></div>
+            <div class="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <div class="w-14 h-14 rounded-xl bg-[#dff1e4] flex items-center justify-center flex-shrink-0">
+                        <svg class="w-8 h-8 text-[#27643d]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6M9 10h6M9 14h6M9 18h4"/></svg>
+                    </div>
+                    <div class="border-l-2 border-[#4a7c59] pl-4">
+                        <h1 class="text-2xl font-bold text-[#172b24] tracking-tight">Buat Assessment</h1>
+                        <p class="text-sm text-gray-500 mt-1">Buat assessment baru untuk karyawan.</p>
+                    </div>
+                </div>
+                <a href="{{ route('hrd.assessment.index') }}" class="self-start sm:self-auto inline-flex items-center justify-center gap-2 rounded-lg border border-[#4a7c59] bg-white px-4 py-2.5 text-sm font-semibold text-[#2c4a3e] hover:bg-[#e8f1ea] transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6M20 12H9"/></svg>
+                    Kembali
+                </a>
+            </div>
         </div>
-
 
         @if ($errors->any())
 
-            <div class="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-6">
+            <div class="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 mb-6">
 
                 <ul class="list-disc pl-5 space-y-1">
 
@@ -65,18 +52,21 @@
 
 
             <!-- Informasi Assessment -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 sm:p-6">
 
-                <h2 class="text-lg font-semibold text-gray-800 mb-5">
-                    Informasi Assessment
-                </h2>
+                <div class="flex items-center gap-3 mb-5">
+                    <span class="w-7 h-7 rounded-lg bg-[#2c4a3e] text-white flex items-center justify-center text-xs font-bold">1</span>
+                    <div>
+                        <h2 class="text-lg font-bold text-[#203e32]">Informasi Assessment</h2>
+                    </div>
+                </div>
 
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-4">
 
-                    <div class="md:col-span-2">
+                    <div>
 
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
                             Nama Assessment
                         </label>
 
@@ -85,7 +75,7 @@
                             name="nama_assessment"
                             value="{{ old('nama_assessment') }}"
                             required
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2"
+                            class="w-full h-11 border border-gray-300 rounded-xl px-4 py-2.5 bg-white text-sm text-gray-800 outline-none focus:border-[#4a7c59] focus:ring-2 focus:ring-[#e2efe5] transition"
                             placeholder="Contoh: Ujian Kenaikan Operator Senior"
                         >
 
@@ -93,7 +83,7 @@
 
                     <div>
 
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
                             Departemen Peserta
                         </label>
 
@@ -101,7 +91,7 @@
                             name="departemen_id"
                             id="departemen_id"
                             required
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2"
+                            class="w-full h-11 border border-gray-300 rounded-xl px-4 py-2.5 bg-white text-sm text-gray-800 outline-none focus:border-[#4a7c59] focus:ring-2 focus:ring-[#e2efe5] transition"
                         >
 
                             <option value="">
@@ -126,7 +116,7 @@
 
                     <div>
 
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
                             Jabatan Tujuan
                         </label>
 
@@ -134,7 +124,7 @@
                             name="jabatan_id"
                             id="jabatan_id"
                             required
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2"
+                            class="w-full h-11 border border-gray-300 rounded-xl px-4 py-2.5 bg-white text-sm text-gray-800 outline-none focus:border-[#4a7c59] focus:ring-2 focus:ring-[#e2efe5] transition"
                         >
 
                             <option value="">
@@ -156,13 +146,11 @@
 
                     </div>
 
-                    <p class="md:col-span-2 text-sm text-gray-500">
-                        Standar kelulusan otomatis mengikuti standar nilai yang ditetapkan pada jabatan.
-                    </p>
+
 
                     <div>
 
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
                             Durasi (menit)
                         </label>
 
@@ -172,7 +160,7 @@
                             value="{{ old('durasi', 60) }}"
                             min="1"
                             required
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2"
+                            class="w-full h-11 border border-gray-300 rounded-xl px-4 py-2.5 bg-white text-sm text-gray-800 outline-none focus:border-[#4a7c59] focus:ring-2 focus:ring-[#e2efe5] transition"
                         >
 
                     </div>
@@ -180,7 +168,7 @@
 
                     <div>
 
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
                             Tanggal Mulai
                         </label>
 
@@ -189,7 +177,7 @@
                             name="tanggal_mulai"
                             value="{{ old('tanggal_mulai') }}"
                             required
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2"
+                            class="w-full h-11 border border-gray-300 rounded-xl px-4 py-2.5 bg-white text-sm text-gray-800 outline-none focus:border-[#4a7c59] focus:ring-2 focus:ring-[#e2efe5] transition"
                         >
 
                     </div>
@@ -197,7 +185,7 @@
 
                     <div>
 
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
                             Tanggal Selesai
                         </label>
 
@@ -206,9 +194,14 @@
                             name="tanggal_selesai"
                             value="{{ old('tanggal_selesai') }}"
                             required
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2"
+                            class="w-full h-11 border border-gray-300 rounded-xl px-4 py-2.5 bg-white text-sm text-gray-800 outline-none focus:border-[#4a7c59] focus:ring-2 focus:ring-[#e2efe5] transition"
                         >
 
+                    </div>
+
+                    <div class="md:col-span-3 rounded-xl bg-[#f0f7f1] border border-[#dbe9dd] px-4 py-3 flex items-start gap-2">
+                        <svg class="w-5 h-5 text-[#4a7c59] shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7h.01"/></svg>
+                        <p class="text-sm text-[#436250]">Standar kelulusan otomatis mengikuti standar nilai yang ditetapkan pada jabatan.</p>
                     </div>
 
                 </div>
@@ -217,16 +210,17 @@
 
 
             <!-- Konfigurasi Soal -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mt-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 sm:p-6 mt-5">
 
                 <div class="mb-5">
 
-                    <h2 class="text-lg font-semibold text-gray-800">
-                        Susun Soal Assessment
-                    </h2>
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="w-7 h-7 rounded-lg bg-[#2c4a3e] text-white flex items-center justify-center text-xs font-bold">2</span>
+                        <h2 class="text-lg font-bold text-[#203e32]">Susun Soal</h2>
+                    </div>
 
                     <p class="text-sm text-gray-500 mt-1">
-                        Pilih kategori dari dropdown lalu tekan Tambahkan. Urutan yang ditambahkan menjadi urutan soal dalam assessment. Peraturan perusahaan dan K3 diambil dari Level/SOP 1. Assessment struktural menggunakan satu bank soal khusus jabatan tujuan.
+                        Pilih peraturan, K3, atau SOP, lalu klik Tambahkan untuk mengatur komposisi soal. Bank soal tersedia mengikuti departemen dan jabatan tujuan.
                     </p>
 
                 </div>
@@ -234,7 +228,7 @@
                 <div class="flex flex-col gap-3 sm:flex-row">
                     <select
                         id="pilihan-soal"
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2"
+                        class="w-full h-11 border border-gray-300 rounded-xl px-4 py-2.5 bg-white text-sm text-gray-800 outline-none focus:border-[#4a7c59] focus:ring-2 focus:ring-[#e2efe5] transition"
                     >
                         <option value="">Pilih prosedur atau SOP</option>
                     </select>
@@ -242,7 +236,7 @@
                     <button
                         id="tambah-soal"
                         type="button"
-                        class="shrink-0 rounded-lg bg-blue-600 px-5 py-2 font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+                        class="shrink-0 rounded-xl bg-[#2c4a3e] px-5 py-2.5 font-semibold text-white hover:bg-[#3c624e] transition disabled:cursor-not-allowed disabled:bg-gray-300"
                         disabled
                     >
                         Tambahkan
@@ -251,7 +245,7 @@
 
                 <p id="bank-soal-info" class="text-sm text-gray-500 mt-2"></p>
 
-                <div id="bank-soal-container" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4"></div>
+                <div id="bank-soal-container" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5"></div>
 
                 <div
                     id="konfigurasi-soal-container"
@@ -266,16 +260,17 @@
 
 
             <!-- Peserta Otomatis -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mt-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 sm:p-6 mt-5">
 
                 <div class="mb-5">
 
-                    <h2 class="text-lg font-semibold text-gray-800">
-                        Peserta Assessment Otomatis
-                    </h2>
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="w-7 h-7 rounded-lg bg-[#2c4a3e] text-white flex items-center justify-center text-xs font-bold">3</span>
+                        <h2 class="text-lg font-bold text-[#203e32]">Peserta Otomatis</h2>
+                    </div>
 
                     <p class="text-sm text-gray-500 mt-1">
-                        Level 1 mengikutsertakan karyawan Crew aktif; Level 2-5 mengikutsertakan karyawan aktif satu level di bawah pada keluarga jabatan yang sama. Assessment struktural mengikutsertakan karyawan aktif satu tahap jabatan sebelumnya. Semua peserta berasal dari departemen terpilih.
+                        Peserta yang memenuhi ketentuan akan muncul otomatis berdasarkan departemen dan jabatan tujuan.
                     </p>
 
                 </div>
@@ -285,11 +280,11 @@
                     Pilih departemen dan jabatan tujuan untuk melihat peserta yang akan ditugaskan.
                 </p>
 
-                <div class="overflow-x-auto">
+                <div class="overflow-x-auto rounded-xl border border-gray-200">
 
-                    <table class="w-full text-sm">
+                    <table class="w-full min-w-[700px] text-sm">
 
-                        <thead class="bg-gray-50">
+                        <thead class="bg-[#e0f0e4] text-[#203e32]">
 
                             <tr>
 
@@ -357,20 +352,20 @@
 
 
             <!-- Tombol -->
-            <div class="flex items-center justify-between mt-6">
+            <div class="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-3 mt-5 bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
 
                 <a
                     href="{{ route('hrd.assessment.index') }}"
-                    class="px-5 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium"
+                    class="inline-flex items-center justify-center px-5 py-3 bg-white border border-[#4a7c59] hover:bg-[#e8f1ea] text-[#2c4a3e] rounded-xl font-semibold text-sm transition"
                 >
                     Batal
                 </a>
 
                 <button
                     type="submit"
-                    class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold"
+                    class="inline-flex items-center justify-center px-6 py-3 bg-[#2c4a3e] hover:bg-[#3c624e] text-white rounded-xl font-semibold text-sm shadow-sm transition"
                 >
-                    Buat Assessment
+                    Simpan Assessment
                 </button>
 
             </div>
@@ -552,7 +547,7 @@
                 );
 
                 const field = document.createElement('div');
-                field.className = 'rounded-lg border border-gray-200 p-4';
+                field.className = 'rounded-xl border border-gray-200 bg-[#fbfdfb] p-4';
 
                 const label = document.createElement('label');
                 label.htmlFor = `bank-upload-${level}`;
@@ -565,7 +560,7 @@
                 select.id = `bank-upload-${level}`;
                 select.name = `bank_uploads[${level}]`;
                 select.required = true;
-                select.className = 'w-full border border-gray-300 rounded-lg px-3 py-2';
+                select.className = 'w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-[#4a7c59] focus:outline-none';
 
                 const placeholder = document.createElement('option');
                 placeholder.value = '';
@@ -707,7 +702,7 @@
                     jumlahInput.max = String(tersedia);
                     jumlahInput.required = true;
                     jumlahInput.value = item.jumlahSoal[tipeSoal] ?? 0;
-                    jumlahInput.className = 'w-full border border-gray-300 rounded-lg px-3 py-2';
+                    jumlahInput.className = 'w-full border border-gray-300 rounded-lg px-3 py-2 focus:border-[#4a7c59] focus:outline-none';
                     jumlahInput.addEventListener('input', () => {
                         item.jumlahSoal[tipeSoal] = Number(jumlahInput.value);
                     });
@@ -772,5 +767,3 @@
         renderBankSoal();
     </script>
 @endsection
-</body>
-</html>

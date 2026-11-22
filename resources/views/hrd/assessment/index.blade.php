@@ -1,117 +1,35 @@
-<!DOCTYPE html>
-<html lang="id">
-
-<head>
-    <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>Assessment - HRD</title>
-
-    @vite([
-        'resources/css/app.css',
-        'resources/js/app.js'
-    ])
-</head>
-
-<body class="bg-gray-100 min-h-screen">
 @extends('layouts.hrd')
+
 @section('title', 'Assessment')
 @section('page_title', 'Assessment')
+
 @section('content')
-    <nav class="bg-white border-b border-gray-200">
-
-        <div class="max-w-7xl mx-auto px-6 py-4">
-
-            <div class="flex items-center justify-between">
-
+<div class="w-full max-w-7xl mx-auto space-y-6">
+    {{-- Header --}}
+    <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-[#e8f1ea] flex-shrink-0 flex items-center justify-center">
+                    <svg class="w-6 h-6 text-[#2c4a3e]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+                        <rect x="5" y="4" width="14" height="17" rx="2" />
+                        <path d="M9 10h6M9 14h6M9 18h4" />
+                    </svg>
+                </div>
                 <div>
-
-                    <h1 class="text-xl font-bold text-gray-800">
-                        Sistem Penilaian Jabatan
-                    </h1>
-
-                    <p class="text-sm text-gray-500">
-                        Assessment
-                    </p>
-
+                    <p class="text-xs font-semibold uppercase tracking-wider text-[#4a7c59]">Manajemen Assessment</p>
+                    <h1 class="text-2xl font-bold text-[#2c4a3e] mt-1">Assessment</h1>
+                    <p class="text-sm text-gray-500 mt-1">Kelola assessment dan peserta ujian karyawan.</p>
                 </div>
-
-                <div class="flex items-center gap-4">
-
-                    <span class="text-sm text-gray-600">
-                        {{ auth()->user()->name }}
-                    </span>
-
-                    <form
-                        method="POST"
-                        action="{{ route('logout') }}"
-                    >
-                        @csrf
-
-                        <button
-                            type="submit"
-                            class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm"
-                        >
-                            Logout
-                        </button>
-
-                    </form>
-
-                </div>
-
             </div>
-
-        </div>
-
-    </nav>
-
-
-    <main class="max-w-7xl mx-auto px-6 py-8">
-
-        @if (session('success'))
-
-            <div class="bg-green-50 border border-green-200 text-green-700 rounded-lg px-4 py-3 mb-6">
-                {{ session('success') }}
-            </div>
-
-        @endif
-
-        @if (session('error'))
-
-            <div class="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 mb-6">
-                {{ session('error') }}
-            </div>
-
-        @endif
-
-
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-
-            <div>
-
-                <h2 class="text-2xl font-bold text-gray-800">
-                    Assessment
-                </h2>
-
-                <p class="text-gray-500 mt-1">
-                    Kelola assessment dan peserta ujian.
-                </p>
-
-            </div>
-
-
-            <a
-                href="{{ route('hrd.assessment.create') }}"
-                class="inline-flex items-center justify-center px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium"
-            >
-                + Buat Assessment
+            <a href="{{ route('hrd.assessment.create') }}"
+               class="inline-flex items-center justify-center gap-2 bg-[#2c4a3e] hover:bg-[#4a7c59] text-white px-5 py-3 rounded-xl text-sm font-semibold transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 5v14M5 12h14"/>
+                </svg>
+                Buat Assessment
             </a>
-
         </div>
+    </div>
 
         @php
             $kategoriAssessment = [
@@ -122,64 +40,70 @@
             ];
         @endphp
 
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-6 pt-6 pb-2">
+                <h2 class="text-lg font-bold text-[#2c4a3e]">Daftar Assessment</h2>
+                <p class="text-sm text-gray-500 mt-1">Pilih kategori untuk melihat assessment yang tersedia.</p>
+            </div>
+
         <nav
             aria-label="Kategori assessment"
-            class="mb-6 flex gap-2 overflow-x-auto border-b border-gray-200"
+            class="flex gap-2 overflow-x-auto border-b border-gray-100 px-5 pt-3"
         >
             @foreach ($kategoriAssessment as $nilaiKategori => $labelKategori)
                 <a
                     href="{{ route('hrd.assessment.index', ['kategori' => $nilaiKategori]) }}"
                     @if ($kategori === $nilaiKategori) aria-current="page" @endif
-                    class="shrink-0 border-b-2 px-4 py-3 text-sm font-medium {{ $kategori === $nilaiKategori ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700' }}"
+                    class="shrink-0 border-b-2 px-4 py-3 text-sm font-medium {{ $kategori === $nilaiKategori ? 'border-[#2c4a3e] text-[#2c4a3e] font-semibold' : 'border-transparent text-gray-500 hover:border-[#a4c4ad] hover:text-[#2c4a3e]' }}"
                 >
                     {{ $labelKategori }}
                 </a>
             @endforeach
         </nav>
 
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-hidden">
 
-            <div class="overflow-x-auto">
+            <div class="overflow-x-auto px-5 pb-3">
 
-                <table class="w-full text-sm">
+                <table class="w-full min-w-[1120px] text-sm border-separate border-spacing-0">
 
-                    <thead class="bg-gray-50">
+                    <thead class="bg-[#e8f1ea] text-[#2c4a3e]">
 
                         <tr>
 
-                            <th class="px-6 py-3 text-left">
+                            <th class="px-4 py-4 text-left text-xs font-bold tracking-wide">
                                 #
                             </th>
 
-                            <th class="px-6 py-3 text-left">
+                            <th class="px-4 py-4 text-left text-xs font-bold tracking-wide">
                                 Assessment
                             </th>
 
-                            <th class="px-6 py-3 text-left">
+                            <th class="px-4 py-4 text-left text-xs font-bold tracking-wide">
                                 Jabatan
                             </th>
 
-                            <th class="px-6 py-3 text-left">
+                            <th class="px-4 py-4 text-left text-xs font-bold tracking-wide">
                                 Departemen
                             </th>
 
-                            <th class="px-6 py-3 text-left">
+                            <th class="px-4 py-4 text-left text-xs font-bold tracking-wide">
                                 Standar
                             </th>
 
-                            <th class="px-6 py-3 text-left">
+                            <th class="px-4 py-4 text-left text-xs font-bold tracking-wide">
                                 Durasi
                             </th>
 
-                            <th class="px-6 py-3 text-left">
+                            <th class="px-4 py-4 text-left text-xs font-bold tracking-wide">
                                 Peserta
                             </th>
 
-                            <th class="px-6 py-3 text-left">
+                            <th class="px-4 py-4 text-left text-xs font-bold tracking-wide">
                                 Status
                             </th>
 
-                            <th class="px-6 py-3 text-left">
+                            <th class="px-4 py-4 text-left text-xs font-bold tracking-wide">
                                 Aksi
                             </th>
 
@@ -192,14 +116,14 @@
 
                         @forelse ($assessments as $index => $assessment)
 
-                            <tr class="hover:bg-gray-50">
+                            <tr class="hover:bg-[#f6faf7] transition-colors">
 
-                                <td class="px-6 py-4">
+                                <td class="px-4 py-4">
                                     {{ $assessments->firstItem() + $index }}
                                 </td>
 
 
-                                <td class="px-6 py-4">
+                                <td class="px-4 py-4">
 
                                     <p class="font-semibold text-gray-800">
                                         {{ $assessment->nama_assessment }}
@@ -212,31 +136,31 @@
                                 </td>
 
 
-                                <td class="px-6 py-4 text-gray-600">
+                                <td class="px-4 py-4 text-gray-600">
                                     {{ $assessment->jabatan?->nama_jabatan ?? '-' }}
                                 </td>
 
-                                <td class="px-6 py-4 text-gray-600">
+                                <td class="px-4 py-4 text-gray-600">
                                     {{ $assessment->departemen?->nama_departemen ?? '-' }}
                                 </td>
 
 
-                                <td class="px-6 py-4 text-gray-600">
+                                <td class="px-4 py-4 text-gray-600">
                                     {{ number_format($assessment->standar_nilai, 0) }}
                                 </td>
 
 
-                                <td class="px-6 py-4 text-gray-600">
+                                <td class="px-4 py-4 text-gray-600">
                                     {{ $assessment->durasi }} menit
                                 </td>
 
 
-                                <td class="px-6 py-4 text-gray-600">
+                                <td class="px-4 py-4 text-gray-600">
                                     {{ $assessment->peserta_count }} orang
                                 </td>
 
 
-                                <td class="px-6 py-4">
+                                <td class="px-4 py-4">
 
                                     @if (in_array($assessment->status, ['aktif', 'draft'], true))
                                         @php
@@ -253,7 +177,7 @@
                                                 role="switch"
                                                 aria-checked="{{ $isAssessmentActive ? 'true' : 'false' }}"
                                                 aria-label="{{ $isAssessmentActive ? 'Nonaktifkan' : 'Aktifkan' }} {{ $assessment->nama_assessment }}"
-                                                class="inline-flex items-center gap-2 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                                                class="inline-flex items-center gap-2 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4a7c59] focus-visible:ring-offset-2"
                                             >
                                                 <span
                                                     aria-hidden="true"
@@ -271,7 +195,7 @@
 
                                     @elseif ($assessment->status === 'selesai')
 
-                                        <span class="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                                        <span class="px-3 py-1 rounded-full text-xs font-medium bg-[#e8f1ea] text-[#2c4a3e]">
                                             Selesai
                                         </span>
 
@@ -286,18 +210,18 @@
                                 </td>
 
 
-                                <td class="px-6 py-4">
-                                    <div class="flex flex-wrap items-center gap-3">
+                                <td class="px-4 py-4">
+                                    <div class="flex flex-wrap items-center gap-2">
                                         <a
                                             href="{{ route('hrd.assessment.show', $assessment) }}"
-                                            class="font-medium text-blue-600 hover:text-blue-800"
+                                            class="inline-flex items-center rounded-lg border border-[#c5ddcc] px-3 py-1.5 text-xs font-semibold text-[#2c4a3e] hover:bg-[#e8f1ea] transition-colors"
                                         >
                                             Detail
                                         </a>
 
                                         <a
                                             href="{{ route('hrd.assessment.edit', $assessment) }}"
-                                            class="font-medium text-indigo-600 hover:text-indigo-800"
+                                            class="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-100 transition-colors"
                                         >
                                             Edit
                                         </a>
@@ -311,7 +235,7 @@
                                             @method('DELETE')
                                             <button
                                                 type="submit"
-                                                class="font-medium text-red-600 hover:text-red-800"
+                                                class="inline-flex items-center rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50 transition-colors"
                                             >
                                                 Hapus
                                             </button>
@@ -346,7 +270,7 @@
 
             @if ($assessments->hasPages())
 
-                <div class="px-6 py-4 border-t border-gray-200">
+                <div class="px-5 py-4 border-t border-gray-100">
 
                     {{ $assessments->links() }}
 
@@ -355,8 +279,7 @@
             @endif
 
         </div>
+        </div>
 
-    </main>
+</div>
 @endsection
-</body>
-</html>

@@ -68,6 +68,7 @@ Route::middleware(['auth', 'role:hrd'])->group(function () {
     Route::post('/hrd/assessment/{assessment}/tugaskan-ulang', [HrdAssessmentController::class, 'tugaskanUlang'])->name('hrd.assessment.tugaskan-ulang');
     Route::get('/hrd/assessment/{assessment}/tugaskan-ulang', fn ($assessment) => redirect()->route('hrd.assessment.show', $assessment));
     Route::get('/hrd/hasil-penilaian', [HasilAssessmentController::class, 'index'])->name('hrd.hasil-assessment.index');
+    Route::get('/hrd/hasil-penilaian/{hasilAssessment}/pdf', [HasilAssessmentController::class, 'downloadPdf'])->name('hrd.hasil-assessment.pdf');
     Route::get('/hrd/hasil-penilaian/{hasilAssessment}', [HasilAssessmentController::class, 'show'])->name('hrd.hasil-assessment.show');
     Route::get('/hrd/kenaikan-jabatan', [KenaikanJabatanController::class, 'index'])->name('hrd.kenaikan-jabatan.index');
     Route::get('/hrd/kenaikan-jabatan/tambah', [KenaikanJabatanController::class, 'create'])->name('hrd.kenaikan-jabatan.create');
