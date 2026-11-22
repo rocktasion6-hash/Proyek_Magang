@@ -1,3 +1,4 @@
+
 @extends('layouts.hrd')
 
 @section('title', 'Manajemen Skill')
@@ -34,6 +35,7 @@
         color: #4b5563;
     }
 
+    /* INFORMASI ALUR SKILL */
     #msSkillPage .ms-flow-box {
         background: #f4f6f4;
         color: #1f2937;
@@ -57,6 +59,7 @@
         color: #4b5563;
     }
 
+    /* FILTER */
     #msSkillPage .ms-filter-box {
         background: #ffffff;
         border: 1px solid #e2e8e4;
@@ -87,9 +90,10 @@
 
     #msSkillPage .ms-filter-row input[type="text"]:focus {
         outline: none;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
     }
 
+    /* TOMBOL UMUM */
     #msSkillPage .ms-btn {
         display: inline-flex;
         align-items: center;
@@ -104,21 +108,26 @@
         line-height: 1.2;
         white-space: nowrap;
         box-sizing: border-box;
+        transition: background 0.2s ease,
+                    border-color 0.2s ease,
+                    color 0.2s ease;
     }
 
+    /* TOMBOL CARI */
     #msSkillPage .ms-btn-primary {
-        background: #2c4a3e;
-        color: #fdfdfc;
-        border-color: #2c4a3e;
-    }
-
-    #msSkillPage .ms-btn-primary:hover,
-    #msSkillPage .ms-btn-primary:active {
         background: #4a7c59;
         color: #fdfdfc;
         border-color: #4a7c59;
     }
 
+    #msSkillPage .ms-btn-primary:hover,
+    #msSkillPage .ms-btn-primary:active {
+        background: #3b6649;
+        color: #fdfdfc;
+        border-color: #3b6649;
+    }
+
+    /* TOMBOL RESET */
     #msSkillPage .ms-btn-reset {
         background: #ffffff;
         color: #374151;
@@ -129,7 +138,7 @@
     #msSkillPage .ms-btn-reset:active {
         background: #f4f6f4;
         color: #111827;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
     }
 
     #msSkillPage .ms-btn-sm {
@@ -139,6 +148,7 @@
         border-radius: 7px;
     }
 
+    /* TOMBOL DETAIL JABATAN */
     #msSkillPage .ms-btn-detail {
         background: #f4f6f4;
         color: #2c4a3e;
@@ -147,11 +157,12 @@
 
     #msSkillPage .ms-btn-detail:hover,
     #msSkillPage .ms-btn-detail:active {
-        background: #2c4a3e;
+        background: #4a7c59;
         color: #fdfdfc;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
     }
 
+    /* TABEL */
     #msSkillPage .ms-table-wrap {
         background: #ffffff;
         border: 1px solid #e2e8e4;
@@ -199,6 +210,7 @@
         border-bottom: none;
     }
 
+    /* BADGE LEVEL SKILL */
     #msSkillPage .ms-level-badge {
         display: inline-block;
         padding: 4px 12px;
@@ -212,6 +224,7 @@
         white-space: nowrap;
     }
 
+    /* BADGE JUMLAH KARYAWAN */
     #msSkillPage .ms-count-badge {
         display: inline-block;
         padding: 4px 12px;
@@ -224,6 +237,7 @@
         white-space: nowrap;
     }
 
+    /* DATA KOSONG */
     #msSkillPage .ms-empty-row {
         text-align: center;
         padding: 34px 16px;
@@ -237,6 +251,7 @@
         text-decoration: underline;
     }
 
+    /* PAGINATION */
     #msSkillPage .ms-pager {
         margin-top: 18px;
     }

@@ -1,3 +1,4 @@
+
 @extends('layouts.hrd')
 
 @section('title', 'Tambah Karyawan')
@@ -98,7 +99,7 @@
     .input-item input:focus,
     .input-item select:focus {
         outline: none;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
     }
 
     .input-item input:disabled,
@@ -137,7 +138,7 @@
         padding: 10px 20px;
         border-radius: 8px;
         border: none;
-        background: #2c4a3e;
+        background: #4a7c59;
         color: #fdfdfc;
         font-size: 14px;
         font-weight: 600;
@@ -145,7 +146,7 @@
     }
 
     .btn-simpan-utama:hover {
-        background: #4a7c59;
+        background: #3b6649;
     }
 
     .btn-batal-link {
@@ -189,13 +190,12 @@
             </div>
         @endif
 
-
         <form method="POST" action="{{ route('hrd.karyawan.store') }}">
             @csrf
 
-            {{-- ===================================================== --}}
+            {{-- ====================================== --}}
             {{-- DATA KARYAWAN --}}
-            {{-- ===================================================== --}}
+            {{-- ====================================== --}}
             <div class="section-strip">Data Karyawan</div>
 
             <div class="grid-2">
@@ -245,9 +245,9 @@
                 </div>
             </div>
 
-            {{-- ===================================================== --}}
+            {{-- ====================================== --}}
             {{-- AKUN LOGIN --}}
-            {{-- ===================================================== --}}
+            {{-- ====================================== --}}
             <div class="section-strip">Akun Login</div>
 
             <div class="grid-2">
@@ -310,9 +310,9 @@
                 </div>
             </div>
 
-            {{-- ===================================================== --}}
+            {{-- ====================================== --}}
             {{-- DATA PEKERJAAN --}}
-            {{-- ===================================================== --}}
+            {{-- ====================================== --}}
             <div class="section-strip">Data Pekerjaan</div>
 
             <div class="grid-2">
@@ -379,8 +379,12 @@
             </div>
 
             <div class="form-actions">
-                <button type="submit" class="btn-simpan-utama">Simpan Karyawan</button>
-                <a href="{{ route('hrd.karyawan.index') }}" class="btn-batal-link">Kembali</a>
+                <button type="submit" class="btn-simpan-utama">
+                    Simpan Karyawan
+                </button>
+                <a href="{{ route('hrd.karyawan.index') }}" class="btn-batal-link">
+                    Kembali
+                </a>
             </div>
         </form>
 

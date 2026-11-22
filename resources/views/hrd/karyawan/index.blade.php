@@ -1,3 +1,4 @@
+
 @extends('layouts.hrd')
 
 @section('title', 'Manajemen Karyawan')
@@ -49,13 +50,13 @@
     }
 
     .mk-btn-primary {
-        background: #2c4a3e;
+        background: #4a7c59;
         color: #fdfdfc;
     }
 
     .mk-btn-primary:hover,
     .mk-btn-primary:active {
-        background: #4a7c59;
+        background: #3b6649;
     }
 
     .mk-btn-reset {
@@ -68,7 +69,7 @@
     .mk-btn-reset:active {
         background: #f4f6f4;
         color: #111827;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
     }
 
     .mk-btn-sm {
@@ -86,9 +87,9 @@
 
     .mk-btn-detail:hover,
     .mk-btn-detail:active {
-        background: #2c4a3e;
+        background: #4a7c59;
         color: #fdfdfc;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
     }
 
     .mk-btn-edit {
@@ -168,7 +169,7 @@
     .mk-filter-row input[type="text"]:focus,
     .mk-filter-row select:focus {
         outline: none;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
     }
 
     .mk-select-status.is-aktif {
@@ -236,9 +237,9 @@
     }
 
     .mk-status.aktif {
-        background: #2c4a3e;
+        background: #4a7c59;
         color: #fdfdfc;
-        border: 1px solid #2c4a3e;
+        border: 1px solid #4a7c59;
     }
 
     .mk-status.nonaktif {
@@ -416,6 +417,7 @@
 
         function syncStatusClass() {
             el.classList.remove('is-aktif', 'is-nonaktif');
+
             if (el.value === 'aktif') {
                 el.classList.add('is-aktif');
             } else if (el.value === 'nonaktif') {

@@ -1,3 +1,4 @@
+
 @extends('layouts.hrd')
 
 @section('title', 'Detail Jabatan')
@@ -87,6 +88,7 @@
         border-radius: 7px;
     }
 
+    /* Tombol Kembali */
     #djJabatanPage .dj-btn-back {
         background: #f4f6f4;
         color: #2c4a3e;
@@ -95,11 +97,12 @@
 
     #djJabatanPage .dj-btn-back:hover,
     #djJabatanPage .dj-btn-back:active {
-        background: #2c4a3e;
+        background: #4a7c59;
         color: #fdfdfc;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
     }
 
+    /* Tombol Edit */
     #djJabatanPage .dj-btn-edit {
         background: #e3b535;
         color: #111827;
@@ -114,22 +117,24 @@
         border-color: #cca024;
     }
 
+    /* Tombol Tambah Skill */
     #djJabatanPage .dj-btn-save {
         height: 42px;
         padding: 0 18px;
-        background: #2c4a3e;
+        background: #4a7c59;
         color: #fdfdfc;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
         font-weight: 700;
     }
 
     #djJabatanPage .dj-btn-save:hover,
     #djJabatanPage .dj-btn-save:active {
-        background: #4a7c59;
+        background: #3b6649;
         color: #fdfdfc;
-        border-color: #4a7c59;
+        border-color: #3b6649;
     }
 
+    /* Tombol Hapus */
     #djJabatanPage .dj-btn-delete {
         background: #ffffff;
         color: #991b1b;
@@ -212,8 +217,9 @@
         white-space: nowrap;
     }
 
+    /* Badge Status Aktif */
     #djJabatanPage .dj-status-badge.aktif {
-        background: #2c4a3e;
+        background: #4a7c59;
         color: #fdfdfc;
     }
 
@@ -257,9 +263,10 @@
         box-sizing: border-box;
     }
 
+    /* Border Input Saat Aktif */
     #djJabatanPage .dj-input-group select:focus {
         outline: none;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
     }
 
     #djJabatanPage .dj-table-wrap {
@@ -398,6 +405,7 @@
                             6 => 'Manager',
                         ];
                     @endphp
+
                     {{ $jabatan->urutan_struktural }}
                     &mdash;
                     {{ $labelUrutan[$jabatan->urutan_struktural] ?? '-' }}
@@ -509,6 +517,7 @@
                                     >
                                         @csrf
                                         @method('DELETE')
+
                                         <button type="submit" class="dj-btn dj-btn-sm dj-btn-delete">
                                             Hapus
                                         </button>
@@ -596,6 +605,7 @@
                             $stLower = mb_strtolower(trim($assessment->status));
                             $stClass = in_array($stLower, ['nonaktif', 'non-aktif', 'tidak aktif', 'inactive']) ? 'nonaktif' : 'aktif';
                         @endphp
+
                         <tr>
                             <td>{{ $loop->iteration }}</td>
                             <td><strong>{{ $assessment->nama_assessment }}</strong></td>

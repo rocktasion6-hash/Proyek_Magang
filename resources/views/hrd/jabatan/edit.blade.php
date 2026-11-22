@@ -1,3 +1,4 @@
+
 @extends('layouts.hrd')
 
 @section('title', 'Edit Jabatan')
@@ -48,6 +49,7 @@
         line-height: 1.45;
     }
 
+    /* Tombol Kembali */
     #ejJabatanPage .ej-btn-back {
         display: inline-flex;
         align-items: center;
@@ -66,9 +68,9 @@
 
     #ejJabatanPage .ej-btn-back:hover,
     #ejJabatanPage .ej-btn-back:active {
-        background: #2c4a3e;
+        background: #4a7c59;
         color: #fdfdfc;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
     }
 
     #ejJabatanPage .ej-err {
@@ -143,12 +145,13 @@
         font-family: inherit;
     }
 
+    /* Border input saat aktif */
     #ejJabatanPage .ej-group input[type="text"]:focus,
     #ejJabatanPage .ej-group input[type="number"]:focus,
     #ejJabatanPage .ej-group select:focus,
     #ejJabatanPage .ej-group textarea:focus {
         outline: none;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
     }
 
     #ejJabatanPage .ej-group textarea {
@@ -182,14 +185,15 @@
         flex-wrap: wrap;
     }
 
+    /* Tombol Simpan Perubahan */
     #ejJabatanPage .ej-btn-save {
         display: inline-flex;
         align-items: center;
         justify-content: center;
         padding: 12px 24px;
         border-radius: 8px;
-        border: 1.5px solid #2c4a3e;
-        background: #2c4a3e;
+        border: 1.5px solid #4a7c59;
+        background: #4a7c59;
         color: #fdfdfc;
         font-size: 15px;
         font-weight: 700;
@@ -199,10 +203,11 @@
 
     #ejJabatanPage .ej-btn-save:hover,
     #ejJabatanPage .ej-btn-save:active {
-        background: #4a7c59;
-        border-color: #4a7c59;
+        background: #3b6649;
+        border-color: #3b6649;
     }
 
+    /* Tombol Batal */
     #ejJabatanPage .ej-btn-cancel {
         display: inline-flex;
         align-items: center;
@@ -221,7 +226,7 @@
     #ejJabatanPage .ej-btn-cancel:hover,
     #ejJabatanPage .ej-btn-cancel:active {
         background: #f4f6f4;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
     }
 
     @media (max-width: 768px) {

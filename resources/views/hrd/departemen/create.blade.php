@@ -66,9 +66,9 @@
 
     #tdDepartemenPage .td-btn-back:hover,
     #tdDepartemenPage .td-btn-back:active {
-        background: #2c4a3e;
+        background: #4a7c59;
         color: #fdfdfc;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
     }
 
     #tdDepartemenPage .td-err {
@@ -117,7 +117,7 @@
     #tdDepartemenPage .td-group input[type="text"]:focus,
     #tdDepartemenPage .td-group textarea:focus {
         outline: none;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
     }
 
     #tdDepartemenPage .td-group textarea {
@@ -149,8 +149,8 @@
         justify-content: center;
         padding: 12px 24px;
         border-radius: 8px;
-        border: 1.5px solid #2c4a3e;
-        background: #2c4a3e;
+        border: 1.5px solid #4a7c59;
+        background: #4a7c59;
         color: #fdfdfc;
         font-size: 15px;
         font-weight: 700;
@@ -160,8 +160,8 @@
 
     #tdDepartemenPage .td-btn-save:hover,
     #tdDepartemenPage .td-btn-save:active {
-        background: #4a7c59;
-        border-color: #4a7c59;
+        background: #3b6649;
+        border-color: #3b6649;
     }
 
     #tdDepartemenPage .td-btn-cancel {

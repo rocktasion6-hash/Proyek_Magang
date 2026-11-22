@@ -1,3 +1,4 @@
+
 @extends('layouts.hrd')
 
 @section('title', 'Edit Karyawan')
@@ -56,9 +57,9 @@
     }
 
     .btn-top-back:hover {
-        background: #2c4a3e;
+        background: #4a7c59;
         color: #fdfdfc;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
     }
 
     .info-notice {
@@ -143,7 +144,7 @@
     .f-group input:focus,
     .f-group select:focus {
         outline: none;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
     }
 
     .f-group input[readonly],
@@ -184,7 +185,7 @@
         padding: 12px 26px;
         border-radius: 8px;
         border: none;
-        background: #2c4a3e;
+        background: #4a7c59;
         color: #fdfdfc;
         font-size: 15px;
         font-weight: 700;
@@ -192,7 +193,7 @@
     }
 
     .btn-save-primary:hover {
-        background: #4a7c59;
+        background: #3b6649;
     }
 
     .btn-cancel-light {
@@ -208,7 +209,7 @@
 
     .btn-cancel-light:hover {
         background: #f4f6f4;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
     }
 
     @media (max-width: 768px) {
@@ -249,14 +250,13 @@
             </div>
         @endif
 
-
         <form method="POST" action="{{ route('hrd.karyawan.update', $karyawan) }}">
             @csrf
             @method('PUT')
 
-            {{-- ================================================= --}}
+            {{-- ====================================== --}}
             {{-- DATA KARYAWAN --}}
-            {{-- ================================================= --}}
+            {{-- ====================================== --}}
             <div class="part-heading">Data Karyawan</div>
 
             <div class="form-grid-2">
@@ -304,9 +304,9 @@
                 </div>
             </div>
 
-            {{-- ================================================= --}}
-            {{-- AKUN --}}
-            {{-- ================================================= --}}
+            {{-- ====================================== --}}
+            {{-- AKUN LOGIN --}}
+            {{-- ====================================== --}}
             <div class="part-heading">Akun Login</div>
 
             <div class="form-grid-2">
@@ -318,7 +318,9 @@
                         value="{{ $karyawan->user->username ?? '-' }}"
                         readonly
                     >
-                    <small class="f-help">Username tidak diubah dari halaman ini.</small>
+                    <small class="f-help">
+                        Username tidak diubah dari halaman ini.
+                    </small>
                 </div>
 
                 <div class="f-group">
@@ -329,13 +331,15 @@
                         value="{{ $karyawan->user->email ?? '-' }}"
                         readonly
                     >
-                    <small class="f-help">Email login juga tidak diubah dari halaman ini.</small>
+                    <small class="f-help">
+                        Email login juga tidak diubah dari halaman ini.
+                    </small>
                 </div>
             </div>
 
-            {{-- ================================================= --}}
-            {{-- PEKERJAAN --}}
-            {{-- ================================================= --}}
+            {{-- ====================================== --}}
+            {{-- DATA PEKERJAAN --}}
+            {{-- ====================================== --}}
             <div class="part-heading">Data Pekerjaan</div>
 
             <div class="form-grid-2">
@@ -410,8 +414,13 @@
             </div>
 
             <div class="form-footer-actions">
-                <button type="submit" class="btn-save-primary">Simpan Perubahan</button>
-                <a href="{{ route('hrd.karyawan.show', $karyawan) }}" class="btn-cancel-light">Batal</a>
+                <button type="submit" class="btn-save-primary">
+                    Simpan Perubahan
+                </button>
+
+                <a href="{{ route('hrd.karyawan.show', $karyawan) }}" class="btn-cancel-light">
+                    Batal
+                </a>
             </div>
         </form>
 

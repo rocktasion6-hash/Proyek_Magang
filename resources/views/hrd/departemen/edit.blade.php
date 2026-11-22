@@ -37,7 +37,7 @@
         margin: 0 0 6px;
         font-size: 24px;
         font-weight: 700;
-        color: #2c4a3e;
+        color:#2c4a3e;
         line-height: 1.25;
     }
 
@@ -65,9 +65,9 @@
 
     #edDepartemenPage .ed-btn-back:hover,
     #edDepartemenPage .ed-btn-back:active {
-        background: #2c4a3e;
+        background: #3b6649;
         color: #fdfdfc;
-        border-color: #2c4a3e;
+        border-color: #3b6649;
     }
 
     #edDepartemenPage .ed-err {
@@ -116,7 +116,7 @@
     #edDepartemenPage .ed-group input[type="text"]:focus,
     #edDepartemenPage .ed-group textarea:focus {
         outline: none;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
     }
 
     #edDepartemenPage .ed-group textarea {
@@ -146,7 +146,7 @@
         padding: 12px 24px;
         border-radius: 8px;
         border: none;
-        background: #2c4a3e;
+        background: #4a7c59;
         color: #fdfdfc;
         font-size: 15px;
         font-weight: 700;
@@ -155,7 +155,7 @@
 
     #edDepartemenPage .ed-btn-save:hover,
     #edDepartemenPage .ed-btn-save:active {
-        background: #4a7c59;
+        background: #3b6649;
     }
 
     #edDepartemenPage .ed-btn-cancel {
@@ -172,7 +172,7 @@
     #edDepartemenPage .ed-btn-cancel:hover,
     #edDepartemenPage .ed-btn-cancel:active {
         background: #f4f6f4;
-        border-color: #2c4a3e;
+        border-color:#3b6649;
     }
 
     @media (max-width: 768px) {

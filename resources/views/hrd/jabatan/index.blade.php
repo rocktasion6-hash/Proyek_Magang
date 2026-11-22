@@ -1,3 +1,4 @@
+
 @extends('layouts.hrd')
 
 @section('title', 'Manajemen Jabatan')
@@ -50,19 +51,21 @@
         box-sizing: border-box;
     }
 
+    /* Tombol Tambah Jabatan dan Filter */
     #mjJabatanPage .mj-btn-primary {
-        background: #2c4a3e;
-        color: #fdfdfc;
-        border-color: #2c4a3e;
-    }
-
-    #mjJabatanPage .mj-btn-primary:hover,
-    #mjJabatanPage .mj-btn-primary:active {
         background: #4a7c59;
         color: #fdfdfc;
         border-color: #4a7c59;
     }
 
+    #mjJabatanPage .mj-btn-primary:hover,
+    #mjJabatanPage .mj-btn-primary:active {
+        background: #3b6649;
+        color: #fdfdfc;
+        border-color: #3b6649;
+    }
+
+    /* Tombol Reset */
     #mjJabatanPage .mj-btn-reset {
         background: #ffffff;
         color: #374151;
@@ -73,7 +76,7 @@
     #mjJabatanPage .mj-btn-reset:active {
         background: #f4f6f4;
         color: #111827;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
     }
 
     #mjJabatanPage .mj-btn-sm {
@@ -83,6 +86,7 @@
         border-radius: 7px;
     }
 
+    /* Tombol Detail */
     #mjJabatanPage .mj-btn-detail {
         background: #f4f6f4;
         color: #2c4a3e;
@@ -91,11 +95,12 @@
 
     #mjJabatanPage .mj-btn-detail:hover,
     #mjJabatanPage .mj-btn-detail:active {
-        background: #2c4a3e;
+        background: #4a7c59;
         color: #fdfdfc;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
     }
 
+    /* Tombol Edit */
     #mjJabatanPage .mj-btn-edit {
         background: #e3b535;
         color: #111827;
@@ -109,6 +114,7 @@
         border-color: #cca024;
     }
 
+    /* Tombol Hapus */
     #mjJabatanPage .mj-btn-delete {
         background: #ffffff;
         color: #991b1b;
@@ -122,6 +128,7 @@
         border-color: #991b1b;
     }
 
+    /* Pesan Berhasil */
     #mjJabatanPage .mj-flash {
         background: #f4f6f4;
         color: #2c4a3e;
@@ -134,6 +141,7 @@
         font-weight: 500;
     }
 
+    /* Filter */
     #mjJabatanPage .mj-filter-box {
         background: #ffffff;
         border: 1px solid #e2e8e4;
@@ -173,9 +181,10 @@
     #mjJabatanPage .mj-filter-row input[type="text"]:focus,
     #mjJabatanPage .mj-filter-row select:focus {
         outline: none;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
     }
 
+    /* Tabel Jabatan */
     #mjJabatanPage .mj-table-wrap {
         background: #ffffff;
         border: 1px solid #e2e8e4;
@@ -223,6 +232,7 @@
         border-bottom: none;
     }
 
+    /* Badge Tipe Jabatan */
     #mjJabatanPage .mj-tipe-badge {
         display: inline-block;
         padding: 4px 11px;
@@ -245,6 +255,7 @@
         border: 1px solid #4a7c59;
     }
 
+    /* Badge Jumlah Karyawan */
     #mjJabatanPage .mj-count-badge {
         display: inline-block;
         padding: 4px 12px;
@@ -299,6 +310,7 @@
 
     <div class="mj-filter-box">
         <form method="GET" action="{{ route('hrd.jabatan.index') }}" class="mj-filter-row">
+
             <input
                 type="text"
                 name="search"
@@ -308,10 +320,18 @@
 
             <select name="tipe_jabatan">
                 <option value="">Semua Tipe</option>
-                <option value="operasional" {{ request('tipe_jabatan') === 'operasional' ? 'selected' : '' }}>
+
+                <option
+                    value="operasional"
+                    {{ request('tipe_jabatan') === 'operasional' ? 'selected' : '' }}
+                >
                     Operasional
                 </option>
-                <option value="struktural" {{ request('tipe_jabatan') === 'struktural' ? 'selected' : '' }}>
+
+                <option
+                    value="struktural"
+                    {{ request('tipe_jabatan') === 'struktural' ? 'selected' : '' }}
+                >
                     Struktural
                 </option>
             </select>
@@ -341,15 +361,21 @@
                     <th style="width: 240px;" class="mj-col-center">Aksi</th>
                 </tr>
             </thead>
+
             <tbody>
                 @forelse($jabatans as $jabatan)
                     <tr>
                         <td>{{ $jabatans->firstItem() + $loop->index }}</td>
-                        <td><strong>{{ $jabatan->nama_jabatan }}</strong></td>
+
+                        <td>
+                            <strong>{{ $jabatan->nama_jabatan }}</strong>
+                        </td>
+
                         <td class="mj-col-center">
                             @if($jabatan->tipe_jabatan === 'struktural')
                                 <span class="mj-tipe-badge struktural">
                                     Struktural
+
                                     @if($jabatan->urutan_struktural)
                                         ({{ $jabatan->urutan_struktural }})
                                     @endif
@@ -360,6 +386,7 @@
                                 </span>
                             @endif
                         </td>
+
                         <td>
                             @if($jabatan->tipe_jabatan === 'struktural')
                                 @php
@@ -372,23 +399,32 @@
                                         6 => 'Manager',
                                     ];
                                 @endphp
+
                                 {{ $labelUrutan[$jabatan->urutan_struktural] ?? '-' }}
+
                             @elseif(mb_strtolower(trim($jabatan->nama_jabatan)) === 'crew')
                                 Crew
+
                             @else
                                 Level {{ $jabatan->level_jabatan }}
                             @endif
                         </td>
+
                         <td class="mj-col-center">
-                            <strong>{{ number_format($jabatan->standar_nilai, 2) }}</strong>
+                            <strong>
+                                {{ number_format($jabatan->standar_nilai, 2) }}
+                            </strong>
                         </td>
+
                         <td class="mj-col-center">
                             <span class="mj-count-badge">
                                 {{ $jabatan->karyawans_count }} orang
                             </span>
                         </td>
+
                         <td class="mj-col-center">
                             <div class="mj-aksi-group">
+
                                 <a
                                     href="{{ route('hrd.jabatan.show', $jabatan) }}"
                                     class="mj-btn mj-btn-sm mj-btn-detail"
@@ -411,13 +447,19 @@
                                 >
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="mj-btn mj-btn-sm mj-btn-delete">
+
+                                    <button
+                                        type="submit"
+                                        class="mj-btn mj-btn-sm mj-btn-delete"
+                                    >
                                         Hapus
                                     </button>
                                 </form>
+
                             </div>
                         </td>
                     </tr>
+
                 @empty
                     <tr>
                         <td colspan="7" class="mj-empty-row">

@@ -1,3 +1,4 @@
+
 @extends('layouts.hrd')
 
 @section('title', 'Detail Karyawan')
@@ -12,7 +13,7 @@
 
     .dk-bar {
         display: flex;
-        justify-content: space-between;
+        justify-content: flex-end;
         align-items: center;
         gap: 12px;
         flex-wrap: wrap;
@@ -34,17 +35,27 @@
         margin-bottom: 20px;
     }
 
+    /* Header mengikuti halaman Edit Karyawan */
     .dk-panel-head {
-        padding-bottom: 14px;
-        margin-bottom: 18px;
+        padding-bottom: 18px;
+        margin-bottom: 24px;
         border-bottom: 1px solid #e5e7eb;
     }
 
+    .dk-panel-head-main {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
     .dk-panel-head h1 {
-        margin: 0 0 4px;
-        font-size: 22px;
+        margin: 0 0 6px;
+        font-size: 24px;
         font-weight: 700;
         color: #2c4a3e;
+        line-height: 1.25;
     }
 
     .dk-panel-head h2 {
@@ -56,8 +67,9 @@
 
     .dk-panel-head p {
         margin: 0;
-        font-size: 13.5px;
+        font-size: 14.5px;
         color: #6b7280;
+        line-height: 1.45;
     }
 
     .dk-sections-grid {
@@ -139,6 +151,7 @@
         cursor: pointer;
         line-height: 1.2;
         white-space: nowrap;
+        box-sizing: border-box;
     }
 
     .dk-btn-sm {
@@ -147,14 +160,19 @@
         border-radius: 7px;
     }
 
+    /* Tombol Kembali sama dengan Edit Karyawan */
     .dk-btn-back {
+        padding: 10px 18px;
         background: #f4f6f4;
         color: #2c4a3e;
-        border-color: #cbd5e1;
+        border-color: #c6d2c9;
+        border-radius: 7px;
     }
 
     .dk-btn-back:hover {
-        background: #e2e8e4;
+        background: #4a7c59;
+        color: #fdfdfc;
+        border-color: #4a7c59;
     }
 
     .dk-btn-edit {
@@ -169,27 +187,27 @@
     }
 
     .dk-btn-history {
-        background: #2c4a3e;
+        background: #4a7c59;
         color: #fdfdfc;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
     }
 
     .dk-btn-history:hover {
-        background: #4a7c59;
-        border-color: #4a7c59;
+        background: #3b6649;
+        border-color: #3b6649;
     }
 
     .dk-btn-save {
         height: 42px;
         padding: 0 18px;
-        background: #2c4a3e;
+        background: #4a7c59;
         color: #fdfdfc;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
     }
 
     .dk-btn-save:hover {
-        background: #4a7c59;
-        border-color: #4a7c59;
+        background: #3b6649;
+        border-color: #3b6649;
     }
 
     .dk-btn-delete {
@@ -213,7 +231,7 @@
     }
 
     .dk-badge.aktif {
-        background: #2c4a3e;
+        background: #4a7c59;
         color: #fdfdfc;
     }
 
@@ -261,7 +279,7 @@
     .dk-input-group select:focus,
     .dk-input-group input[type="date"]:focus {
         outline: none;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
     }
 
     .dk-table-box {
@@ -345,6 +363,14 @@
         .dk-panel {
             padding: 18px;
         }
+
+        .dk-panel-head-main {
+            align-items: flex-start;
+        }
+
+        .dk-panel-head-main .dk-btn-back {
+            margin-left: auto;
+        }
     }
 </style>
 @endpush
@@ -352,69 +378,109 @@
 @section('content')
 <div class="dk-wrap">
 
+    {{-- ====================================== --}}
+    {{-- TOMBOL AKSI ATAS --}}
+    {{-- ====================================== --}}
     <div class="dk-bar">
-        <a href="{{ route('hrd.karyawan.index') }}" class="dk-btn dk-btn-back">
-            Kembali
-        </a>
-
         <div class="dk-bar-right">
-            <a href="{{ route('hrd.karyawan.edit', $karyawan) }}" class="dk-btn dk-btn-edit">
+            <a
+                href="{{ route('hrd.karyawan.edit', $karyawan) }}"
+                class="dk-btn dk-btn-edit"
+            >
                 Edit Data
             </a>
 
-            <a href="{{ route('hrd.riwayat.show', $karyawan) }}" class="dk-btn dk-btn-history">
+            <a
+                href="{{ route('hrd.riwayat.show', $karyawan) }}"
+                class="dk-btn dk-btn-history"
+            >
                 Lihat Riwayat Lengkap
             </a>
         </div>
     </div>
 
-    {{-- ===================================================== --}}
+    {{-- ====================================== --}}
     {{-- IDENTITAS KARYAWAN --}}
-    {{-- ===================================================== --}}
+    {{-- ====================================== --}}
     <div class="dk-panel">
-        <div class="dk-panel-head">
-            <h1>Detail Karyawan</h1>
-            <p>Informasi profil, akun login dan posisi kepegawaian karyawan.</p>
+
+        {{-- Header mengikuti Edit Karyawan --}}
+        <div class="dk-panel-head dk-panel-head-main">
+            <div>
+                <h1>Detail Karyawan</h1>
+                <p>
+                    Informasi profil, akun login dan posisi
+                    kepegawaian karyawan.
+                </p>
+            </div>
+
+            <a
+                href="{{ route('hrd.karyawan.index') }}"
+                class="dk-btn dk-btn-back"
+            >
+                Kembali
+            </a>
         </div>
 
         <div class="dk-sections-grid">
+
+            {{-- PROFIL DAN AKUN --}}
             <div class="dk-box">
-                <div class="dk-box-title">Profil &amp; Akun</div>
+                <div class="dk-box-title">
+                    Profil &amp; Akun
+                </div>
+
                 <table class="dk-kv-table">
                     <tr>
                         <th>NIK</th>
                         <td>{{ $karyawan->nik }}</td>
                     </tr>
+
                     <tr>
                         <th>Nama Karyawan</th>
                         <td>{{ $karyawan->nama }}</td>
                     </tr>
+
                     <tr>
                         <th>Username</th>
-                        <td>{{ $karyawan->user->username ?? '-' }}</td>
+                        <td>
+                            {{ $karyawan->user->username ?? '-' }}
+                        </td>
                     </tr>
+
                     <tr>
                         <th>Email</th>
-                        <td>{{ $karyawan->user->email ?? '-' }}</td>
+                        <td>
+                            {{ $karyawan->user->email ?? '-' }}
+                        </td>
                     </tr>
                 </table>
             </div>
 
+            {{-- DATA PEKERJAAN --}}
             <div class="dk-box">
-                <div class="dk-box-title">Data Pekerjaan</div>
+                <div class="dk-box-title">
+                    Data Pekerjaan
+                </div>
+
                 <table class="dk-kv-table">
                     <tr>
                         <th>PT/Perusahaan</th>
                         <td>{{ $karyawan->pt ?: '-' }}</td>
                     </tr>
+
                     <tr>
                         <th>Departemen</th>
-                        <td>{{ $karyawan->departemen->nama_departemen }}</td>
+                        <td>
+                            {{ $karyawan->departemen->nama_departemen }}
+                        </td>
                     </tr>
+
                     <tr>
                         <th>Jabatan</th>
                         <td>
                             {{ $karyawan->jabatan->nama_jabatan }}
+
                             <span class="dk-jabatan-sub">
                                 @if(mb_strtolower(trim($karyawan->jabatan->nama_jabatan)) === 'crew')
                                     Jabatan Awal
@@ -424,10 +490,14 @@
                             </span>
                         </td>
                     </tr>
+
                     <tr>
                         <th>Tanggal Masuk</th>
-                        <td>{{ \Carbon\Carbon::parse($karyawan->tanggal_masuk)->format('d-m-Y') }}</td>
+                        <td>
+                            {{ \Carbon\Carbon::parse($karyawan->tanggal_masuk)->format('d-m-Y') }}
+                        </td>
                     </tr>
+
                     <tr>
                         <th>Status</th>
                         <td>
@@ -438,17 +508,22 @@
                     </tr>
                 </table>
             </div>
+
         </div>
     </div>
 
-    {{-- ===================================================== --}}
+    {{-- ====================================== --}}
     {{-- SKILL SAAT INI --}}
-    {{-- ===================================================== --}}
+    {{-- ====================================== --}}
     @unless($isCrew)
         <div class="dk-panel">
+
             <div class="dk-panel-head">
                 <h2>Skill Saat Ini</h2>
-                <p>Kelola skill yang dimiliki karyawan beserta level kompetensinya.</p>
+                <p>
+                    Kelola skill yang dimiliki karyawan
+                    beserta level kompetensinya.
+                </p>
             </div>
 
             <form
@@ -459,10 +534,19 @@
                 @csrf
 
                 <div class="dk-form-grid">
+
                     <div class="dk-input-group">
                         <label for="skill_id">Skill</label>
-                        <select id="skill_id" name="skill_id" required>
-                            <option value="">-- Pilih Skill --</option>
+
+                        <select
+                            id="skill_id"
+                            name="skill_id"
+                            required
+                        >
+                            <option value="">
+                                -- Pilih Skill --
+                            </option>
+
                             @foreach($availableSkills as $skill)
                                 <option value="{{ $skill->id }}">
                                     {{ $skill->nama_skill }}
@@ -472,8 +556,15 @@
                     </div>
 
                     <div class="dk-input-group">
-                        <label for="level_skill">Level Skill</label>
-                        <select id="level_skill" name="level_skill" required>
+                        <label for="level_skill">
+                            Level Skill
+                        </label>
+
+                        <select
+                            id="level_skill"
+                            name="level_skill"
+                            required
+                        >
                             @for($level = 1; $level <= 5; $level++)
                                 <option value="{{ $level }}">
                                     Level {{ $level }}
@@ -483,7 +574,10 @@
                     </div>
 
                     <div class="dk-input-group">
-                        <label for="tanggal_penilaian">Tanggal Penilaian</label>
+                        <label for="tanggal_penilaian">
+                            Tanggal Penilaian
+                        </label>
+
                         <input
                             type="date"
                             id="tanggal_penilaian"
@@ -493,9 +587,13 @@
                         >
                     </div>
 
-                    <button type="submit" class="dk-btn dk-btn-save">
+                    <button
+                        type="submit"
+                        class="dk-btn dk-btn-save"
+                    >
                         + Simpan
                     </button>
+
                 </div>
             </form>
 
@@ -510,17 +608,30 @@
                             <th style="width: 110px;">Aksi</th>
                         </tr>
                     </thead>
+
                     <tbody>
                         @forelse($karyawan->karyawanSkills as $karyawanSkill)
                             <tr>
-                                <td>{{ $loop->iteration }}</td>
-                                <td><strong>{{ $karyawanSkill->skill->nama_skill }}</strong></td>
-                                <td>Level {{ $karyawanSkill->level_skill }}</td>
+                                <td>
+                                    {{ $loop->iteration }}
+                                </td>
+
+                                <td>
+                                    <strong>
+                                        {{ $karyawanSkill->skill->nama_skill }}
+                                    </strong>
+                                </td>
+
+                                <td>
+                                    Level {{ $karyawanSkill->level_skill }}
+                                </td>
+
                                 <td>
                                     {{ $karyawanSkill->tanggal_penilaian
                                         ? \Carbon\Carbon::parse($karyawanSkill->tanggal_penilaian)->format('d-m-Y')
                                         : '-' }}
                                 </td>
+
                                 <td>
                                     <form
                                         method="POST"
@@ -532,7 +643,11 @@
                                     >
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="dk-btn dk-btn-sm dk-btn-delete">
+
+                                        <button
+                                            type="submit"
+                                            class="dk-btn dk-btn-sm dk-btn-delete"
+                                        >
                                             Hapus
                                         </button>
                                     </form>
@@ -548,13 +663,15 @@
                     </tbody>
                 </table>
             </div>
+
         </div>
     @endunless
 
-    {{-- ===================================================== --}}
+    {{-- ====================================== --}}
     {{-- RIWAYAT JABATAN SINGKAT --}}
-    {{-- ===================================================== --}}
+    {{-- ====================================== --}}
     <div class="dk-panel">
+
         <div class="dk-panel-head">
             <h2>Riwayat Jabatan</h2>
             <p>Catatan perubahan jabatan karyawan.</p>
@@ -571,18 +688,35 @@
                         <th>Selesai</th>
                     </tr>
                 </thead>
+
                 <tbody>
                     @forelse($karyawan->riwayatJabatans as $riwayat)
                         <tr>
-                            <td>{{ $loop->iteration }}</td>
-                            <td><strong>{{ $riwayat->jabatan->nama_jabatan }}</strong></td>
-                            <td>{{ ucfirst($riwayat->jenis_perubahan) }}</td>
-                            <td>{{ \Carbon\Carbon::parse($riwayat->tanggal_mulai)->format('d-m-Y') }}</td>
+                            <td>
+                                {{ $loop->iteration }}
+                            </td>
+
+                            <td>
+                                <strong>
+                                    {{ $riwayat->jabatan->nama_jabatan }}
+                                </strong>
+                            </td>
+
+                            <td>
+                                {{ ucfirst($riwayat->jenis_perubahan) }}
+                            </td>
+
+                            <td>
+                                {{ \Carbon\Carbon::parse($riwayat->tanggal_mulai)->format('d-m-Y') }}
+                            </td>
+
                             <td>
                                 @if($riwayat->tanggal_selesai)
                                     {{ \Carbon\Carbon::parse($riwayat->tanggal_selesai)->format('d-m-Y') }}
                                 @else
-                                    <span class="dk-badge aktif">Masih aktif</span>
+                                    <span class="dk-badge aktif">
+                                        Masih aktif
+                                    </span>
                                 @endif
                             </td>
                         </tr>
@@ -596,6 +730,7 @@
                 </tbody>
             </table>
         </div>
+
     </div>
 
 </div>

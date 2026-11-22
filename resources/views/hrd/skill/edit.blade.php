@@ -1,3 +1,4 @@
+
 @extends('layouts.hrd')
 
 @section('title', 'Edit Skill')
@@ -48,6 +49,7 @@
         line-height: 1.45;
     }
 
+    /* TOMBOL KEMBALI */
     #esSkillPage .es-btn-back {
         display: inline-flex;
         align-items: center;
@@ -62,15 +64,19 @@
         text-decoration: none;
         white-space: nowrap;
         box-sizing: border-box;
+        transition: background 0.2s ease,
+                    border-color 0.2s ease,
+                    color 0.2s ease;
     }
 
     #esSkillPage .es-btn-back:hover,
     #esSkillPage .es-btn-back:active {
-        background: #2c4a3e;
+        background: #4a7c59;
         color: #fdfdfc;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
     }
 
+    /* PESAN ERROR */
     #esSkillPage .es-err {
         background: #fef2f2;
         color: #991b1b;
@@ -88,6 +94,7 @@
         padding: 0;
     }
 
+    /* FORM GROUP */
     #esSkillPage .es-group {
         margin-bottom: 22px;
     }
@@ -100,6 +107,7 @@
         color: #111827;
     }
 
+    /* INPUT DAN TEXTAREA */
     #esSkillPage .es-group input[type="text"],
     #esSkillPage .es-group textarea {
         width: 100%;
@@ -112,12 +120,14 @@
         border: 1.5px solid #cbd5e1;
         border-radius: 8px;
         font-family: inherit;
+        transition: border-color 0.2s ease;
     }
 
+    /* BORDER INPUT SAAT AKTIF */
     #esSkillPage .es-group input[type="text"]:focus,
     #esSkillPage .es-group textarea:focus {
         outline: none;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
     }
 
     #esSkillPage .es-group textarea {
@@ -125,6 +135,7 @@
         resize: vertical;
     }
 
+    /* PESAN VALIDASI */
     #esSkillPage .es-error {
         display: block;
         margin-top: 7px;
@@ -133,6 +144,7 @@
         color: #991b1b;
     }
 
+    /* TOMBOL AKSI */
     #esSkillPage .es-actions {
         margin-top: 28px;
         padding-top: 22px;
@@ -143,27 +155,31 @@
         flex-wrap: wrap;
     }
 
+    /* TOMBOL SIMPAN PERUBAHAN */
     #esSkillPage .es-btn-save {
         display: inline-flex;
         align-items: center;
         justify-content: center;
         padding: 12px 24px;
         border-radius: 8px;
-        border: 1.5px solid #2c4a3e;
-        background: #2c4a3e;
+        border: 1.5px solid #4a7c59;
+        background: #4a7c59;
         color: #fdfdfc;
         font-size: 15px;
         font-weight: 700;
         cursor: pointer;
         box-sizing: border-box;
+        transition: background 0.2s ease,
+                    border-color 0.2s ease;
     }
 
     #esSkillPage .es-btn-save:hover,
     #esSkillPage .es-btn-save:active {
-        background: #4a7c59;
-        border-color: #4a7c59;
+        background: #3b6649;
+        border-color: #3b6649;
     }
 
+    /* TOMBOL BATAL */
     #esSkillPage .es-btn-cancel {
         display: inline-flex;
         align-items: center;
@@ -177,14 +193,17 @@
         font-weight: 600;
         text-decoration: none;
         box-sizing: border-box;
+        transition: background 0.2s ease,
+                    border-color 0.2s ease;
     }
 
     #esSkillPage .es-btn-cancel:hover,
     #esSkillPage .es-btn-cancel:active {
         background: #f4f6f4;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
     }
 
+    /* RESPONSIVE */
     @media (max-width: 768px) {
         #esSkillPage .es-card {
             padding: 20px;
@@ -251,8 +270,16 @@
             </div>
 
             <div class="es-actions">
-                <button type="submit" class="es-btn-save">Simpan Perubahan</button>
-                <a href="{{ route('hrd.skill.show', $skill) }}" class="es-btn-cancel">Batal</a>
+                <button type="submit" class="es-btn-save">
+                    Simpan Perubahan
+                </button>
+
+                <a
+                    href="{{ route('hrd.skill.show', $skill) }}"
+                    class="es-btn-cancel"
+                >
+                    Batal
+                </a>
             </div>
         </form>
 

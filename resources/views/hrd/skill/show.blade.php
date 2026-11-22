@@ -1,3 +1,4 @@
+
 @extends('layouts.hrd')
 
 @section('title', 'Detail Skill')
@@ -78,8 +79,12 @@
         line-height: 1.2;
         white-space: nowrap;
         box-sizing: border-box;
+        transition: background 0.2s ease,
+                    border-color 0.2s ease,
+                    color 0.2s ease;
     }
 
+    /* TOMBOL KEMBALI */
     #dsSkillPage .ds-btn-back {
         background: #f4f6f4;
         color: #2c4a3e;
@@ -88,11 +93,12 @@
 
     #dsSkillPage .ds-btn-back:hover,
     #dsSkillPage .ds-btn-back:active {
-        background: #2c4a3e;
+        background: #4a7c59;
         color: #fdfdfc;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
     }
 
+    /* TOMBOL EDIT */
     #dsSkillPage .ds-btn-edit {
         background: #e3b535;
         color: #111827;
@@ -107,6 +113,7 @@
         border-color: #cca024;
     }
 
+    /* INFORMASI SKILL */
     #dsSkillPage .ds-info-grid {
         display: grid;
         grid-template-columns: 220px 1fr;
@@ -132,6 +139,7 @@
         word-break: break-word;
     }
 
+    /* TABEL */
     #dsSkillPage .ds-table-wrap {
         width: 100%;
         overflow-x: auto;
@@ -179,6 +187,7 @@
         border-bottom: none;
     }
 
+    /* BADGE LEVEL SKILL */
     #dsSkillPage .ds-level-badge {
         display: inline-block;
         padding: 4px 12px;
@@ -192,6 +201,7 @@
         white-space: nowrap;
     }
 
+    /* INFORMASI TAMBAHAN */
     #dsSkillPage .ds-note {
         background: #f4f6f4;
         color: #1f2937;
@@ -215,6 +225,7 @@
         font-size: 14px;
     }
 
+    /* RESPONSIVE */
     @media (max-width: 768px) {
         #dsSkillPage .ds-panel {
             padding: 20px;

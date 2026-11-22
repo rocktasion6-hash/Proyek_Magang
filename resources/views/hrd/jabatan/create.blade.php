@@ -1,3 +1,4 @@
+
 @extends('layouts.hrd')
 
 @section('title', 'Tambah Jabatan')
@@ -48,6 +49,7 @@
         line-height: 1.45;
     }
 
+    /* Tombol Kembali */
     #tjJabatanPage .tj-btn-back {
         display: inline-flex;
         align-items: center;
@@ -66,11 +68,12 @@
 
     #tjJabatanPage .tj-btn-back:hover,
     #tjJabatanPage .tj-btn-back:active {
-        background: #2c4a3e;
+        background: #4a7c59;
         color: #fdfdfc;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
     }
 
+    /* Pesan Error */
     #tjJabatanPage .tj-err {
         background: #fef2f2;
         color: #991b1b;
@@ -88,6 +91,7 @@
         padding: 0;
     }
 
+    /* Panduan Tipe Jabatan */
     #tjJabatanPage .tj-guide {
         background: #f4f6f4;
         color: #1f2937;
@@ -104,6 +108,7 @@
         color: #2c4a3e;
     }
 
+    /* Grid Form */
     #tjJabatanPage .tj-grid-2 {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -127,6 +132,7 @@
         color: #111827;
     }
 
+    /* Input, Select dan Textarea */
     #tjJabatanPage .tj-group input[type="text"],
     #tjJabatanPage .tj-group input[type="number"],
     #tjJabatanPage .tj-group select,
@@ -148,7 +154,7 @@
     #tjJabatanPage .tj-group select:focus,
     #tjJabatanPage .tj-group textarea:focus {
         outline: none;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
     }
 
     #tjJabatanPage .tj-group textarea {
@@ -172,6 +178,7 @@
         color: #991b1b;
     }
 
+    /* Bagian Tombol Aksi */
     #tjJabatanPage .tj-actions {
         margin-top: 28px;
         padding-top: 22px;
@@ -182,14 +189,15 @@
         flex-wrap: wrap;
     }
 
+    /* Tombol Simpan Jabatan */
     #tjJabatanPage .tj-btn-save {
         display: inline-flex;
         align-items: center;
         justify-content: center;
         padding: 12px 24px;
         border-radius: 8px;
-        border: 1.5px solid #2c4a3e;
-        background: #2c4a3e;
+        border: 1.5px solid #4a7c59;
+        background: #4a7c59;
         color: #fdfdfc;
         font-size: 15px;
         font-weight: 700;
@@ -199,10 +207,11 @@
 
     #tjJabatanPage .tj-btn-save:hover,
     #tjJabatanPage .tj-btn-save:active {
-        background: #4a7c59;
-        border-color: #4a7c59;
+        background: #3b6649;
+        border-color: #3b6649;
     }
 
+    /* Tombol Batal */
     #tjJabatanPage .tj-btn-cancel {
         display: inline-flex;
         align-items: center;
@@ -221,9 +230,10 @@
     #tjJabatanPage .tj-btn-cancel:hover,
     #tjJabatanPage .tj-btn-cancel:active {
         background: #f4f6f4;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
     }
 
+    /* Responsive */
     @media (max-width: 768px) {
         #tjJabatanPage .tj-grid-2 {
             grid-template-columns: 1fr;
@@ -251,6 +261,7 @@
             </a>
         </div>
 
+        {{-- Pesan Error --}}
         @if($errors->any())
             <div class="tj-err">
                 <strong>Terjadi kesalahan:</strong>
@@ -262,16 +273,23 @@
             </div>
         @endif
 
+        {{-- Panduan Tipe Jabatan --}}
         <div class="tj-guide">
             <strong>Panduan Tipe Jabatan:</strong><br>
-            <strong>Operasional</strong> — Crew, Operator Loader Level 1, Operator Loader Level 2, dst.<br>
-            <strong>Struktural</strong> — Wakil Foreman (urutan 1), Foreman (2), Wakil Supervisor (3), Supervisor (4), Wakil General Manager (5), Manager (6).
+            <strong>Operasional</strong> —
+            Crew, Operator Loader Level 1, Operator Loader Level 2, dst.<br>
+            <strong>Struktural</strong> —
+            Wakil Foreman (urutan 1), Foreman (2),
+            Wakil Supervisor (3), Supervisor (4),
+            Wakil General Manager (5), Manager (6).
         </div>
 
         <form method="POST" action="{{ route('hrd.jabatan.store') }}">
             @csrf
 
+            {{-- Nama Jabatan dan Tipe Jabatan --}}
             <div class="tj-grid-2">
+
                 <div class="tj-group">
                     <label for="nama_jabatan">Nama Jabatan</label>
                     <input
@@ -283,6 +301,7 @@
                         placeholder="Contoh: Operator Loader Level 1"
                         autocomplete="off"
                     >
+
                     @error('nama_jabatan')
                         <span class="tj-error">{{ $message }}</span>
                     @enderror
@@ -296,39 +315,89 @@
                         required
                         onchange="toggleUrutan()"
                     >
-                        <option value="operasional" {{ old('tipe_jabatan', 'operasional') === 'operasional' ? 'selected' : '' }}>
+                        <option
+                            value="operasional"
+                            {{ old('tipe_jabatan', 'operasional') === 'operasional' ? 'selected' : '' }}
+                        >
                             Operasional (Crew, Operator, Teknisi, dll)
                         </option>
-                        <option value="struktural" {{ old('tipe_jabatan') === 'struktural' ? 'selected' : '' }}>
+
+                        <option
+                            value="struktural"
+                            {{ old('tipe_jabatan') === 'struktural' ? 'selected' : '' }}
+                        >
                             Struktural (Wakil Foreman, Foreman, Supervisor, dll)
                         </option>
                     </select>
+
                     @error('tipe_jabatan')
                         <span class="tj-error">{{ $message }}</span>
                     @enderror
                 </div>
+
             </div>
 
+            {{-- Level, Urutan dan Standar Nilai --}}
             <div class="tj-grid-2">
-                <div id="wrap_urutan" class="tj-group" style="{{ old('tipe_jabatan') === 'struktural' ? '' : 'display:none;' }}">
-                    <label for="urutan_struktural">Urutan Struktural</label>
-                    <select id="urutan_struktural" name="urutan_struktural">
+
+                <div
+                    id="wrap_urutan"
+                    class="tj-group"
+                    style="{{ old('tipe_jabatan') === 'struktural' ? '' : 'display:none;' }}"
+                >
+                    <label for="urutan_struktural">
+                        Urutan Struktural
+                    </label>
+
+                    <select
+                        id="urutan_struktural"
+                        name="urutan_struktural"
+                    >
                         <option value="">-- Pilih Urutan --</option>
-                        <option value="1" {{ old('urutan_struktural') == 1 ? 'selected' : '' }}>1 — Wakil Foreman</option>
-                        <option value="2" {{ old('urutan_struktural') == 2 ? 'selected' : '' }}>2 — Foreman</option>
-                        <option value="3" {{ old('urutan_struktural') == 3 ? 'selected' : '' }}>3 — Wakil Supervisor</option>
-                        <option value="4" {{ old('urutan_struktural') == 4 ? 'selected' : '' }}>4 — Supervisor</option>
-                        <option value="5" {{ old('urutan_struktural') == 5 ? 'selected' : '' }}>5 — Wakil General Manager</option>
-                        <option value="6" {{ old('urutan_struktural') == 6 ? 'selected' : '' }}>6 — Manager</option>
+
+                        <option value="1" {{ old('urutan_struktural') == 1 ? 'selected' : '' }}>
+                            1 — Wakil Foreman
+                        </option>
+
+                        <option value="2" {{ old('urutan_struktural') == 2 ? 'selected' : '' }}>
+                            2 — Foreman
+                        </option>
+
+                        <option value="3" {{ old('urutan_struktural') == 3 ? 'selected' : '' }}>
+                            3 — Wakil Supervisor
+                        </option>
+
+                        <option value="4" {{ old('urutan_struktural') == 4 ? 'selected' : '' }}>
+                            4 — Supervisor
+                        </option>
+
+                        <option value="5" {{ old('urutan_struktural') == 5 ? 'selected' : '' }}>
+                            5 — Wakil General Manager
+                        </option>
+
+                        <option value="6" {{ old('urutan_struktural') == 6 ? 'selected' : '' }}>
+                            6 — Manager
+                        </option>
                     </select>
-                    <small class="tj-help">Urutan menentukan hierarki kenaikan jabatan struktural.</small>
+
+                    <small class="tj-help">
+                        Urutan menentukan hierarki kenaikan jabatan struktural.
+                    </small>
+
                     @error('urutan_struktural')
                         <span class="tj-error">{{ $message }}</span>
                     @enderror
                 </div>
 
-                <div id="wrap_level" class="tj-group" style="{{ old('tipe_jabatan') === 'struktural' ? 'display:none;' : '' }}">
-                    <label for="level_jabatan">Level Jabatan</label>
+                <div
+                    id="wrap_level"
+                    class="tj-group"
+                    style="{{ old('tipe_jabatan') === 'struktural' ? 'display:none;' : '' }}"
+                >
+                    <label for="level_jabatan">
+                        Level Jabatan
+                    </label>
+
                     <input
                         type="number"
                         id="level_jabatan"
@@ -337,14 +406,21 @@
                         min="0"
                         placeholder="Contoh: 1"
                     >
-                    <small class="tj-help">0 = Crew, 1 = Level 1, 2 = Level 2, dst.</small>
+
+                    <small class="tj-help">
+                        0 = Crew, 1 = Level 1, 2 = Level 2, dst.
+                    </small>
+
                     @error('level_jabatan')
                         <span class="tj-error">{{ $message }}</span>
                     @enderror
                 </div>
 
                 <div class="tj-group">
-                    <label for="standar_nilai">Standar Nilai Assessment</label>
+                    <label for="standar_nilai">
+                        Standar Nilai Assessment
+                    </label>
+
                     <input
                         type="number"
                         id="standar_nilai"
@@ -356,30 +432,48 @@
                         required
                         placeholder="Contoh: 80"
                     >
-                    <small class="tj-help">Nilai minimal yang digunakan sebagai standar kelulusan.</small>
+
+                    <small class="tj-help">
+                        Nilai minimal yang digunakan sebagai standar kelulusan.
+                    </small>
+
                     @error('standar_nilai')
                         <span class="tj-error">{{ $message }}</span>
                     @enderror
                 </div>
+
             </div>
 
+            {{-- Deskripsi --}}
             <div class="tj-group">
                 <label for="deskripsi">Deskripsi</label>
+
                 <textarea
                     id="deskripsi"
                     name="deskripsi"
                     rows="5"
                     placeholder="Deskripsi jabatan..."
                 >{{ old('deskripsi') }}</textarea>
+
                 @error('deskripsi')
                     <span class="tj-error">{{ $message }}</span>
                 @enderror
             </div>
 
+            {{-- Tombol Aksi --}}
             <div class="tj-actions">
-                <button type="submit" class="tj-btn-save">Simpan Jabatan</button>
-                <a href="{{ route('hrd.jabatan.index') }}" class="tj-btn-cancel">Batal</a>
+                <button type="submit" class="tj-btn-save">
+                    Simpan Jabatan
+                </button>
+
+                <a
+                    href="{{ route('hrd.jabatan.index') }}"
+                    class="tj-btn-cancel"
+                >
+                    Batal
+                </a>
             </div>
+
         </form>
 
     </div>
@@ -388,8 +482,10 @@
 <script>
 function toggleUrutan() {
     const tipe = document.getElementById('tipe_jabatan').value;
+
     document.getElementById('wrap_urutan').style.display =
         tipe === 'struktural' ? 'block' : 'none';
+
     document.getElementById('wrap_level').style.display =
         tipe === 'struktural' ? 'none' : 'block';
 }

@@ -1,3 +1,4 @@
+
 @extends('layouts.hrd')
 
 @section('title', 'Tambah Skill')
@@ -48,6 +49,7 @@
         line-height: 1.45;
     }
 
+    /* TOMBOL KEMBALI */
     #tsSkillPage .ts-btn-back {
         display: inline-flex;
         align-items: center;
@@ -62,15 +64,19 @@
         text-decoration: none;
         white-space: nowrap;
         box-sizing: border-box;
+        transition: background 0.2s ease,
+                    border-color 0.2s ease,
+                    color 0.2s ease;
     }
 
     #tsSkillPage .ts-btn-back:hover,
     #tsSkillPage .ts-btn-back:active {
-        background: #2c4a3e;
+        background: #4a7c59;
         color: #fdfdfc;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
     }
 
+    /* PESAN ERROR */
     #tsSkillPage .ts-err {
         background: #fef2f2;
         color: #991b1b;
@@ -88,6 +94,7 @@
         padding: 0;
     }
 
+    /* FORM GROUP */
     #tsSkillPage .ts-group {
         margin-bottom: 22px;
     }
@@ -100,6 +107,7 @@
         color: #111827;
     }
 
+    /* INPUT DAN TEXTAREA */
     #tsSkillPage .ts-group input[type="text"],
     #tsSkillPage .ts-group textarea {
         width: 100%;
@@ -112,12 +120,14 @@
         border: 1.5px solid #cbd5e1;
         border-radius: 8px;
         font-family: inherit;
+        transition: border-color 0.2s ease;
     }
 
+    /* BORDER INPUT SAAT AKTIF */
     #tsSkillPage .ts-group input[type="text"]:focus,
     #tsSkillPage .ts-group textarea:focus {
         outline: none;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
     }
 
     #tsSkillPage .ts-group textarea {
@@ -125,6 +135,7 @@
         resize: vertical;
     }
 
+    /* PESAN VALIDASI */
     #tsSkillPage .ts-error {
         display: block;
         margin-top: 7px;
@@ -133,6 +144,7 @@
         color: #991b1b;
     }
 
+    /* TOMBOL AKSI */
     #tsSkillPage .ts-actions {
         margin-top: 28px;
         padding-top: 22px;
@@ -143,27 +155,31 @@
         flex-wrap: wrap;
     }
 
+    /* TOMBOL SIMPAN SKILL */
     #tsSkillPage .ts-btn-save {
         display: inline-flex;
         align-items: center;
         justify-content: center;
         padding: 12px 24px;
         border-radius: 8px;
-        border: 1.5px solid #2c4a3e;
-        background: #2c4a3e;
+        border: 1.5px solid #4a7c59;
+        background: #4a7c59;
         color: #fdfdfc;
         font-size: 15px;
         font-weight: 700;
         cursor: pointer;
         box-sizing: border-box;
+        transition: background 0.2s ease,
+                    border-color 0.2s ease;
     }
 
     #tsSkillPage .ts-btn-save:hover,
     #tsSkillPage .ts-btn-save:active {
-        background: #4a7c59;
-        border-color: #4a7c59;
+        background: #3b6649;
+        border-color: #3b6649;
     }
 
+    /* TOMBOL BATAL */
     #tsSkillPage .ts-btn-cancel {
         display: inline-flex;
         align-items: center;
@@ -177,14 +193,17 @@
         font-weight: 600;
         text-decoration: none;
         box-sizing: border-box;
+        transition: background 0.2s ease,
+                    border-color 0.2s ease;
     }
 
     #tsSkillPage .ts-btn-cancel:hover,
     #tsSkillPage .ts-btn-cancel:active {
         background: #f4f6f4;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
     }
 
+    /* RESPONSIVE */
     @media (max-width: 768px) {
         #tsSkillPage .ts-card {
             padding: 20px;
@@ -233,6 +252,7 @@
                     placeholder="Contoh: Problem Solving"
                     autocomplete="off"
                 >
+
                 @error('nama_skill')
                     <span class="ts-error">{{ $message }}</span>
                 @enderror
@@ -246,14 +266,23 @@
                     rows="5"
                     placeholder="Jelaskan skill..."
                 >{{ old('deskripsi') }}</textarea>
+
                 @error('deskripsi')
                     <span class="ts-error">{{ $message }}</span>
                 @enderror
             </div>
 
             <div class="ts-actions">
-                <button type="submit" class="ts-btn-save">Simpan Skill</button>
-                <a href="{{ route('hrd.skill.index') }}" class="ts-btn-cancel">Batal</a>
+                <button type="submit" class="ts-btn-save">
+                    Simpan Skill
+                </button>
+
+                <a
+                    href="{{ route('hrd.skill.index') }}"
+                    class="ts-btn-cancel"
+                >
+                    Batal
+                </a>
             </div>
         </form>
 

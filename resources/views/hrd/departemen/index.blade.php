@@ -1,3 +1,4 @@
+
 @extends('layouts.hrd')
 
 @section('title', 'Manajemen Departemen')
@@ -48,13 +49,13 @@
     }
 
     .md-btn-primary {
-        background: #2c4a3e;
+        background: #4a7c59;
         color: #fdfdfc;
     }
 
     .md-btn-primary:hover,
     .md-btn-primary:active {
-        background: #4a7c59;
+        background: #3b6649;
     }
 
     .md-btn-reset {
@@ -67,7 +68,7 @@
     .md-btn-reset:active {
         background: #f4f6f4;
         color: #111827;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
     }
 
     .md-btn-sm {
@@ -85,9 +86,9 @@
 
     .md-btn-detail:hover,
     .md-btn-detail:active {
-        background: #2c4a3e;
+        background: #4a7c59;
         color: #fdfdfc;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
     }
 
     .md-btn-edit {
@@ -158,7 +159,7 @@
 
     .md-filter-row input[type="text"]:focus {
         outline: none;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
     }
 
     .md-table-wrap {
@@ -282,14 +283,14 @@
 
     .md-pager-links a:hover {
         background: #f4f6f4;
-        border-color: #2c4a3e;
+        border-color: #4a7c59;
         color: #2c4a3e;
     }
 
     .md-pager-links [aria-current="page"] span,
     .md-pager-links span.active {
-        background: #2c4a3e;
-        border-color: #2c4a3e;
+        background: #4a7c59;
+        border-color: #4a7c59;
         color: #fdfdfc;
     }
 

@@ -88,9 +88,9 @@
 
     #ddDepartemenPage .dd-btn-back:hover,
     #ddDepartemenPage .dd-btn-back:active {
-        background: #2c4a3e;
+        background: #3b6649;
         color: #fdfdfc;
-        border-color: #2c4a3e;
+        border-color: #3b6649;
     }
 
     #ddDepartemenPage .dd-btn-edit {
