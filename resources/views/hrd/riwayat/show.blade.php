@@ -1,445 +1,756 @@
-<!DOCTYPE html>
-<html lang="id">
 
-<head>
-
-    <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>Detail Riwayat Karyawan</title>
-
-    <style>
-
-        body {
-            font-family: Arial, sans-serif;
-            background: #f4f6f8;
-            margin: 0;
-            padding: 30px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: auto;
-        }
-
-        .card {
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-            margin-bottom: 25px;
-        }
-
-        .profile {
-            display: grid;
-            grid-template-columns: 200px 1fr;
-            gap: 10px;
-        }
-
-        .profile div {
-            padding: 8px 0;
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        .label {
-            font-weight: bold;
-            color: #374151;
-        }
-
-        h1,
-        h2 {
-            margin-top: 0;
-        }
-
-        .btn {
-            display: inline-block;
-            padding: 10px 15px;
-            text-decoration: none;
-            border-radius: 6px;
-        }
-
-        .btn-back {
-            background: #6b7280;
-            color: white;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th,
-        td {
-            padding: 12px;
-            border-bottom: 1px solid #e5e7eb;
-            text-align: left;
-            vertical-align: top;
-        }
-
-        th {
-            background: #f9fafb;
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-
-        .awal {
-            background: #e5e7eb;
-            color: #374151;
-        }
-
-        .kenaikan {
-            background: #dcfce7;
-            color: #166534;
-        }
-
-        .pemindahan {
-            background: #dbeafe;
-            color: #1d4ed8;
-        }
-
-        .skill {
-            background: #fef3c7;
-            color: #92400e;
-        }
-
-        .empty {
-            text-align: center;
-            padding: 25px;
-            color: #6b7280;
-        }
-
-    </style>
-
-</head>
-
-<body>
 @extends('layouts.hrd')
-@section('title', 'Detail Riwayat')
-@section('page_title', 'Detail Riwayat')
+
+@section('title', 'Detail Riwayat Karyawan')
+@section('page_title', 'Detail Riwayat Karyawan')
+
 @section('content')
-<div class="container">
 
-    <div style="margin-bottom:20px;">
+<div class="w-full min-w-0 space-y-5">
 
-        <a
-            href="{{ route('hrd.riwayat.index') }}"
-            class="btn btn-back"
-        >
-            ← Kembali
+    {{-- ============================================== --}}
+    {{-- HEADER HALAMAN --}}
+    {{-- ============================================== --}}
+
+    <div class="flex flex-col gap-3 sm:flex-row
+                sm:items-center sm:justify-between">
+
+        <div>
+            <h1 class="text-2xl font-bold text-[#304c3f]">
+                Detail Riwayat Karyawan
+            </h1>
+
+            <p class="mt-1 text-sm text-gray-500">
+                Informasi perjalanan jabatan dan perkembangan
+                keterampilan karyawan.
+            </p>
+        </div>
+
+        <a href="{{ route('hrd.riwayat.index') }}"
+           class="inline-flex h-10 items-center justify-center
+                  gap-2 self-start rounded-lg
+                  border border-[#dfe5df] bg-white
+                  px-4 text-sm font-semibold text-[#304c3f]
+                  transition-colors hover:bg-[#f4f6f3]
+                  sm:self-auto">
+
+            <svg class="h-4 w-4"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2"
+                 viewBox="0 0 24 24">
+
+                <path d="M15 18l-6-6 6-6"/>
+
+            </svg>
+
+            Kembali
         </a>
 
     </div>
 
-    <!-- PROFIL KARYAWAN -->
 
-    <div class="card">
+    {{-- ============================================== --}}
+    {{-- INFORMASI KARYAWAN --}}
+    {{-- ============================================== --}}
 
-        <h1>Riwayat Karyawan</h1>
+    <section class="w-full min-w-0 rounded-xl
+                    border border-[#e0e5df] bg-white p-5">
 
-        <div class="profile">
+        {{-- JUDUL SECTION --}}
+        <div class="mb-5 overflow-hidden rounded-lg
+                    bg-[#f4f6f3]">
 
-            <div class="label">
-                NIK
-            </div>
+            <div class="rounded-l-md border-l-[5px]
+                        border-[#4c7b58] px-5 py-3">
 
-            <div>
-                {{ $karyawan->nik }}
-            </div>
+                <h2 class="text-base font-bold text-[#304c3f]">
+                    Informasi Karyawan
+                </h2>
 
-            <div class="label">
-                Nama
-            </div>
-
-            <div>
-                {{ $karyawan->nama }}
-            </div>
-
-            <div class="label">
-                Departemen
-            </div>
-
-            <div>
-                {{ $karyawan->departemen->nama_departemen }}
-            </div>
-
-            <div class="label">
-                Jabatan Saat Ini
-            </div>
-
-            <div>
-                {{ $karyawan->jabatan->nama_jabatan }}
-            </div>
-
-            <div class="label">
-                Level
-            </div>
-
-            <div>
-                {{ $karyawan->jabatan->level_jabatan }}
-            </div>
-
-            <div class="label">
-                Tanggal Masuk
-            </div>
-
-            <div>
-                {{ \Carbon\Carbon::parse(
-                    $karyawan->tanggal_masuk
-                )->format('d-m-Y') }}
             </div>
 
         </div>
 
-    </div>
+
+        {{-- DATA KARYAWAN --}}
+        <div class="grid grid-cols-1 gap-x-8
+                    lg:grid-cols-2">
+
+            {{-- NIK --}}
+            <div class="flex flex-col gap-1
+                        border-b border-[#e8ece8]
+                        py-4 sm:flex-row sm:items-start">
+
+                <p class="w-full flex-shrink-0 text-sm
+                          font-medium text-gray-500
+                          sm:w-40">
+                    NIK
+                </p>
+
+                <p class="min-w-0 flex-1 break-words
+                          text-sm font-semibold text-gray-800">
+                    {{ $karyawan->nik }}
+                </p>
+
+            </div>
 
 
-    <!-- RIWAYAT JABATAN -->
+            {{-- NAMA --}}
+            <div class="flex flex-col gap-1
+                        border-b border-[#e8ece8]
+                        py-4 sm:flex-row sm:items-start">
 
-    <div class="card">
+                <p class="w-full flex-shrink-0 text-sm
+                          font-medium text-gray-500
+                          sm:w-40">
+                    Nama Karyawan
+                </p>
 
-        <h2>Riwayat Jabatan</h2>
+                <p class="min-w-0 flex-1 break-words
+                          text-sm font-semibold text-gray-800">
+                    {{ $karyawan->nama }}
+                </p>
 
-        <table>
+            </div>
 
-            <thead>
 
-                <tr>
-                    <th>No</th>
-                    <th>Jabatan</th>
-                    <th>Jenis Perubahan</th>
-                    <th>Tanggal Mulai</th>
-                    <th>Tanggal Selesai</th>
-                    <th>Nilai Assessment</th>
-                    <th>Keterangan</th>
-                </tr>
+            {{-- DEPARTEMEN --}}
+            <div class="flex flex-col gap-1
+                        border-b border-[#e8ece8]
+                        py-4 sm:flex-row sm:items-start">
 
-            </thead>
+                <p class="w-full flex-shrink-0 text-sm
+                          font-medium text-gray-500
+                          sm:w-40">
+                    Departemen
+                </p>
 
-            <tbody>
+                <p class="min-w-0 flex-1 break-words
+                          text-sm font-semibold text-gray-800">
+                    {{ $karyawan->departemen?->nama_departemen ?? '-' }}
+                </p>
 
-            @forelse($riwayatJabatans as $riwayat)
+            </div>
 
-                <tr>
 
-                    <td>
-                        {{ $loop->iteration }}
-                    </td>
+            {{-- JABATAN --}}
+            <div class="flex flex-col gap-1
+                        border-b border-[#e8ece8]
+                        py-4 sm:flex-row sm:items-start">
 
-                    <td>
+                <p class="w-full flex-shrink-0 text-sm
+                          font-medium text-gray-500
+                          sm:w-40">
+                    Jabatan Saat Ini
+                </p>
 
-                        <strong>
-                            {{ $riwayat->jabatan->nama_jabatan }}
-                        </strong>
+                <p class="min-w-0 flex-1 break-words
+                          text-sm font-semibold text-gray-800">
+                    {{ $karyawan->jabatan?->nama_jabatan ?? '-' }}
+                </p>
 
-                        <br>
+            </div>
 
-                        <small>
-                            Level {{ $riwayat->jabatan->level_jabatan }}
-                        </small>
 
-                    </td>
+            {{-- LEVEL --}}
+            <div class="flex flex-col gap-1
+                        border-b border-[#e8ece8]
+                        py-4 sm:flex-row sm:items-start">
 
-                    <td>
+                <p class="w-full flex-shrink-0 text-sm
+                          font-medium text-gray-500
+                          sm:w-40">
+                    Level Jabatan
+                </p>
+
+                <p class="min-w-0 flex-1 text-sm
+                          font-semibold text-gray-800">
+
+                    @if ($karyawan->jabatan?->level_jabatan)
+                        Level {{ $karyawan->jabatan->level_jabatan }}
+                    @else
+                        -
+                    @endif
+
+                </p>
+
+            </div>
+
+
+            {{-- TANGGAL MASUK --}}
+            <div class="flex flex-col gap-1
+                        border-b border-[#e8ece8]
+                        py-4 sm:flex-row sm:items-start">
+
+                <p class="w-full flex-shrink-0 text-sm
+                          font-medium text-gray-500
+                          sm:w-40">
+                    Tanggal Masuk
+                </p>
+
+                <p class="min-w-0 flex-1 text-sm
+                          font-semibold text-gray-800">
+
+                    {{ $karyawan->tanggal_masuk
+                        ? \Carbon\Carbon::parse($karyawan->tanggal_masuk)->format('d M Y')
+                        : '-' }}
+
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    {{-- ============================================== --}}
+    {{-- RIWAYAT JABATAN --}}
+    {{-- ============================================== --}}
+
+    <section class="w-full min-w-0 overflow-hidden
+                    rounded-xl border border-[#e0e5df]
+                    bg-white">
+
+        <div class="p-5 pb-4">
+
+            {{-- JUDUL SECTION --}}
+            <div class="mb-3 overflow-hidden rounded-lg
+                        bg-[#f4f6f3]">
+
+                <div class="rounded-l-md border-l-[5px]
+                            border-[#4c7b58] px-5 py-3">
+
+                    <h2 class="text-base font-bold text-[#304c3f]">
+                        Riwayat Jabatan
+                    </h2>
+
+                </div>
+
+            </div>
+
+            <p class="text-sm text-gray-500">
+                Daftar perubahan jabatan, kenaikan jabatan, dan
+                pemindahan jabatan selama masa kerja.
+            </p>
+
+        </div>
+
+
+        {{-- TABEL RIWAYAT JABATAN --}}
+        <div class="w-full min-w-0 overflow-x-auto">
+
+            <table class="w-full min-w-[1050px]
+                          border-collapse text-sm">
+
+                <thead class="bg-[#f4f6f3]">
+
+                    <tr class="text-xs uppercase
+                               tracking-wide text-[#304c3f]">
+
+                        <th class="px-4 py-4 text-left font-bold">
+                            No
+                        </th>
+
+                        <th class="px-4 py-4 text-left font-bold">
+                            Jabatan
+                        </th>
+
+                        <th class="px-4 py-4 text-left font-bold">
+                            Jenis Perubahan
+                        </th>
+
+                        <th class="px-4 py-4 text-left font-bold">
+                            Tanggal Mulai
+                        </th>
+
+                        <th class="px-4 py-4 text-left font-bold">
+                            Tanggal Selesai
+                        </th>
+
+                        <th class="px-4 py-4 text-center font-bold">
+                            Nilai Assessment
+                        </th>
+
+                        <th class="px-4 py-4 text-left font-bold">
+                            Keterangan
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody class="divide-y divide-[#e8ece8]">
+
+                    @forelse ($riwayatJabatans as $riwayat)
 
                         @php
-                            $class = match($riwayat->jenis_perubahan) {
-                                'awal' => 'awal',
-                                'kenaikan' => 'kenaikan',
-                                'pemindahan' => 'pemindahan',
-                                default => 'awal',
+                            $jenisPerubahan = $riwayat->jenis_perubahan;
+
+                            $warnaJenis = match ($jenisPerubahan) {
+                                'awal' => 'bg-gray-100 text-gray-600 border-gray-200',
+                                'kenaikan' => 'bg-[#e8f1ea] text-[#304c3f] border-[#d3e3d6]',
+                                'pemindahan' => 'bg-[#fff8e6] text-[#927018] border-[#f2e3ab]',
+                                default => 'bg-gray-100 text-gray-600 border-gray-200',
+                            };
+
+                            $namaJenis = match ($jenisPerubahan) {
+                                'awal' => 'Jabatan Awal',
+                                'kenaikan' => 'Kenaikan Jabatan',
+                                'pemindahan' => 'Pemindahan Jabatan',
+                                default => ucfirst(
+                                    str_replace('_', ' ', $jenisPerubahan ?? '-')
+                                ),
                             };
                         @endphp
 
-                        <span class="badge {{ $class }}">
-                            {{ ucfirst($riwayat->jenis_perubahan) }}
-                        </span>
+                        <tr class="transition-colors
+                                   hover:bg-[#fafbf9]">
 
-                    </td>
+                            {{-- NOMOR --}}
+                            <td class="whitespace-nowrap
+                                       px-4 py-4 text-gray-600">
 
-                    <td>
+                                {{ $loop->iteration }}
 
-                        {{ \Carbon\Carbon::parse(
-                            $riwayat->tanggal_mulai
-                        )->format('d-m-Y') }}
+                            </td>
 
-                    </td>
 
-                    <td>
+                            {{-- JABATAN --}}
+                            <td class="px-4 py-4">
 
-                        @if($riwayat->tanggal_selesai)
+                                <p class="font-semibold text-gray-800">
+                                    {{ $riwayat->jabatan?->nama_jabatan ?? '-' }}
+                                </p>
 
-                            {{ \Carbon\Carbon::parse(
-                                $riwayat->tanggal_selesai
-                            )->format('d-m-Y') }}
+                                <p class="mt-1 text-xs text-gray-500">
 
-                        @else
+                                    @if ($riwayat->jabatan?->level_jabatan)
+                                        Level {{ $riwayat->jabatan->level_jabatan }}
+                                    @else
+                                        -
+                                    @endif
 
-                            <strong>Masih aktif</strong>
+                                </p>
 
-                        @endif
+                            </td>
 
-                    </td>
 
-                    <td>
+                            {{-- JENIS PERUBAHAN --}}
+                            <td class="px-4 py-4">
 
-                        @if($riwayat->hasilAssessment)
+                                <span class="inline-flex items-center
+                                             justify-center whitespace-nowrap
+                                             rounded-md border
+                                             px-3 py-1.5
+                                             text-xs font-semibold
+                                             {{ $warnaJenis }}">
 
-                            {{ number_format(
-                                $riwayat->hasilAssessment->nilai_akhir,
-                                2
-                            ) }}
+                                    {{ $namaJenis }}
 
-                        @else
+                                </span>
 
-                            -
+                            </td>
 
-                        @endif
 
-                    </td>
+                            {{-- TANGGAL MULAI --}}
+                            <td class="whitespace-nowrap
+                                       px-4 py-4 text-gray-700">
 
-                    <td>
-                        {{ $riwayat->keterangan ?: '-' }}
-                    </td>
+                                {{ $riwayat->tanggal_mulai
+                                    ? \Carbon\Carbon::parse($riwayat->tanggal_mulai)->format('d M Y')
+                                    : '-' }}
 
-                </tr>
+                            </td>
 
-            @empty
 
-                <tr>
+                            {{-- TANGGAL SELESAI --}}
+                            <td class="whitespace-nowrap
+                                       px-4 py-4">
 
-                    <td
-                        colspan="7"
-                        class="empty"
-                    >
-                        Belum ada riwayat jabatan.
-                    </td>
+                                @if ($riwayat->tanggal_selesai)
 
-                </tr>
+                                    <span class="text-gray-700">
 
-            @endforelse
+                                        {{ \Carbon\Carbon::parse(
+                                            $riwayat->tanggal_selesai
+                                        )->format('d M Y') }}
 
-            </tbody>
+                                    </span>
 
-        </table>
+                                @else
 
-    </div>
+                                    <span class="inline-flex items-center
+                                                 gap-2 text-xs font-semibold
+                                                 text-[#4c7b58]">
 
+                                        <span class="h-2 w-2 rounded-full
+                                                     bg-[#4c7b58]"></span>
 
-    <!-- RIWAYAT SKILL -->
+                                        Masih Aktif
 
-    <div class="card">
+                                    </span>
 
-        <h2>Riwayat Skill</h2>
+                                @endif
 
-        <table>
+                            </td>
 
-            <thead>
 
-                <tr>
-                    <th>No</th>
-                    <th>Skill</th>
-                    <th>Level Sebelum</th>
-                    <th>Level Sesudah</th>
-                    <th>Tanggal Perubahan</th>
-                    <th>Nilai Assessment</th>
-                    <th>Keterangan</th>
-                </tr>
+                            {{-- NILAI ASSESSMENT --}}
+                            <td class="px-4 py-4 text-center">
 
-            </thead>
+                                @if ($riwayat->hasilAssessment)
 
-            <tbody>
+                                    <span class="font-bold text-[#304c3f]">
 
-            @forelse($riwayatSkills as $riwayat)
+                                        {{ number_format(
+                                            $riwayat->hasilAssessment->nilai_akhir,
+                                            2
+                                        ) }}
 
-                <tr>
+                                    </span>
 
-                    <td>
-                        {{ $loop->iteration }}
-                    </td>
+                                @else
 
-                    <td>
+                                    <span class="text-gray-400">
+                                        -
+                                    </span>
 
-                        <strong>
-                            {{ $riwayat->skill->nama_skill }}
-                        </strong>
+                                @endif
 
-                    </td>
+                            </td>
 
-                    <td>
-                        Level {{ $riwayat->level_sebelum }}
-                    </td>
 
-                    <td>
+                            {{-- KETERANGAN --}}
+                            <td class="px-4 py-4 text-gray-600">
 
-                        <span class="badge skill">
-                            Level {{ $riwayat->level_sesudah }}
-                        </span>
+                                {{ $riwayat->keterangan ?: '-' }}
 
-                    </td>
+                            </td>
 
-                    <td>
+                        </tr>
 
-                        {{ \Carbon\Carbon::parse(
-                            $riwayat->tanggal_perubahan
-                        )->format('d-m-Y') }}
+                    @empty
 
-                    </td>
+                        <tr>
+                            <td colspan="7"
+                                class="px-6 py-12 text-center">
 
-                    <td>
+                                <div class="flex flex-col
+                                            items-center gap-2">
 
-                        @if($riwayat->hasilAssessment)
+                                    <div class="flex h-12 w-12
+                                                items-center justify-center
+                                                rounded-xl bg-[#f4f6f3]">
 
-                            {{ number_format(
-                                $riwayat->hasilAssessment->nilai_akhir,
-                                2
-                            ) }}
+                                        <svg class="h-6 w-6 text-gray-400"
+                                             fill="none"
+                                             stroke="currentColor"
+                                             stroke-width="1.5"
+                                             viewBox="0 0 24 24">
 
-                        @else
+                                            <rect x="5" y="4"
+                                                  width="14" height="17"
+                                                  rx="2"/>
 
-                            -
+                                            <path d="M9 9h6M9 13h6M9 17h4"/>
 
-                        @endif
+                                        </svg>
 
-                    </td>
+                                    </div>
 
-                    <td>
-                        {{ $riwayat->keterangan ?: '-' }}
-                    </td>
+                                    <p class="text-sm font-semibold
+                                              text-gray-600">
+                                        Belum ada riwayat jabatan.
+                                    </p>
 
-                </tr>
+                                    <p class="text-xs text-gray-400">
+                                        Perubahan jabatan akan ditampilkan di sini.
+                                    </p>
 
-            @empty
+                                </div>
 
-                <tr>
+                            </td>
+                        </tr>
 
-                    <td
-                        colspan="7"
-                        class="empty"
-                    >
-                        Belum ada riwayat skill.
-                    </td>
+                    @endforelse
 
-                </tr>
+                </tbody>
 
-            @endforelse
+            </table>
 
-            </tbody>
+        </div>
 
-        </table>
+    </section>
+
+
+    {{-- ============================================== --}}
+    {{-- RIWAYAT SKILL --}}
+    {{-- ============================================== --}}
+
+    <section class="w-full min-w-0 overflow-hidden
+                    rounded-xl border border-[#e0e5df]
+                    bg-white">
+
+        <div class="p-5 pb-4">
+
+            {{-- JUDUL SECTION --}}
+            <div class="mb-3 overflow-hidden rounded-lg
+                        bg-[#f4f6f3]">
+
+                <div class="rounded-l-md border-l-[5px]
+                            border-[#4c7b58] px-5 py-3">
+
+                    <h2 class="text-base font-bold text-[#304c3f]">
+                        Riwayat Skill
+                    </h2>
+
+                </div>
+
+            </div>
+
+            <p class="text-sm text-gray-500">
+                Perkembangan keterampilan dan peningkatan level
+                kompetensi karyawan.
+            </p>
+
+        </div>
+
+
+        {{-- TABEL RIWAYAT SKILL --}}
+        <div class="w-full min-w-0 overflow-x-auto">
+
+            <table class="w-full min-w-[1050px]
+                          border-collapse text-sm">
+
+                <thead class="bg-[#f4f6f3]">
+
+                    <tr class="text-xs uppercase
+                               tracking-wide text-[#304c3f]">
+
+                        <th class="px-4 py-4 text-left font-bold">
+                            No
+                        </th>
+
+                        <th class="px-4 py-4 text-left font-bold">
+                            Skill
+                        </th>
+
+                        <th class="px-4 py-4 text-center font-bold">
+                            Level Sebelum
+                        </th>
+
+                        <th class="px-4 py-4 text-center font-bold">
+                            Level Sesudah
+                        </th>
+
+                        <th class="px-4 py-4 text-left font-bold">
+                            Tanggal Perubahan
+                        </th>
+
+                        <th class="px-4 py-4 text-center font-bold">
+                            Nilai Assessment
+                        </th>
+
+                        <th class="px-4 py-4 text-left font-bold">
+                            Keterangan
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody class="divide-y divide-[#e8ece8]">
+
+                    @forelse ($riwayatSkills as $riwayat)
+
+                        <tr class="transition-colors
+                                   hover:bg-[#fafbf9]">
+
+                            {{-- NOMOR --}}
+                            <td class="whitespace-nowrap
+                                       px-4 py-4 text-gray-600">
+
+                                {{ $loop->iteration }}
+
+                            </td>
+
+
+                            {{-- SKILL --}}
+                            <td class="px-4 py-4">
+
+                                <p class="font-semibold text-gray-800">
+                                    {{ $riwayat->skill?->nama_skill ?? '-' }}
+                                </p>
+
+                            </td>
+
+
+                            {{-- LEVEL SEBELUM --}}
+                            <td class="px-4 py-4 text-center">
+
+                                <span class="inline-flex items-center
+                                             justify-center rounded-md
+                                             border border-gray-200
+                                             bg-gray-100 px-3 py-1.5
+                                             text-xs font-semibold
+                                             text-gray-600">
+
+                                    Level {{ $riwayat->level_sebelum }}
+
+                                </span>
+
+                            </td>
+
+
+                            {{-- LEVEL SESUDAH --}}
+                            <td class="px-4 py-4 text-center">
+
+                                <span class="inline-flex items-center
+                                             justify-center rounded-md
+                                             border border-[#d3e3d6]
+                                             bg-[#e8f1ea] px-3 py-1.5
+                                             text-xs font-semibold
+                                             text-[#304c3f]">
+
+                                    Level {{ $riwayat->level_sesudah }}
+
+                                </span>
+
+                            </td>
+
+
+                            {{-- TANGGAL PERUBAHAN --}}
+                            <td class="whitespace-nowrap
+                                       px-4 py-4 text-gray-700">
+
+                                {{ $riwayat->tanggal_perubahan
+                                    ? \Carbon\Carbon::parse($riwayat->tanggal_perubahan)->format('d M Y')
+                                    : '-' }}
+
+                            </td>
+
+
+                            {{-- NILAI ASSESSMENT --}}
+                            <td class="px-4 py-4 text-center">
+
+                                @if ($riwayat->hasilAssessment)
+
+                                    <span class="font-bold text-[#304c3f]">
+
+                                        {{ number_format(
+                                            $riwayat->hasilAssessment->nilai_akhir,
+                                            2
+                                        ) }}
+
+                                    </span>
+
+                                @else
+
+                                    <span class="text-gray-400">
+                                        -
+                                    </span>
+
+                                @endif
+
+                            </td>
+
+
+                            {{-- KETERANGAN --}}
+                            <td class="px-4 py-4 text-gray-600">
+
+                                {{ $riwayat->keterangan ?: '-' }}
+
+                            </td>
+
+                        </tr>
+
+                    @empty
+
+                        <tr>
+                            <td colspan="7"
+                                class="px-6 py-12 text-center">
+
+                                <div class="flex flex-col
+                                            items-center gap-2">
+
+                                    <div class="flex h-12 w-12
+                                                items-center justify-center
+                                                rounded-xl bg-[#f4f6f3]">
+
+                                        <svg class="h-6 w-6 text-gray-400"
+                                             fill="none"
+                                             stroke="currentColor"
+                                             stroke-width="1.5"
+                                             viewBox="0 0 24 24">
+
+                                            <rect x="5" y="4"
+                                                  width="14" height="17"
+                                                  rx="2"/>
+
+                                            <path d="M9 9h6M9 13h6M9 17h4"/>
+
+                                        </svg>
+
+                                    </div>
+
+                                    <p class="text-sm font-semibold
+                                              text-gray-600">
+                                        Belum ada riwayat skill.
+                                    </p>
+
+                                    <p class="text-xs text-gray-400">
+                                        Perkembangan skill akan ditampilkan di sini.
+                                    </p>
+
+                                </div>
+
+                            </td>
+                        </tr>
+
+                    @endforelse
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+
+    {{-- ============================================== --}}
+    {{-- TOMBOL KEMBALI BAWAH --}}
+    {{-- ============================================== --}}
+
+    <div class="flex justify-end">
+
+        <a href="{{ route('hrd.riwayat.index') }}"
+           class="inline-flex h-10 items-center justify-center
+                  gap-2 rounded-lg border border-[#dfe5df]
+                  bg-white px-5 text-sm font-semibold
+                  text-[#304c3f] transition-colors
+                  hover:bg-[#f4f6f3]">
+
+            <svg class="h-4 w-4"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2"
+                 viewBox="0 0 24 24">
+
+                <path d="M15 18l-6-6 6-6"/>
+
+            </svg>
+
+            Kembali ke Riwayat Karyawan
+
+        </a>
 
     </div>
 
 </div>
-@endsection
-</body>
 
-</html>
+@endsection

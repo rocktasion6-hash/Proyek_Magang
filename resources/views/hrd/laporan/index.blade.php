@@ -1,950 +1,1204 @@
+
 @extends('layouts.hrd')
 
 @section('title', 'Laporan & Analitik')
-
 @section('page_title', 'Laporan & Analitik')
 
 @section('content')
 
-{{-- ========================================================== --}}
-{{-- FILTER TAHUN --}}
-{{-- ========================================================== --}}
+@php
+    $statistikMaster = [
+        ['label' => 'Karyawan Aktif', 'nilai' => $totalKaryawan, 'satuan' => 'orang'],
+        ['label' => 'Departemen', 'nilai' => $totalDepartemen, 'satuan' => 'departemen'],
+        ['label' => 'Jabatan', 'nilai' => $totalJabatan, 'satuan' => 'jabatan'],
+        ['label' => 'Skill', 'nilai' => $totalSkill, 'satuan' => 'skill'],
+    ];
 
-<div class="card">
+    $statistikAssessment = [
+        ['label' => 'Hasil Assessment', 'nilai' => $totalHasilAssessment, 'satuan' => $labelTahun],
+        ['label' => 'Lulus', 'nilai' => $totalLulus, 'satuan' => 'peserta'],
+        ['label' => 'Tidak Lulus', 'nilai' => $totalTidakLulus, 'satuan' => 'peserta'],
+        [
+            'label' => 'Tingkat Kelulusan',
+            'nilai' => number_format($tingkatKelulusan, 2) . '%',
+            'satuan' => 'Rata-rata nilai: ' . number_format($rataRataNilai, 2),
+        ],
+    ];
 
-    <div
-        style="
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            gap:15px;
-            flex-wrap:wrap;
-        "
-    >
+    $statistikPengembangan = [
+        ['label' => 'Total Pengembangan', 'nilai' => $totalPengembangan],
+        ['label' => 'Diajukan', 'nilai' => $pengembanganDiajukan],
+        ['label' => 'Diproses', 'nilai' => $pengembanganDiproses],
+        ['label' => 'Disetujui', 'nilai' => $pengembanganDisetujui],
+        ['label' => 'Ditolak', 'nilai' => $pengembanganDitolak],
+    ];
 
-        <div>
+    $statistikRealisasi = [
+        [
+            'label' => 'Perubahan Jabatan',
+            'nilai' => $totalPerubahanJabatan,
+            'keterangan' => 'Perubahan terealisasi',
+        ],
+        [
+            'label' => 'Promosi Struktural',
+            'nilai' => $totalPromosiStruktural,
+            'keterangan' => 'Promosi terealisasi',
+        ],
+        [
+            'label' => 'Pemindahan Jabatan',
+            'nilai' => $totalPemindahanAktual,
+            'keterangan' => 'Pemindahan terealisasi',
+        ],
+        [
+            'label' => 'Peningkatan Skill',
+            'nilai' => $totalPeningkatanSkill,
+            'keterangan' => 'Pengajuan disetujui',
+        ],
+    ];
+@endphp
 
-            <h1 style="margin:0;">
+<div class="w-full min-w-0 space-y-6">
+
+    {{-- ================================================= --}}
+    {{-- HEADER DAN FILTER TAHUN --}}
+    {{-- ================================================= --}}
+
+    <div class="flex flex-col gap-4
+                lg:flex-row lg:items-end lg:justify-between">
+
+        <div class="min-w-0">
+            <h1 class="text-2xl font-bold text-[#304c3f]">
                 Dashboard Analitik
             </h1>
 
-            <p style="margin-bottom:0;">
-                Ringkasan data karyawan, assessment,
-                dan pengembangan {{ $labelTahun }}.
-                Distribusi karyawan menampilkan kondisi terkini pada pembaruan warehouse terakhir.
+            <p class="mt-1 max-w-3xl text-sm leading-6 text-gray-500">
+                Ringkasan karyawan, assessment, dan pengembangan
+                {{ $labelTahun }}.
+            </p>
+
+            <p class="text-xs text-gray-400">
+                Distribusi karyawan menggunakan data warehouse
+                pada pembaruan terakhir.
+            </p>
+        </div>
+
+        <form
+            method="GET"
+            action="{{ route('hrd.laporan.index') }}"
+            class="flex shrink-0 items-end gap-3"
+        >
+            <div class="min-w-0">
+                <label for="filter-tahun"
+                       class="mb-2 block text-xs font-semibold
+                              text-[#304c3f]">
+                    Filter Tahun
+                </label>
+
+                <select
+                    id="filter-tahun"
+                    name="tahun"
+                    onchange="this.form.submit()"
+                    class="h-11 min-w-[170px] rounded-lg
+                           border border-[#dfe5df] bg-white
+                           px-3 text-sm font-medium text-gray-700
+                           outline-none transition
+                           focus:border-[#4c7b58]
+                           focus:ring-2 focus:ring-[#dce8df]"
+                >
+                    @foreach ($tahunTersedia as $tahunItem)
+                        <option
+                            value="{{ $tahunItem }}"
+                            @selected((string) $tahun === (string) $tahunItem)
+                        >
+                            {{ $tahunItem === 'semua'
+                                ? 'Semua Tahun'
+                                : $tahunItem }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <button
+                type="submit"
+                class="inline-flex h-11 items-center justify-center
+                       rounded-lg bg-[#4c7b58] px-5
+                       text-sm font-semibold text-white
+                       transition hover:bg-[#3e6749]"
+            >
+                Terapkan
+            </button>
+        </form>
+    </div>
+
+
+    {{-- ================================================= --}}
+    {{-- RINGKASAN DATA MASTER --}}
+    {{-- ================================================= --}}
+
+    <section class="min-w-0 rounded-xl border
+                    border-[#e0e5df] bg-white p-5">
+
+        <div class="mb-5 overflow-hidden rounded-lg
+                    bg-[#f4f6f3]">
+
+            <div class="rounded-l-md border-l-[5px]
+                        border-[#4c7b58] px-5 py-3">
+
+                <h2 class="text-base font-bold text-[#304c3f]">
+                    Ringkasan Data Karyawan
+                </h2>
+
+            </div>
+
+        </div>
+
+        <div class="grid grid-cols-1 gap-4
+                    sm:grid-cols-2 xl:grid-cols-4">
+
+            @foreach ($statistikMaster as $item)
+
+                <div class="min-w-0 rounded-xl border
+                            border-[#e1e7e1] bg-[#fafbf9]
+                            p-5">
+
+                    <p class="text-xs font-semibold uppercase
+                              tracking-wide text-gray-500">
+                        {{ $item['label'] }}
+                    </p>
+
+                    <p class="mt-3 text-3xl font-bold text-[#304c3f]">
+                        {{ number_format($item['nilai']) }}
+                    </p>
+
+                    <p class="mt-2 text-xs text-gray-500">
+                        {{ $item['satuan'] }}
+                    </p>
+
+                    <div class="mt-4 h-1 w-10 rounded-full
+                                bg-[#4c7b58]"></div>
+
+                </div>
+
+            @endforeach
+
+        </div>
+
+    </section>
+
+
+    {{-- ================================================= --}}
+    {{-- RINGKASAN HASIL ASSESSMENT --}}
+    {{-- ================================================= --}}
+
+    <section class="min-w-0 rounded-xl border
+                    border-[#e0e5df] bg-white p-5">
+
+        <div class="mb-5 overflow-hidden rounded-lg
+                    bg-[#f4f6f3]">
+
+            <div class="rounded-l-md border-l-[5px]
+                        border-[#4c7b58] px-5 py-3">
+
+                <h2 class="text-base font-bold text-[#304c3f]">
+                    Ringkasan Hasil Assessment
+                </h2>
+
+            </div>
+
+        </div>
+
+        <div class="grid grid-cols-1 gap-4
+                    sm:grid-cols-2 xl:grid-cols-4">
+
+            @foreach ($statistikAssessment as $item)
+
+                <div class="min-w-0 rounded-xl border
+                            border-[#e1e7e1] bg-[#fafbf9]
+                            p-5">
+
+                    <p class="text-xs font-semibold uppercase
+                              tracking-wide text-gray-500">
+                        {{ $item['label'] }}
+                    </p>
+
+                    <p class="mt-3 text-3xl font-bold
+                        {{ $item['label'] === 'Tidak Lulus'
+                            ? 'text-red-600'
+                            : 'text-[#304c3f]' }}">
+                        {{ $item['nilai'] }}
+                    </p>
+
+                    <p class="mt-2 text-xs text-gray-500">
+                        {{ $item['satuan'] }}
+                    </p>
+
+                    <div class="mt-4 h-1 w-10 rounded-full
+                        {{ $item['label'] === 'Tidak Lulus'
+                            ? 'bg-red-400'
+                            : 'bg-[#4c7b58]' }}">
+                    </div>
+
+                </div>
+
+            @endforeach
+
+        </div>
+
+    </section>
+
+
+    {{-- ================================================= --}}
+    {{-- RINGKASAN PENGEMBANGAN --}}
+    {{-- ================================================= --}}
+
+    <section class="min-w-0 rounded-xl border
+                    border-[#e0e5df] bg-white p-5">
+
+        <div class="mb-5 overflow-hidden rounded-lg
+                    bg-[#f4f6f3]">
+
+            <div class="rounded-l-md border-l-[5px]
+                        border-[#4c7b58] px-5 py-3">
+
+                <h2 class="text-base font-bold text-[#304c3f]">
+                    Ringkasan Pengembangan Karyawan
+                </h2>
+
+            </div>
+
+        </div>
+
+        <div class="grid grid-cols-1 gap-4
+                    sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+
+            @foreach ($statistikPengembangan as $item)
+
+                <div class="min-w-0 rounded-xl border
+                            border-[#e1e7e1] bg-[#fafbf9]
+                            p-4">
+
+                    <p class="min-h-[32px] text-xs font-semibold
+                              uppercase tracking-wide text-gray-500">
+                        {{ $item['label'] }}
+                    </p>
+
+                    <p class="mt-2 text-3xl font-bold
+                        {{ $item['label'] === 'Ditolak'
+                            ? 'text-red-600'
+                            : 'text-[#304c3f]' }}">
+                        {{ number_format($item['nilai']) }}
+                    </p>
+
+                    <div class="mt-4 h-1 w-10 rounded-full
+                        {{ $item['label'] === 'Ditolak'
+                            ? 'bg-red-400'
+                            : 'bg-[#4c7b58]' }}">
+                    </div>
+
+                </div>
+
+            @endforeach
+
+        </div>
+
+        <p class="mt-4 text-xs leading-5 text-gray-500">
+            Status mengikuti kondisi terakhir pengajuan yang dibuat
+            {{ $labelTahun }}. Tren keputusan menggunakan
+            tanggal keputusan.
+        </p>
+
+    </section>
+
+
+    {{-- ================================================= --}}
+    {{-- REALISASI PENGEMBANGAN --}}
+    {{-- ================================================= --}}
+
+    <section class="min-w-0 rounded-xl border
+                    border-[#e0e5df] bg-white p-5">
+
+        <div class="mb-5 overflow-hidden rounded-lg
+                    bg-[#f4f6f3]">
+
+            <div class="rounded-l-md border-l-[5px]
+                        border-[#4c7b58] px-5 py-3">
+
+                <h2 class="text-base font-bold text-[#304c3f]">
+                    Realisasi Pengembangan
+                </h2>
+
+            </div>
+
+        </div>
+
+        <div class="grid grid-cols-1 gap-4
+                    sm:grid-cols-2 xl:grid-cols-4">
+
+            @foreach ($statistikRealisasi as $item)
+
+                <div class="min-w-0 rounded-xl border
+                            border-[#e1e7e1] bg-[#fafbf9]
+                            p-5">
+
+                    <p class="min-h-[32px] text-xs font-semibold
+                              uppercase tracking-wide text-gray-500">
+                        {{ $item['label'] }}
+                    </p>
+
+                    <p class="mt-2 text-3xl font-bold text-[#304c3f]">
+                        {{ number_format($item['nilai']) }}
+                    </p>
+
+                    <p class="mt-2 text-xs text-gray-500">
+                        {{ $item['keterangan'] }} {{ $labelTahun }}
+                    </p>
+
+                    <div class="mt-4 h-1 w-10 rounded-full
+                                bg-[#e6b93d]"></div>
+
+                </div>
+
+            @endforeach
+
+        </div>
+
+    </section>
+
+
+    {{-- ================================================= --}}
+    {{-- GRAFIK STATUS ASSESSMENT DAN PENGEMBANGAN --}}
+    {{-- ================================================= --}}
+
+    <div class="grid min-w-0 grid-cols-1 gap-5 xl:grid-cols-2">
+
+        {{-- STATUS ASSESSMENT --}}
+        <section class="min-w-0 rounded-xl border
+                        border-[#e0e5df] bg-white p-5">
+
+            <div class="mb-4 overflow-hidden rounded-lg
+                        bg-[#f4f6f3]">
+
+                <div class="rounded-l-md border-l-[5px]
+                            border-[#4c7b58] px-5 py-3">
+
+                    <h2 class="text-base font-bold text-[#304c3f]">
+                        Status Hasil Assessment
+                    </h2>
+
+                </div>
+
+            </div>
+
+            <p class="mb-5 text-xs text-gray-500">
+                Perbandingan jumlah peserta lulus dan tidak lulus
+                {{ $labelTahun }}.
+            </p>
+
+            <div class="relative h-[300px] w-full min-w-0">
+                <canvas id="assessmentStatusChart"></canvas>
+            </div>
+
+        </section>
+
+
+        {{-- PENGEMBANGAN BERDASARKAN JENIS --}}
+        <section class="min-w-0 rounded-xl border
+                        border-[#e0e5df] bg-white p-5">
+
+            <div class="mb-4 overflow-hidden rounded-lg
+                        bg-[#f4f6f3]">
+
+                <div class="rounded-l-md border-l-[5px]
+                            border-[#4c7b58] px-5 py-3">
+
+                    <h2 class="text-base font-bold text-[#304c3f]">
+                        Pengembangan Berdasarkan Jenis
+                    </h2>
+
+                </div>
+
+            </div>
+
+            <p class="mb-5 text-xs text-gray-500">
+                Distribusi pengajuan kenaikan jabatan,
+                pemindahan jabatan, dan peningkatan skill.
+            </p>
+
+            <div class="relative h-[300px] w-full min-w-0">
+                <canvas id="pengembanganJenisChart"></canvas>
+            </div>
+
+        </section>
+
+    </div>
+
+
+    {{-- ================================================= --}}
+    {{-- GRAFIK DISTRIBUSI KARYAWAN --}}
+    {{-- ================================================= --}}
+
+    <div class="grid min-w-0 grid-cols-1 gap-5 xl:grid-cols-2">
+
+        {{-- PER JABATAN --}}
+        <section class="min-w-0 rounded-xl border
+                        border-[#e0e5df] bg-white p-5">
+
+            <div class="mb-4 overflow-hidden rounded-lg
+                        bg-[#f4f6f3]">
+
+                <div class="rounded-l-md border-l-[5px]
+                            border-[#4c7b58] px-5 py-3">
+
+                    <h2 class="text-base font-bold text-[#304c3f]">
+                        Karyawan Aktif per Jabatan
+                    </h2>
+
+                </div>
+
+            </div>
+
+            <p class="mb-5 text-xs text-gray-500">
+                Distribusi karyawan aktif berdasarkan jabatan saat ini.
+            </p>
+
+            <div class="relative h-[350px] w-full min-w-0">
+                <canvas id="jabatanChart"></canvas>
+            </div>
+
+        </section>
+
+
+        {{-- PER DEPARTEMEN --}}
+        <section class="min-w-0 rounded-xl border
+                        border-[#e0e5df] bg-white p-5">
+
+            <div class="mb-4 overflow-hidden rounded-lg
+                        bg-[#f4f6f3]">
+
+                <div class="rounded-l-md border-l-[5px]
+                            border-[#4c7b58] px-5 py-3">
+
+                    <h2 class="text-base font-bold text-[#304c3f]">
+                        Karyawan Aktif per Departemen
+                    </h2>
+
+                </div>
+
+            </div>
+
+            <p class="mb-5 text-xs text-gray-500">
+                Distribusi jumlah karyawan aktif berdasarkan departemen.
+            </p>
+
+            <div class="relative h-[350px] w-full min-w-0">
+                <canvas id="departemenChart"></canvas>
+            </div>
+
+        </section>
+
+    </div>
+
+
+    {{-- ================================================= --}}
+    {{-- GRAFIK TREN ASSESSMENT --}}
+    {{-- ================================================= --}}
+
+    <section class="min-w-0 rounded-xl border
+                    border-[#e0e5df] bg-white p-5">
+
+        <div class="mb-4 overflow-hidden rounded-lg
+                    bg-[#f4f6f3]">
+
+            <div class="rounded-l-md border-l-[5px]
+                        border-[#4c7b58] px-5 py-3">
+
+                <h2 class="text-base font-bold text-[#304c3f]">
+                    Tren Hasil Assessment {{ $labelTahun }}
+                </h2>
+
+            </div>
+
+        </div>
+
+        <p class="mb-5 text-xs text-gray-500">
+            Perkembangan jumlah peserta lulus dan tidak lulus
+            dari Januari hingga Desember.
+        </p>
+
+        <div class="relative h-[350px] w-full min-w-0">
+            <canvas id="assessmentTrendChart"></canvas>
+        </div>
+
+    </section>
+
+
+    {{-- ================================================= --}}
+    {{-- PROMOSI DAN KEPUTUSAN PENGEMBANGAN --}}
+    {{-- ================================================= --}}
+
+    <div class="grid min-w-0 grid-cols-1 gap-5 xl:grid-cols-2">
+
+        {{-- PROMOSI STRUKTURAL --}}
+        <section class="min-w-0 rounded-xl border
+                        border-[#e0e5df] bg-white p-5">
+
+            <div class="mb-4 overflow-hidden rounded-lg
+                        bg-[#f4f6f3]">
+
+                <div class="rounded-l-md border-l-[5px]
+                            border-[#4c7b58] px-5 py-3">
+
+                    <h2 class="text-base font-bold text-[#304c3f]">
+                        Promosi Struktural per Urutan
+                    </h2>
+
+                </div>
+
+            </div>
+
+            <p class="mb-5 text-xs text-gray-500">
+                Jumlah promosi jabatan struktural terealisasi
+                {{ $labelTahun }}.
+            </p>
+
+            <div class="relative h-[350px] w-full min-w-0">
+                <canvas id="promotionSequenceChart"></canvas>
+            </div>
+
+        </section>
+
+
+        {{-- KEPUTUSAN PENGAJUAN --}}
+        <section class="min-w-0 rounded-xl border
+                        border-[#e0e5df] bg-white p-5">
+
+            <div class="mb-4 overflow-hidden rounded-lg
+                        bg-[#f4f6f3]">
+
+                <div class="rounded-l-md border-l-[5px]
+                            border-[#4c7b58] px-5 py-3">
+
+                    <h2 class="text-base font-bold text-[#304c3f]">
+                        Keputusan Pengajuan per Bulan
+                    </h2>
+
+                </div>
+
+            </div>
+
+            <p class="mb-5 text-xs text-gray-500">
+                Tren jumlah pengajuan yang disetujui
+                dan ditolak {{ $labelTahun }}.
+            </p>
+
+            <div class="relative h-[350px] w-full min-w-0">
+                <canvas id="developmentDecisionChart"></canvas>
+            </div>
+
+        </section>
+
+    </div>
+
+
+    {{-- ================================================= --}}
+    {{-- TABEL PENGEMBANGAN TERBARU --}}
+    {{-- ================================================= --}}
+
+    <section class="min-w-0 overflow-hidden rounded-xl
+                    border border-[#e0e5df] bg-white">
+
+        <div class="p-5 pb-4">
+
+            <div class="mb-3 overflow-hidden rounded-lg
+                        bg-[#f4f6f3]">
+
+                <div class="rounded-l-md border-l-[5px]
+                            border-[#4c7b58] px-5 py-3">
+
+                    <h2 class="text-base font-bold text-[#304c3f]">
+                        Pengembangan Terbaru
+                    </h2>
+
+                </div>
+
+            </div>
+
+            <p class="text-xs text-gray-500">
+                Daftar 10 aktivitas pengajuan pengembangan terbaru
+                {{ $labelTahun }}.
             </p>
 
         </div>
 
+        <div class="w-full min-w-0 overflow-x-auto">
 
-        <form
-            method="GET"
-            style="
-                display:flex;
-                gap:10px;
-                align-items:center;
-            "
-        >
+            <table class="w-full min-w-[1100px]
+                          border-collapse text-sm">
 
-            <label>
-                Tahun:
-            </label>
+                <thead class="bg-[#f4f6f3]">
 
-            <select
-                name="tahun"
-                onchange="this.form.submit()"
-                style="
-                    padding:10px;
-                    border:1px solid #d1d5db;
-                    border-radius:6px;
-                "
-            >
+                    <tr class="text-xs uppercase
+                               tracking-wide text-[#304c3f]">
 
-                @foreach($tahunTersedia as $tahunItem)
+                        <th class="px-4 py-4 text-left font-bold">
+                            No
+                        </th>
 
-                    <option
-                        value="{{ $tahunItem }}"
-                        {{ $tahun == $tahunItem
-                            ? 'selected'
-                            : '' }}
-                    >
-                        {{ $tahunItem === 'semua'
-                            ? 'Semua Tahun'
-                            : $tahunItem }}
-                    </option>
+                        <th class="px-4 py-4 text-left font-bold">
+                            Karyawan
+                        </th>
 
-                @endforeach
+                        <th class="px-4 py-4 text-left font-bold">
+                            Jenis
+                        </th>
 
-            </select>
+                        <th class="px-4 py-4 text-left font-bold">
+                            Detail
+                        </th>
 
-        </form>
+                        <th class="px-4 py-4 text-center font-bold">
+                            Status
+                        </th>
 
-    </div>
+                        <th class="px-4 py-4 text-left font-bold">
+                            Tanggal Pengajuan
+                        </th>
 
-</div>
+                        <th class="px-4 py-4 text-left font-bold">
+                            Tanggal Keputusan
+                        </th>
 
+                    </tr>
 
-{{-- ========================================================== --}}
-{{-- KPI MASTER --}}
-{{-- ========================================================== --}}
+                </thead>
 
-<div
-    style="
-        display:grid;
-        grid-template-columns:repeat(4, 1fr);
-        gap:20px;
-        margin-bottom:20px;
-    "
->
+                <tbody class="divide-y divide-[#e8ece8]">
 
-    <div class="card" style="margin:0;">
+                    @forelse ($pengembanganTerbaru as $pengajuan)
 
-        <small>
-            Karyawan Aktif Saat Ini
-        </small>
+                        @php
+                            $jenisPengajuan = match ($pengajuan->jenis_pengajuan) {
+                                'kenaikan_jabatan' => 'Kenaikan Jabatan',
+                                'pemindahan_jabatan' => 'Pemindahan Jabatan',
+                                'peningkatan_skill' => 'Peningkatan Skill',
+                                default => ucwords(str_replace(
+                                    '_', ' ', $pengajuan->jenis_pengajuan ?? '-'
+                                )),
+                            };
 
-        <h2 style="margin:10px 0 0;">
-            {{ $totalKaryawan }}
-        </h2>
+                            $warnaStatus = match ($pengajuan->status) {
+                                'disetujui' => 'bg-[#e8f1ea] text-[#304c3f] border-[#d3e3d6]',
+                                'ditolak' => 'bg-red-50 text-red-700 border-red-200',
+                                'diproses' => 'bg-[#fff8e6] text-[#927018] border-[#f2e3ab]',
+                                'diajukan' => 'bg-gray-100 text-gray-600 border-gray-200',
+                                default => 'bg-gray-100 text-gray-600 border-gray-200',
+                            };
+                        @endphp
 
-        <small>
-            orang
-        </small>
+                        <tr class="transition-colors hover:bg-[#fafbf9]">
 
-    </div>
+                            {{-- NOMOR --}}
+                            <td class="whitespace-nowrap px-4 py-4
+                                       text-gray-600">
+                                {{ $loop->iteration }}
+                            </td>
 
 
-    <div class="card" style="margin:0;">
+                            {{-- KARYAWAN --}}
+                            <td class="px-4 py-4">
 
-        <small>
-            Departemen Saat Ini
-        </small>
+                                <p class="font-semibold text-gray-800">
+                                    {{ $pengajuan->nama_karyawan }}
+                                </p>
 
-        <h2 style="margin:10px 0 0;">
-            {{ $totalDepartemen }}
-        </h2>
+                                <p class="mt-1 text-xs text-gray-500">
+                                    NIK: {{ $pengajuan->nik }}
+                                </p>
 
-        <small>
-            departemen
-        </small>
+                            </td>
 
-    </div>
 
+                            {{-- JENIS --}}
+                            <td class="px-4 py-4">
 
-    <div class="card" style="margin:0;">
+                                <span class="font-medium text-gray-700">
+                                    {{ $jenisPengajuan }}
+                                </span>
 
-        <small>
-            Jabatan Saat Ini
-        </small>
+                            </td>
 
-        <h2 style="margin:10px 0 0;">
-            {{ $totalJabatan }}
-        </h2>
 
-        <small>
-            jabatan
-        </small>
+                            {{-- DETAIL --}}
+                            <td class="min-w-[260px] px-4 py-4
+                                       text-gray-700">
 
-    </div>
+                                @if ($pengajuan->jenis_pengajuan === 'peningkatan_skill')
 
+                                    @if (
+                                        isset($pengajuan->skill_progressions) &&
+                                        $pengajuan->skill_progressions->isNotEmpty()
+                                    )
 
-    <div class="card" style="margin:0;">
+                                        <div class="space-y-2">
 
-        <small>
-            Skill Saat Ini
-        </small>
+                                            @foreach (
+                                                $pengajuan->skill_progressions
+                                                as $skillProgression
+                                            )
 
-        <h2 style="margin:10px 0 0;">
-            {{ $totalSkill }}
-        </h2>
+                                                <div class="text-xs leading-5">
 
-        <small>
-            skill
-        </small>
+                                                    <span class="font-medium">
+                                                        {{ $skillProgression->nama_skill }}
+                                                    </span>
 
-    </div>
+                                                    <span class="text-gray-500">
+                                                        Level
+                                                        {{ $skillProgression->level_sebelum ?? '-' }}
+                                                    </span>
 
-</div>
+                                                    <span class="mx-1 text-[#4c7b58]">
+                                                        →
+                                                    </span>
 
+                                                    <span class="font-semibold
+                                                                 text-[#304c3f]">
+                                                        Level
+                                                        {{ $skillProgression->level_sesudah ?? '-' }}
+                                                    </span>
 
-{{-- ========================================================== --}}
-{{-- KPI ASSESSMENT --}}
-{{-- ========================================================== --}}
+                                                </div>
 
-<div
-    style="
-        display:grid;
-        grid-template-columns:repeat(4, 1fr);
-        gap:20px;
-        margin-bottom:20px;
-    "
->
+                                            @endforeach
 
-    <div class="card" style="margin:0;">
+                                        </div>
 
-        <small>
-            Hasil Assessment
-        </small>
+                                    @else
 
-        <h2 style="margin:10px 0 0;">
-            {{ $totalHasilAssessment }}
-        </h2>
+                                        <p class="text-xs leading-5">
 
-        <small>
-            {{ $labelTahun }}
-        </small>
+                                            {{ $pengajuan->jabatan_asal
+                                                ?? $pengajuan->nama_skill
+                                                ?? '-' }}
 
-    </div>
+                                            <span class="mx-1 text-[#4c7b58]">
+                                                →
+                                            </span>
 
+                                            {{ $pengajuan->jabatan_tujuan
+                                                ?? $pengajuan->nama_skill
+                                                ?? '-' }}
 
-    <div class="card" style="margin:0;">
+                                        </p>
 
-        <small>
-            Lulus
-        </small>
+                                        @if (
+                                            $pengajuan->level_sebelum !== null ||
+                                            $pengajuan->level_sesudah !== null
+                                        )
 
-        <h2 style="margin:10px 0 0;">
-            {{ $totalLulus }}
-        </h2>
+                                            <p class="mt-1 text-xs text-gray-500">
+                                                Level
+                                                {{ $pengajuan->level_sebelum ?? '-' }}
+                                                →
+                                                {{ $pengajuan->level_sesudah ?? '-' }}
+                                            </p>
 
-        <small>
-            peserta
-        </small>
+                                        @endif
 
-    </div>
+                                    @endif
 
+                                @else
 
-    <div class="card" style="margin:0;">
+                                    <p class="text-xs leading-5">
 
-        <small>
-            Tidak Lulus
-        </small>
+                                        <span class="font-medium">
+                                            {{ $pengajuan->jabatan_asal ?? '-' }}
+                                        </span>
 
-        <h2 style="margin:10px 0 0;">
-            {{ $totalTidakLulus }}
-        </h2>
+                                        @if (
+                                            $pengajuan->tipe_jabatan_asal === 'struktural' &&
+                                            $pengajuan->urutan_asal !== null
+                                        )
+                                            (Urutan {{ $pengajuan->urutan_asal }})
+                                        @endif
 
-        <small>
-            peserta
-        </small>
+                                        <span class="mx-1 text-[#4c7b58]">
+                                            →
+                                        </span>
 
-    </div>
+                                        <span class="font-semibold text-[#304c3f]">
+                                            {{ $pengajuan->jabatan_tujuan ?? '-' }}
+                                        </span>
 
+                                        @if (
+                                            $pengajuan->tipe_jabatan_tujuan === 'struktural' &&
+                                            $pengajuan->urutan_tujuan !== null
+                                        )
+                                            (Urutan {{ $pengajuan->urutan_tujuan }})
+                                        @endif
 
-    <div class="card" style="margin:0;">
+                                    </p>
 
-        <small>
-            Tingkat Kelulusan
-        </small>
-
-        <h2 style="margin:10px 0 0;">
-            {{ number_format(
-                $tingkatKelulusan,
-                2
-            ) }}%
-        </h2>
-
-        <small>
-            rata-rata nilai:
-            {{ number_format(
-                $rataRataNilai,
-                2
-            ) }}
-        </small>
-
-    </div>
-
-</div>
-
-
-{{-- ========================================================== --}}
-{{-- KPI PENGEMBANGAN --}}
-{{-- ========================================================== --}}
-
-<div
-    style="
-        display:grid;
-        grid-template-columns:repeat(5, 1fr);
-        gap:20px;
-        margin-bottom:25px;
-    "
->
-
-    <div class="card" style="margin:0;">
-
-        <small>
-            Total Pengembangan
-        </small>
-
-        <h2 style="margin:10px 0 0;">
-            {{ $totalPengembangan }}
-        </h2>
-
-    </div>
-
-
-    <div class="card" style="margin:0;">
-
-        <small>
-            Diajukan
-        </small>
-
-        <h2 style="margin:10px 0 0;">
-            {{ $pengembanganDiajukan }}
-        </h2>
-
-    </div>
-
-
-    <div class="card" style="margin:0;">
-
-        <small>
-            Diproses
-        </small>
-
-        <h2 style="margin:10px 0 0;">
-            {{ $pengembanganDiproses }}
-        </h2>
-
-    </div>
-
-
-    <div class="card" style="margin:0;">
-
-        <small>
-            Disetujui
-        </small>
-
-        <h2 style="margin:10px 0 0;">
-            {{ $pengembanganDisetujui }}
-        </h2>
-
-    </div>
-
-
-    <div class="card" style="margin:0;">
-
-        <small>
-            Ditolak
-        </small>
-
-        <h2 style="margin:10px 0 0;">
-            {{ $pengembanganDitolak }}
-        </h2>
-
-    </div>
-
-</div>
-
-<p style="margin-top:-15px;margin-bottom:25px;">
-    Status pengajuan mengikuti status terakhir dari pengajuan yang dibuat {{ $labelTahun }};
-    tren keputusan memakai tanggal keputusan.
-</p>
-
-<div
-    style="
-        display:grid;
-        grid-template-columns:repeat(4, 1fr);
-        gap:20px;
-        margin-bottom:25px;
-    "
->
-
-    <div class="card" style="margin:0;">
-        <small>Perubahan Jabatan Terealisasi</small>
-        <h2 style="margin:10px 0 0;">{{ $totalPerubahanJabatan }}</h2>
-        <small>berdasarkan riwayat jabatan {{ $labelTahun }}</small>
-    </div>
-
-    <div class="card" style="margin:0;">
-        <small>Promosi Struktural Terealisasi</small>
-        <h2 style="margin:10px 0 0;">{{ $totalPromosiStruktural }}</h2>
-        <small>berdasarkan riwayat jabatan {{ $labelTahun }}</small>
-    </div>
-
-    <div class="card" style="margin:0;">
-        <small>Pemindahan Terealisasi</small>
-        <h2 style="margin:10px 0 0;">{{ $totalPemindahanAktual }}</h2>
-        <small>berdasarkan riwayat jabatan {{ $labelTahun }}</small>
-    </div>
-
-    <div class="card" style="margin:0;">
-        <small>Peningkatan Skill Terealisasi</small>
-        <h2 style="margin:10px 0 0;">{{ $totalPeningkatanSkill }}</h2>
-        <small>berdasarkan pengajuan disetujui {{ $labelTahun }}</small>
-    </div>
-
-</div>
-
-
-{{-- ========================================================== --}}
-{{-- CHART ASSESSMENT --}}
-{{-- ========================================================== --}}
-
-<div
-    style="
-        display:grid;
-        grid-template-columns:1fr 1fr;
-        gap:20px;
-        margin-bottom:20px;
-    "
->
-
-    <div class="card">
-
-        <h2>
-            Status Hasil Assessment
-        </h2>
-
-        <div style="height:300px;">
-
-            <canvas id="assessmentStatusChart"></canvas>
-
-        </div>
-
-    </div>
-
-
-    <div class="card">
-
-        <h2>
-            Pengembangan Berdasarkan Jenis
-        </h2>
-
-        <div style="height:300px;">
-
-            <canvas id="pengembanganJenisChart"></canvas>
-
-        </div>
-
-    </div>
-
-</div>
-
-
-{{-- ========================================================== --}}
-{{-- CHART DISTRIBUSI --}}
-{{-- ========================================================== --}}
-
-<div
-    style="
-        display:grid;
-        grid-template-columns:1fr 1fr;
-        gap:20px;
-        margin-bottom:20px;
-    "
->
-
-    <div class="card">
-
-        <h2>
-            Karyawan Aktif per Jabatan Saat Ini
-        </h2>
-
-        <div style="height:350px;">
-
-            <canvas id="jabatanChart"></canvas>
-
-        </div>
-
-    </div>
-
-
-    <div class="card">
-
-        <h2>
-            Karyawan Aktif per Departemen Saat Ini
-        </h2>
-
-        <div style="height:350px;">
-
-            <canvas id="departemenChart"></canvas>
-
-        </div>
-
-    </div>
-
-</div>
-
-
-{{-- ========================================================== --}}
-{{-- TREND ASSESSMENT --}}
-{{-- ========================================================== --}}
-
-<div class="card">
-
-    <h2>
-    Tren Hasil Assessment {{ $labelTahun }}
-    </h2>
-
-    <div style="height:350px;">
-
-        <canvas id="assessmentTrendChart"></canvas>
-
-    </div>
-
-</div>
-
-<div
-    style="
-        display:grid;
-        grid-template-columns:1fr 1fr;
-        gap:20px;
-        margin-bottom:20px;
-    "
->
-
-    <div class="card">
-        <h2>Promosi Struktural per Urutan {{ $labelTahun }}</h2>
-        <div style="height:350px;">
-            <canvas id="promotionSequenceChart"></canvas>
-        </div>
-    </div>
-
-    <div class="card">
-        <h2>Keputusan Pengajuan per Bulan {{ $labelTahun }}</h2>
-        <div style="height:350px;">
-            <canvas id="developmentDecisionChart"></canvas>
-        </div>
-    </div>
-
-</div>
-
-
-{{-- ========================================================== --}}
-{{-- TABEL PENGEMBANGAN TERBARU --}}
-{{-- ========================================================== --}}
-
-<div class="card">
-
-    <h2>
-        Pengembangan Terbaru
-    </h2>
-
-    <table
-        style="
-            width:100%;
-            border-collapse:collapse;
-        "
-    >
-
-        <thead>
-
-            <tr>
-
-                <th style="padding:12px;text-align:left;border-bottom:1px solid #e5e7eb;">
-                    No
-                </th>
-
-                <th style="padding:12px;text-align:left;border-bottom:1px solid #e5e7eb;">
-                    Karyawan
-                </th>
-
-                <th style="padding:12px;text-align:left;border-bottom:1px solid #e5e7eb;">
-                    Jenis
-                </th>
-
-                <th style="padding:12px;text-align:left;border-bottom:1px solid #e5e7eb;">
-                    Detail
-                </th>
-
-                <th style="padding:12px;text-align:left;border-bottom:1px solid #e5e7eb;">
-                    Status
-                </th>
-
-                <th style="padding:12px;text-align:left;border-bottom:1px solid #e5e7eb;">
-                    Tanggal Pengajuan
-                </th>
-
-                <th style="padding:12px;text-align:left;border-bottom:1px solid #e5e7eb;">
-                    Tanggal Keputusan
-                </th>
-
-            </tr>
-
-        </thead>
-
-        <tbody>
-
-        @forelse($pengembanganTerbaru as $pengajuan)
-
-            <tr>
-
-                <td style="padding:12px;border-bottom:1px solid #e5e7eb;">
-                    {{ $loop->iteration }}
-                </td>
-
-                <td style="padding:12px;border-bottom:1px solid #e5e7eb;">
-
-                    <strong>
-                        {{ $pengajuan->nama_karyawan }}
-                    </strong>
-
-                    <br>
-
-                    <small>
-                        {{ $pengajuan->nik }}
-                    </small>
-
-                </td>
-
-                <td style="padding:12px;border-bottom:1px solid #e5e7eb;">
-
-                    {{ match($pengajuan->jenis_pengajuan) {
-                        'kenaikan_jabatan' => 'Kenaikan Jabatan',
-                        'pemindahan_jabatan' => 'Pemindahan Jabatan',
-                        'peningkatan_skill' => 'Peningkatan Skill',
-                        default => ucfirst(
-                            $pengajuan->jenis_pengajuan
-                        ),
-                    } }}
-
-                </td>
-
-                <td style="padding:12px;border-bottom:1px solid #e5e7eb;">
-
-                    @if($pengajuan->jenis_pengajuan === 'peningkatan_skill')
-
-                        @if($pengajuan->skill_progressions->isNotEmpty())
-
-                            @foreach($pengajuan->skill_progressions as $skillProgression)
-
-                                {{ $skillProgression->nama_skill }}
-                                @if($skillProgression->level_sebelum !== null)
-                                    Level {{ $skillProgression->level_sebelum }}
                                 @endif
 
-                                →
+                            </td>
 
-                                {{ $skillProgression->nama_skill }}
-                                @if($skillProgression->level_sesudah !== null)
-                                    Level {{ $skillProgression->level_sesudah }}
-                                @endif
 
-                                @if(! $loop->last)
-                                    <br>
-                                @endif
+                            {{-- STATUS --}}
+                            <td class="px-4 py-4 text-center">
 
-                            @endforeach
+                                <span class="inline-flex items-center
+                                             justify-center whitespace-nowrap
+                                             rounded-md border px-3 py-1.5
+                                             text-xs font-semibold
+                                             {{ $warnaStatus }}">
 
-                        @else
+                                    {{ ucfirst($pengajuan->status) }}
 
-                            {{ $pengajuan->jabatan_asal ?? $pengajuan->nama_skill ?? '-' }}
+                                </span>
 
-                            →
+                            </td>
 
-                            {{ $pengajuan->jabatan_tujuan ?? $pengajuan->nama_skill ?? '-' }}
 
-                            @if($pengajuan->level_sebelum !== null || $pengajuan->level_sesudah !== null)
-                                <br>
+                            {{-- TANGGAL PENGAJUAN --}}
+                            <td class="whitespace-nowrap px-4 py-4
+                                       text-gray-600">
 
-                                <small>
-                                    Level
-                                    {{ $pengajuan->level_sebelum ?? '-' }}
-                                    →
-                                    {{ $pengajuan->level_sesudah ?? '-' }}
-                                </small>
-                            @endif
+                                {{ $pengajuan->tanggal
+                                    ? \Carbon\Carbon::parse($pengajuan->tanggal)->format('d M Y')
+                                    : '-' }}
 
-                        @endif
+                            </td>
 
-                    @else
 
-                        {{ $pengajuan->jabatan_asal ?? '-' }}
-                        @if($pengajuan->tipe_jabatan_asal === 'struktural' && $pengajuan->urutan_asal !== null)
-                            (Urutan {{ $pengajuan->urutan_asal }})
-                        @endif
+                            {{-- TANGGAL KEPUTUSAN --}}
+                            <td class="whitespace-nowrap px-4 py-4
+                                       text-gray-600">
 
-                        →
+                                {{ $pengajuan->tanggal_keputusan
+                                    ? \Carbon\Carbon::parse($pengajuan->tanggal_keputusan)->format('d M Y')
+                                    : '-' }}
 
-                        {{ $pengajuan->jabatan_tujuan ?? '-' }}
-                        @if($pengajuan->tipe_jabatan_tujuan === 'struktural' && $pengajuan->urutan_tujuan !== null)
-                            (Urutan {{ $pengajuan->urutan_tujuan }})
-                        @endif
+                            </td>
 
-                    @endif
+                        </tr>
 
-                </td>
+                    @empty
 
-                <td style="padding:12px;border-bottom:1px solid #e5e7eb;">
+                        <tr>
 
-                    {{ ucfirst(
-                        $pengajuan->status
-                    ) }}
+                            <td colspan="7"
+                                class="px-6 py-12 text-center">
 
-                </td>
+                                <p class="text-sm font-semibold text-gray-600">
+                                    Belum ada data pengembangan.
+                                </p>
 
-                <td style="padding:12px;border-bottom:1px solid #e5e7eb;">
+                                <p class="mt-1 text-xs text-gray-400">
+                                    Data pengembangan {{ $labelTahun }}
+                                    akan ditampilkan di sini.
+                                </p>
 
-                    {{ \Carbon\Carbon::parse($pengajuan->tanggal)->format('d-m-Y') }}
-                </td>
+                            </td>
 
-                <td style="padding:12px;border-bottom:1px solid #e5e7eb;">
-                    {{ $pengajuan->tanggal_keputusan
-                        ? \Carbon\Carbon::parse($pengajuan->tanggal_keputusan)->format('d-m-Y')
-                        : '-' }}
+                        </tr>
 
-                </td>
+                    @endforelse
 
-            </tr>
+                </tbody>
 
-        @empty
+            </table>
 
-            <tr>
+        </div>
 
-                <td
-                    colspan="7"
-                    style="
-                        padding:25px;
-                        text-align:center;
-                    "
-                >
-                    Belum ada data pengembangan
-                    {{ $labelTahun }}.
-                </td>
-
-            </tr>
-
-        @endforelse
-
-        </tbody>
-
-    </table>
+    </section>
 
 </div>
 
 
-{{-- ========================================================== --}}
+{{-- ================================================= --}}
 {{-- CHART.JS --}}
-{{-- ========================================================== --}}
+{{-- ================================================= --}}
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
+document.addEventListener('DOMContentLoaded', function () {
 
-    /*
-    |--------------------------------------------------------------------------
-    | Data dari Laravel
-    |--------------------------------------------------------------------------
-    */
+    // ---------------------------------------------
+    // DATA DARI LARAVEL
+    // ---------------------------------------------
 
     const assessmentLulus = {{ Js::from($totalLulus) }};
     const assessmentTidakLulus = {{ Js::from($totalTidakLulus) }};
+
     const jabatanLabels = {{ Js::from($karyawanPerJabatan->pluck('label_jabatan')->values()) }};
     const jabatanData = {{ Js::from($karyawanPerJabatan->pluck('jumlah')->values()) }};
+
     const departemenLabels = {{ Js::from($karyawanPerDepartemen->pluck('nama_departemen')->values()) }};
     const departemenData = {{ Js::from($karyawanPerDepartemen->pluck('jumlah')->values()) }};
+
     const jenisLabels = {{ Js::from($labelPengembanganJenis) }};
     const jenisData = {{ Js::from($dataPengembanganJenis) }};
+
     const bulanLabels = {{ Js::from($labelBulan) }};
     const lulusBulanan = {{ Js::from($dataLulusBulanan) }};
     const tidakLulusBulanan = {{ Js::from($dataTidakLulusBulanan) }};
-    const labelPengembanganJenis = {{ Js::from($labelPengembanganJenis) }};
-    const dataPengembanganJenis = {{ Js::from($dataPengembanganJenis) }};
+
     const promosiUrutanLabels = {{ Js::from($labelPromosiPerUrutan) }};
     const promosiUrutanData = {{ Js::from($dataPromosiPerUrutan) }};
+
     const keputusanDisetujuiData = {{ Js::from($dataDisetujuiBulanan) }};
     const keputusanDitolakData = {{ Js::from($dataDitolakBulanan) }};
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | Chart status assessment
-    |--------------------------------------------------------------------------
-    */
+    // ---------------------------------------------
+    // PALET WARNA GRAFIK
+    // ---------------------------------------------
+
+    const hijau = '#4c7b58';
+    const hijauGelap = '#304c3f';
+    const hijauMuda = '#91b59a';
+    const kuning = '#e6b93d';
+    const merah = '#d87676';
+
+    const warnaGrafik = [
+        hijau,
+        kuning,
+        hijauMuda,
+        hijauGelap,
+        '#b8c9b9',
+        '#d3a96a',
+        '#789b83',
+        '#aab8ad'
+    ];
+
+    Chart.defaults.font.family = 'Arial, sans-serif';
+    Chart.defaults.font.size = 12;
+    Chart.defaults.color = '#6b7280';
+    Chart.defaults.plugins.legend.labels.usePointStyle = true;
+
+
+    // ---------------------------------------------
+    // PENGATURAN GRAFIK
+    // ---------------------------------------------
+
+    const opsiLingkaran = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    padding: 18
+                }
+            }
+        }
+    };
+
+    const opsiBatang = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            x: {
+                grid: {
+                    display: false
+                },
+                ticks: {
+                    maxRotation: 45,
+                    minRotation: 0
+                }
+            },
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    precision: 0
+                },
+                grid: {
+                    color: '#edf1ed'
+                }
+            }
+        }
+    };
+
+    const opsiGaris = {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+            intersect: false,
+            mode: 'index'
+        },
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        },
+        scales: {
+            x: {
+                grid: {
+                    display: false
+                }
+            },
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    precision: 0
+                },
+                grid: {
+                    color: '#edf1ed'
+                }
+            }
+        }
+    };
+
+
+    // ---------------------------------------------
+    // 1. STATUS HASIL ASSESSMENT
+    // ---------------------------------------------
 
     new Chart(
-        document.getElementById(
-            'assessmentStatusChart'
-        ),
+        document.getElementById('assessmentStatusChart'),
         {
             type: 'doughnut',
-
             data: {
-                labels: [
-                    'Lulus',
-                    'Tidak Lulus'
-                ],
-
-                datasets: [
-                    {
-                        data: [
-                            assessmentLulus,
-                            assessmentTidakLulus
-                        ]
-                    }
-                ]
+                labels: ['Lulus', 'Tidak Lulus'],
+                datasets: [{
+                    data: [
+                        assessmentLulus,
+                        assessmentTidakLulus
+                    ],
+                    backgroundColor: [
+                        hijau,
+                        merah
+                    ],
+                    borderWidth: 3,
+                    borderColor: '#ffffff',
+                    hoverOffset: 5
+                }]
             },
-
             options: {
-                responsive: true,
-                maintainAspectRatio: false
+                ...opsiLingkaran,
+                cutout: '68%'
             }
         }
     );
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | Chart pengembangan berdasarkan jenis
-    |--------------------------------------------------------------------------
-    */
+    // ---------------------------------------------
+    // 2. PENGEMBANGAN BERDASARKAN JENIS
+    // ---------------------------------------------
 
     new Chart(
-        document.getElementById(
-            'pengembanganJenisChart'
-        ),
+        document.getElementById('pengembanganJenisChart'),
         {
             type: 'pie',
-
             data: {
                 labels: jenisLabels,
-
-                datasets: [
-                    {
-                        data: jenisData
-                    }
-                ]
+                datasets: [{
+                    data: jenisData,
+                    backgroundColor: warnaGrafik,
+                    borderColor: '#ffffff',
+                    borderWidth: 3,
+                    hoverOffset: 5
+                }]
             },
-
-            options: {
-                responsive: true,
-                maintainAspectRatio: false
-            }
+            options: opsiLingkaran
         }
     );
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | Chart karyawan per jabatan
-    |--------------------------------------------------------------------------
-    */
+    // ---------------------------------------------
+    // 3. KARYAWAN PER JABATAN
+    // ---------------------------------------------
 
     new Chart(
-        document.getElementById(
-            'jabatanChart'
-        ),
+        document.getElementById('jabatanChart'),
         {
             type: 'bar',
-
             data: {
                 labels: jabatanLabels,
-
-                datasets: [
-                    {
-                        label: 'Karyawan',
-                        data: jabatanData
-                    }
-                ]
+                datasets: [{
+                    label: 'Karyawan',
+                    data: jabatanData,
+                    backgroundColor: hijau,
+                    borderRadius: 5,
+                    maxBarThickness: 45
+                }]
             },
-
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            precision: 0
-                        }
-                    }
-                }
-            }
+            options: opsiBatang
         }
     );
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | Chart karyawan per departemen
-    |--------------------------------------------------------------------------
-    */
+    // ---------------------------------------------
+    // 4. KARYAWAN PER DEPARTEMEN
+    // ---------------------------------------------
 
     new Chart(
-        document.getElementById(
-            'departemenChart'
-        ),
+        document.getElementById('departemenChart'),
         {
             type: 'bar',
-
             data: {
                 labels: departemenLabels,
-
-                datasets: [
-                    {
-                        label: 'Karyawan',
-                        data: departemenData
-                    }
-                ]
+                datasets: [{
+                    label: 'Karyawan',
+                    data: departemenData,
+                    backgroundColor: hijauMuda,
+                    borderRadius: 5,
+                    maxBarThickness: 45
+                }]
             },
-
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            precision: 0
-                        }
-                    }
-                }
-            }
+            options: opsiBatang
         }
     );
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | Trend assessment bulanan
-    |--------------------------------------------------------------------------
-    */
+    // ---------------------------------------------
+    // 5. TREN HASIL ASSESSMENT
+    // ---------------------------------------------
 
     new Chart(
-        document.getElementById(
-            'assessmentTrendChart'
-        ),
+        document.getElementById('assessmentTrendChart'),
         {
             type: 'line',
-
             data: {
                 labels: bulanLabels,
-
                 datasets: [
-
                     {
                         label: 'Lulus',
                         data: lulusBulanan,
-                        tension: 0.3
+                        borderColor: hijau,
+                        backgroundColor: '#4c7b581a',
+                        tension: 0.35,
+                        borderWidth: 2.5,
+                        pointRadius: 3,
+                        pointHoverRadius: 5
                     },
-
                     {
                         label: 'Tidak Lulus',
                         data: tidakLulusBulanan,
-                        tension: 0.3
+                        borderColor: merah,
+                        backgroundColor: '#d876761a',
+                        tension: 0.35,
+                        borderWidth: 2.5,
+                        pointRadius: 3,
+                        pointHoverRadius: 5
                     }
-
                 ]
             },
-
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            precision: 0
-                        }
-                    }
-                }
-            }
+            options: opsiGaris
         }
     );
+
+
+    // ---------------------------------------------
+    // 6. PROMOSI STRUKTURAL
+    // ---------------------------------------------
 
     new Chart(
         document.getElementById('promotionSequenceChart'),
@@ -953,22 +1207,21 @@
             data: {
                 labels: promosiUrutanLabels,
                 datasets: [{
-                    label: 'Promosi terealisasi',
-                    data: promosiUrutanData
+                    label: 'Promosi Terealisasi',
+                    data: promosiUrutanData,
+                    backgroundColor: kuning,
+                    borderRadius: 5,
+                    maxBarThickness: 45
                 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: { precision: 0 }
-                    }
-                }
-            }
+            options: opsiBatang
         }
     );
+
+
+    // ---------------------------------------------
+    // 7. KEPUTUSAN PENGAJUAN
+    // ---------------------------------------------
 
     new Chart(
         document.getElementById('developmentDecisionChart'),
@@ -980,28 +1233,30 @@
                     {
                         label: 'Disetujui',
                         data: keputusanDisetujuiData,
-                        tension: 0.3
+                        borderColor: hijau,
+                        backgroundColor: '#4c7b581a',
+                        tension: 0.35,
+                        borderWidth: 2.5,
+                        pointRadius: 3,
+                        pointHoverRadius: 5
                     },
                     {
                         label: 'Ditolak',
                         data: keputusanDitolakData,
-                        tension: 0.3
+                        borderColor: merah,
+                        backgroundColor: '#d876761a',
+                        tension: 0.35,
+                        borderWidth: 2.5,
+                        pointRadius: 3,
+                        pointHoverRadius: 5
                     }
                 ]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: { precision: 0 }
-                    }
-                }
-            }
+            options: opsiGaris
         }
     );
 
+});
 </script>
 
 @endsection

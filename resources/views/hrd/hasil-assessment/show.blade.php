@@ -11,17 +11,9 @@
     $karyawan = $peserta->karyawan;
     $assessment = $peserta->assessment;
     $jawabans = $peserta->jawabans;
-    $soalAssessment = $assessment->soals;
+    $soals = $assessment->soals;
 
     $isLulus = $hasilAssessment->status === 'lulus';
-
-    $nilaiTextClass = $isLulus
-        ? 'text-green-700'
-        : 'text-red-700';
-
-    $nilaiBgClass = $isLulus
-        ? 'bg-green-50 border-green-200'
-        : 'bg-red-50 border-red-200';
 
     $jabatanAwal = $karyawan->jabatan?->nama_jabatan ?? '-';
     $jabatanTujuan = $assessment->jabatan?->nama_jabatan ?? '-';
@@ -35,7 +27,7 @@
     $kategoriNama = [
         'peraturan_perusahaan' => 'PP - Peraturan Perusahaan',
         'pengoperasian_jabatan' => 'SOP - Prosedur Pengoperasian Jabatan',
-        'keselamatan_kerja' => 'K3 - Prosedur Pengoperasian Keselamatan Kerja',
+        'keselamatan_kerja' => 'K3 - Keselamatan dan Kesehatan Kerja',
     ];
 
     $tipeLabels = [
@@ -45,19 +37,12 @@
     ];
 
     $normalisasiTipe = function ($tipe) {
-        if (in_array($tipe, ['pilihan_tunggal', 'pg'])) {
-            return 'pilihan_ganda';
-        }
-
-        if ($tipe === 'mj') {
-            return 'multi_jawaban';
-        }
-
-        if (in_array($tipe, ['bs', 'true_false'])) {
-            return 'benar_salah';
-        }
-
-        return $tipe;
+        return match ($tipe) {
+            'pilihan_tunggal', 'pg' => 'pilihan_ganda',
+            'mj' => 'multi_jawaban',
+            'bs', 'true_false' => 'benar_salah',
+            default => $tipe,
+        };
     };
 
     $urutanTipe = [
@@ -72,24 +57,25 @@
         'keselamatan_kerja' => 3,
     ];
 
-    // Soal diurutkan berdasarkan tipe jawaban.
-    $soalTerurut = $soalAssessment
+    // Urutkan soal berdasarkan tipe dan nomor.
+    $soalTerurut = $soals
         ->sortBy(function ($soal) use ($normalisasiTipe, $urutanTipe) {
             $tipe = $normalisasiTipe($soal->tipe_soal);
 
-            return [
+            return sprintf(
+                '%02d-%08d',
                 $urutanTipe[$tipe] ?? 99,
-                $soal->pivot->nomor_soal ?? 9999,
-            ];
+                $soal->pivot->nomor_soal ?? 9999
+            );
         })
         ->values();
 
-    // Rekap benar dan salah per kategori dan tipe.
+    // Rekap kesalahan berdasarkan kategori dan tipe.
     $rekapKesalahan = [];
 
-    foreach ($kategoriLabels as $kode => $nama) {
-        foreach ($tipeLabels as $tipe => $label) {
-            $rekapKesalahan[$kode][$tipe] = [
+    foreach ($kategoriLabels as $kategori => $label) {
+        foreach ($tipeLabels as $tipe => $namaTipe) {
+            $rekapKesalahan[$kategori][$tipe] = [
                 'benar' => 0,
                 'salah' => 0,
             ];
@@ -99,15 +85,15 @@
     // Analisis poin pengetahuan.
     $analisisPengetahuan = [];
 
-    foreach ($kategoriNama as $kode => $nama) {
-        $soals = $soalAssessment
-            ->where('tipe_prosedur', $kode);
+    foreach ($kategoriNama as $kategori => $nama) {
+        $soalKategori = $soals->where('tipe_prosedur', $kategori);
 
         $poinMaksimal = 0;
         $poinPeserta = 0;
 
-        foreach ($soals as $soal) {
+        foreach ($soalKategori as $soal) {
             $bobot = $assessment->nilaiPointUntukSoal($soal);
+
             $poinMaksimal += $bobot;
 
             $dipilih = $jawabans
@@ -129,8 +115,7 @@
                 ->values()
                 ->all();
 
-            $benar = count($dipilih) > 0
-                && $dipilih === $kunci;
+            $benar = count($dipilih) > 0 && $dipilih === $kunci;
 
             if ($benar) {
                 $poinPeserta += $bobot;
@@ -138,12 +123,9 @@
 
             $tipe = $normalisasiTipe($soal->tipe_soal);
 
-            if (isset($rekapKesalahan[$kode][$tipe])) {
-                if ($benar) {
-                    $rekapKesalahan[$kode][$tipe]['benar']++;
-                } else {
-                    $rekapKesalahan[$kode][$tipe]['salah']++;
-                }
+            if (isset($rekapKesalahan[$kategori][$tipe])) {
+                $status = $benar ? 'benar' : 'salah';
+                $rekapKesalahan[$kategori][$tipe][$status]++;
             }
         }
 
@@ -190,14 +172,11 @@
             ->values()
             ->all();
 
-        $benar = count($dipilih) > 0
-            && $dipilih === $kunci;
-
-        if ($benar) {
+        if (count($dipilih) > 0 && $dipilih === $kunci) {
             continue;
         }
 
-        $jawabanDipilih = $soal->pilihanJawabans
+        $jawabanPeserta = $soal->pilihanJawabans
             ->filter(fn ($pilihan) =>
                 in_array((string) $pilihan->id, $dipilih, true)
             )
@@ -217,102 +196,77 @@
 
         $grup = $tipe . '_' . $kategori;
 
-        $detailKesalahan[$grup]['tipe'] = $tipe;
-        $detailKesalahan[$grup]['kategori'] = $kategori;
-
-        $detailKesalahan[$grup]['nama'] =
-            $tipeLabels[$tipe] . ' - ' . $kategoriLabels[$kategori];
+        if (!isset($detailKesalahan[$grup])) {
+            $detailKesalahan[$grup] = [
+                'tipe' => $tipe,
+                'kategori' => $kategori,
+                'nama' => $tipeLabels[$tipe]
+                    . ' - ' . $kategoriLabels[$kategori],
+                'soal' => [],
+            ];
+        }
 
         $detailKesalahan[$grup]['soal'][] = [
-            'nomor' => $soal->pivot->nomor_soal,
+            'nomor' => $soal->pivot->nomor_soal ?? '-',
             'pertanyaan' => $soal->pertanyaan,
-            'dipilih' => $jawabanDipilih,
+            'dipilih' => $jawabanPeserta,
             'kunci' => $jawabanBenar,
         ];
     }
 
     $detailKesalahan = collect($detailKesalahan)
-        ->sortBy(function ($item) use (
-            $urutanTipe,
-            $urutanKategori
-        ) {
-            return [
+        ->sortBy(function ($item) use ($urutanTipe, $urutanKategori) {
+            return sprintf(
+                '%02d-%02d',
                 $urutanTipe[$item['tipe']] ?? 99,
-                $urutanKategori[$item['kategori']] ?? 99,
-            ];
+                $urutanKategori[$item['kategori']] ?? 99
+            );
         })
         ->values();
 @endphp
 
+{{-- CSS hanya untuk pengaturan printer --}}
 <style>
-    /* Judul-judul section, bukan judul utama. */
-    .hasil-section-title {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 9px 12px;
-        margin-bottom: 14px;
-        background: #edf5ef;
-        border-left: 4px solid #4a7c59;
-        border-radius: 0 8px 8px 0;
-        color: #2c4a3e;
-        font-size: 15px;
-        font-weight: 750;
-        line-height: 1.4;
-    }
-
-    .hasil-section-description {
-        margin-top: -6px;
-        margin-bottom: 14px;
-        padding-left: 12px;
-        font-size: 12px;
-        color: #6b7280;
-    }
-
     @page {
         size: A4 portrait;
         margin: 12mm;
     }
 
     @media print {
-        body {
-            background: #fff !important;
-        }
-
         #hrd-sidebar,
         .topbar,
-        .print\:hidden,
+        .alert,
         .hasil-no-print {
             display: none !important;
         }
 
+        body,
         #hrd-app,
         #hrd-app .main,
         #hrd-app .content,
         .hasil-print-area {
+            background: white !important;
             width: 100% !important;
             max-width: none !important;
             margin: 0 !important;
             padding: 0 !important;
         }
 
-        .hasil-print-area {
-            display: block !important;
+        #hrd-app .main {
+            margin-left: 0 !important;
         }
 
-        .hasil-print-area > div {
-            margin-bottom: 12px !important;
-            break-inside: avoid;
-            page-break-inside: avoid;
+        .hasil-print-area {
+            border: none !important;
+            box-shadow: none !important;
         }
 
         .hasil-print-area .grid {
-            display: grid !important;
             grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
         }
 
-        .shadow-sm {
-            box-shadow: none !important;
+        .hasil-print-area .grid > div {
+            break-inside: avoid;
         }
 
         * {
@@ -322,408 +276,528 @@
     }
 </style>
 
-{{-- TOMBOL AKSI: TIDAK MASUK PRINT --}}
-<div class="flex flex-wrap justify-end gap-2 mb-4 hasil-no-print">
+<div class="w-full min-w-0 space-y-4">
 
-    <a href="{{ route('hrd.hasil-assessment.pdf', $hasilAssessment) }}"
-       class="inline-flex items-center gap-2
-              bg-[#2c4a3e] hover:bg-[#4a7c59]
-              text-white px-4 py-2.5 rounded-lg
-              text-sm font-semibold transition">
+    {{-- ======================================== --}}
+    {{-- TOMBOL DOWNLOAD DAN PRINT --}}
+    {{-- ======================================== --}}
 
-        <svg width="17" height="17" fill="none"
-             stroke="currentColor" stroke-width="2"
-             viewBox="0 0 24 24">
-            <path d="M12 3v12m-5-5 5 5 5-5"/>
-            <path d="M5 17v4h14v-4"/>
-        </svg>
+    <div class="hasil-no-print flex flex-wrap justify-end gap-2">
 
-        Download PDF
-    </a>
+        <a
+            href="{{ route('hrd.hasil-assessment.pdf', $hasilAssessment) }}"
+            class="inline-flex h-10 items-center justify-center
+                   gap-2 rounded-lg bg-[#4c7b58]
+                   px-4 text-sm font-semibold text-white
+                   transition-colors hover:bg-[#3e6749]"
+        >
+            <svg class="h-4 w-4"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2"
+                 viewBox="0 0 24 24">
+                <path d="M12 3v12m-5-5 5 5 5-5"/>
+                <path d="M5 17v4h14v-4"/>
+            </svg>
 
-    <button type="button"
+            Download PDF
+        </a>
+
+        <button
+            type="button"
             onclick="window.print()"
-            class="inline-flex items-center gap-2
-                   bg-white border border-gray-300
-                   hover:bg-gray-100 text-[#2c4a3e]
-                   px-4 py-2.5 rounded-lg
-                   text-sm font-semibold transition">
+            class="inline-flex h-10 items-center justify-center
+                   gap-2 rounded-lg border border-[#dfe5df]
+                   bg-white px-4 text-sm font-semibold
+                   text-[#304c3f] transition-colors
+                   hover:bg-[#f4f6f3]"
+        >
+            <svg class="h-4 w-4"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2"
+                 viewBox="0 0 24 24">
+                <path d="M6 9V3h12v6M6 18H4V9h16v9h-2M6 14h12v7H6z"/>
+            </svg>
 
-        <svg width="17" height="17" fill="none"
-             stroke="currentColor" stroke-width="2"
-             viewBox="0 0 24 24">
-            <path d="M6 9V3h12v6M6 18H4V9h16v9h-2M6 14h12v7H6z"/>
-        </svg>
+            Print Laporan
+        </button>
 
-        Print Laporan
-    </button>
-
-</div>
+    </div>
 
 
-<div class="w-full max-w-7xl mx-auto">
+    {{-- ======================================== --}}
+    {{-- LAPORAN UTAMA --}}
+    {{-- HANYA BAGIAN INI YANG DICETAK --}}
+    {{-- ======================================== --}}
 
-    {{-- ================================================== --}}
-    {{-- AREA YANG BOLEH DICETAK                        --}}
-    {{-- ================================================== --}}
+    <div class="hasil-print-area rounded-xl border
+                border-[#dfe5df] bg-white p-5 sm:p-6">
 
-    <div class="hasil-print-area space-y-4">
+        {{-- HEADER --}}
+        <div class="flex flex-col justify-between gap-4
+                    border-b border-[#e8ece8] pb-5
+                    md:flex-row md:items-center">
 
-        {{-- HEADER UTAMA --}}
-        <div class="bg-gradient-to-r from-[#f1f7f2] to-white
-                    border border-[#dce8df] rounded-xl p-5 shadow-sm">
+            <div>
 
-            <div class="flex flex-col md:flex-row
-                        md:items-center justify-between gap-4">
+                <p class="mb-1 text-xs font-semibold
+                          uppercase tracking-wide
+                          text-[#4c7b58]">
+                    Laporan Hasil Assessment
+                </p>
 
-                <div class="flex items-start gap-3">
+                <h1 class="text-2xl font-bold text-[#304c3f]">
+                    {{ $assessment->nama_assessment }}
+                </h1>
 
-                    <div class="w-11 h-11 bg-[#dceee0]
-                                rounded-lg flex items-center
-                                justify-center flex-shrink-0">
-
-                        <svg class="w-6 h-6 text-[#2c4a3e]"
-                             fill="none" stroke="currentColor"
-                             stroke-width="1.8"
-                             viewBox="0 0 24 24">
-
-                            <path d="M9 12h6m-6 4h6M9 8h6M5 4h14v16H5z"/>
-
-                        </svg>
-                    </div>
-
-                    <div>
-                        <p class="text-xs font-bold uppercase
-                                  tracking-wider text-[#4a7c59] mb-1">
-                            Laporan Hasil Assessment
-                        </p>
-
-                        <h1 class="text-xl md:text-2xl font-extrabold
-                                   text-[#2c4a3e]">
-                            {{ $assessment->nama_assessment }}
-                        </h1>
-
-                        <p class="text-sm text-gray-500 mt-2">
-                            Tanggal Ujian:
-                            <span class="font-semibold text-gray-700">
-                                {{ $hasilAssessment->tanggal_ujian?->format('d M Y H:i') ?? '-' }}
-                            </span>
-                        </p>
-                    </div>
-
-                </div>
-
-                {{-- NILAI TES --}}
-                <div class="min-w-[165px] border rounded-xl
-                            px-5 py-3 {{ $nilaiBgClass }}">
-
-                    <p class="text-xs uppercase font-bold
-                              tracking-wider text-gray-500">
-                        Nilai Tes
-                    </p>
-
-                    <p class="text-4xl font-extrabold
-                              mt-1 tabular-nums {{ $nilaiTextClass }}">
-                        {{ number_format($hasilAssessment->nilai_akhir, 2) }}
-                    </p>
-
-                    <p class="text-xs text-gray-500 mt-1">
-                        Standar:
-                        {{ number_format($hasilAssessment->standar_nilai, 2) }}
-                    </p>
-                </div>
+                <p class="mt-2 text-sm text-gray-500">
+                    Tanggal Ujian:
+                    <span class="font-semibold text-gray-800">
+                        {{ $hasilAssessment->tanggal_ujian?->format('d M Y H:i') ?? '-' }}
+                    </span>
+                </p>
 
             </div>
+
+            {{-- NILAI TES --}}
+            <div class="rounded-lg border px-5 py-3
+                {{ $isLulus
+                    ? 'border-[#d3e3d6] bg-[#f0f6f1]'
+                    : 'border-red-200 bg-red-50' }}">
+
+                <p class="text-xs font-bold uppercase
+                          tracking-wide text-gray-500">
+                    Nilai Tes
+                </p>
+
+                <p class="mt-1 text-3xl font-bold
+                    {{ $isLulus
+                        ? 'text-[#4c7b58]'
+                        : 'text-red-700' }}">
+                    {{ number_format($hasilAssessment->nilai_akhir, 2) }}
+                </p>
+
+                <p class="mt-1 text-xs text-gray-500">
+                    Standar:
+                    {{ number_format($hasilAssessment->standar_nilai, 2) }}
+                </p>
+
+            </div>
+
         </div>
 
-        {{-- INFORMASI KARYAWAN + INFORMASI JABATAN --}}
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        {{-- INFORMASI KARYAWAN DAN JABATAN --}}
+        <div class="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
 
             {{-- INFORMASI KARYAWAN --}}
-            <div class="bg-white border border-gray-200
-                        rounded-xl shadow-sm p-4">
+            <section class="min-w-0 rounded-xl border
+                            border-[#dfe5df] bg-white p-4">
 
-                <h2 class="hasil-section-title">
+                {{-- JUDUL SEPERTI REFERENSI PROFIL & AKUN --}}
+                <h2 class="mb-4 rounded-l-md rounded-r-lg
+                           border-l-[5px] border-[#4c7b58]
+                           bg-[#f4f6f3] px-5 py-3
+                           text-base font-bold text-[#304c3f]">
                     Informasi Karyawan
                 </h2>
 
-                <div class="space-y-3">
+                <div class="divide-y divide-[#e8ece8]">
 
-                    <div>
-                        <p class="text-xs text-gray-500 mb-1">
+                    <div class="grid grid-cols-5 gap-3 py-3">
+
+                        <span class="col-span-2 text-sm
+                                     font-semibold text-gray-600">
                             Nama Karyawan
-                        </p>
-                        <p class="text-sm font-semibold text-gray-800">
+                        </span>
+
+                        <span class="col-span-3 break-words
+                                     text-sm font-semibold
+                                     text-gray-900">
                             {{ $karyawan->nama }}
-                        </p>
+                        </span>
+
                     </div>
 
-                    <div class="border-t border-gray-100 pt-3">
-                        <p class="text-xs text-gray-500 mb-1">
+                    <div class="grid grid-cols-5 gap-3 py-3">
+
+                        <span class="col-span-2 text-sm
+                                     font-semibold text-gray-600">
                             NIK
-                        </p>
-                        <p class="text-sm font-semibold text-gray-800">
+                        </span>
+
+                        <span class="col-span-3 break-words
+                                     text-sm font-semibold
+                                     text-gray-900">
                             {{ $karyawan->nik }}
-                        </p>
+                        </span>
+
                     </div>
 
                 </div>
-            </div>
+
+            </section>
+
 
             {{-- INFORMASI JABATAN --}}
-            <div class="bg-white border border-gray-200
-                        rounded-xl shadow-sm p-4">
+            <section class="min-w-0 rounded-xl border
+                            border-[#dfe5df] bg-white p-4">
 
-                <h2 class="hasil-section-title">
+                <h2 class="mb-4 rounded-l-md rounded-r-lg
+                           border-l-[5px] border-[#4c7b58]
+                           bg-[#f4f6f3] px-5 py-3
+                           text-base font-bold text-[#304c3f]">
                     Informasi Jabatan
                 </h2>
 
-                <div class="space-y-3">
+                <div class="divide-y divide-[#e8ece8]">
 
-                    <div>
-                        <p class="text-xs text-gray-500 mb-1">
+                    <div class="grid grid-cols-5 gap-3 py-3">
+
+                        <span class="col-span-2 text-sm
+                                     font-semibold text-gray-600">
                             Jabatan Awal
-                        </p>
-                        <p class="text-sm font-semibold text-gray-800">
+                        </span>
+
+                        <span class="col-span-3 break-words
+                                     text-sm font-semibold
+                                     text-gray-900">
                             {{ $jabatanAwal }}
-                        </p>
+                        </span>
+
                     </div>
 
-                    <div class="border-t border-gray-100 pt-3">
-                        <p class="text-xs text-gray-500 mb-1">
+                    <div class="grid grid-cols-5 gap-3 py-3">
+
+                        <span class="col-span-2 text-sm
+                                     font-semibold text-gray-600">
                             Jabatan Tujuan
-                        </p>
-                        <p class="text-sm font-semibold text-[#2c4a3e]">
+                        </span>
+
+                        <span class="col-span-3 break-words
+                                     text-sm font-semibold
+                                     text-gray-900">
                             {{ $jabatanTujuan }}
-                        </p>
+                        </span>
+
                     </div>
 
                 </div>
 
-            </div>
+            </section>
 
         </div>
 
     </div>
 
-    {{-- ================================================== --}}
-    {{-- BAGIAN DI BAWAH INI HANYA UNTUK TAMPILAN LAYAR --}}
-    {{-- TIDAK MASUK HASIL PRINT                       --}}
-    {{-- ================================================== --}}
 
-    <div class="hasil-no-print space-y-4 mt-4">
+    {{-- ======================================== --}}
+    {{-- ANALISIS KESALAHAN --}}
+    {{-- TIDAK IKUT PRINT --}}
+    {{-- ======================================== --}}
 
-        {{-- ANALISIS KESALAHAN PER TIPE JAWABAN --}}
-        <section class="bg-white border border-gray-200
-                        rounded-xl shadow-sm p-4">
+    <section class="hasil-no-print rounded-xl border
+                    border-[#dfe5df] bg-white p-5">
 
-            <h2 class="hasil-section-title">
-                Analisis Kesalahan per Tipe Jawaban
-            </h2>
+        <h2 class="rounded-l-md rounded-r-lg
+                   border-l-[5px] border-[#4c7b58]
+                   bg-[#f4f6f3] px-5 py-3
+                   text-base font-bold text-[#304c3f]">
+            Analisis Kesalahan per Tipe Jawaban
+        </h2>
 
-            <p class="hasil-section-description">
-                Jumlah jawaban benar dan salah berdasarkan kategori PP, SOP, dan K3.
-            </p>
+        <p class="mb-4 mt-3 text-sm text-gray-500">
+            Jumlah jawaban benar dan salah berdasarkan kategori PP, SOP, dan K3.
+        </p>
 
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm border-collapse">
+        <div class="w-full overflow-x-auto rounded-lg
+                    border border-[#e0e5df]">
 
-                    <thead class="bg-[#e8f1ea] text-[#2c4a3e]">
-                        <tr>
-                            <th class="p-3 text-left">Kategori</th>
-                            <th class="p-3 text-center">Pilihan Ganda</th>
-                            <th class="p-3 text-center">Multi Jawaban</th>
-                            <th class="p-3 text-center">Benar/Salah</th>
-                        </tr>
-                    </thead>
+            <table class="w-full min-w-[650px]
+                          border-collapse text-sm">
 
-                    <tbody>
-                        @foreach ($kategoriLabels as $kode => $nama)
-                            <tr class="border-b border-gray-100">
+                <thead class="bg-[#f4f6f3] text-[#304c3f]">
 
-                                <td class="p-3 font-bold text-[#2c4a3e]">
-                                    {{ $nama }}
-                                </td>
+                    <tr>
 
-                                @foreach ($tipeLabels as $tipe => $label)
+                        <th class="px-4 py-3 text-left font-bold">
+                            Kategori
+                        </th>
 
-                                    @php
-                                        $hasil = $rekapKesalahan[$kode][$tipe];
-                                    @endphp
-
-                                    <td class="p-3 text-center">
-                                        <div class="flex flex-col
-                                                    items-center gap-1">
-
-                                            <span class="font-medium text-green-700">
-                                                {{ $hasil['benar'] }} Benar
-                                            </span>
-
-                                            <span class="px-3 py-1 rounded-full
-                                                text-xs font-semibold
-                                                {{ $hasil['salah'] > 0
-                                                    ? 'bg-red-100 text-red-700'
-                                                    : 'bg-green-100 text-green-700' }}">
-
-                                                {{ $hasil['salah'] }} Salah
-
-                                            </span>
-                                        </div>
-                                    </td>
-
-                                @endforeach
-                            </tr>
+                        @foreach ($tipeLabels as $tipe => $label)
+                            <th class="px-4 py-3 text-center font-bold">
+                                {{ $label }}
+                            </th>
                         @endforeach
-                    </tbody>
 
-                </table>
-            </div>
-        </section>
+                    </tr>
 
+                </thead>
 
-        {{-- ANALISIS POIN PENGETAHUAN --}}
-        <section class="bg-white border border-gray-200
-                        rounded-xl shadow-sm p-4">
+                <tbody class="divide-y divide-[#e8ece8]">
 
-            <h2 class="hasil-section-title">
-                Analisis Poin Pengetahuan
-            </h2>
+                    @foreach ($kategoriLabels as $kategori => $nama)
 
-            <p class="hasil-section-description">
-                Rincian pencapaian poin berdasarkan kategori pengetahuan.
-            </p>
+                        <tr class="hover:bg-[#fafbf9]">
 
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm border-collapse">
+                            <td class="px-4 py-4
+                                       font-bold text-[#304c3f]">
+                                {{ $nama }}
+                            </td>
 
-                    <thead class="bg-[#e8f1ea] text-[#2c4a3e]">
-                        <tr>
-                            <th class="p-3 text-left">
-                                Kategori Pengetahuan
-                            </th>
-                            <th class="p-3 text-center">
-                                Poin Maksimal
-                            </th>
-                            <th class="p-3 text-center">
-                                Poin Peserta
-                            </th>
-                            <th class="p-3 text-center">
-                                Persentase
-                            </th>
+                            @foreach ($tipeLabels as $tipe => $label)
+
+                                @php
+                                    $rekap = $rekapKesalahan[$kategori][$tipe];
+                                @endphp
+
+                                <td class="px-4 py-4 text-center">
+
+                                    <div class="flex flex-col items-center gap-1">
+
+                                        {{-- BENAR --}}
+                                        <span class="text-sm font-medium
+                                                     text-[#4c7b58]">
+                                            {{ $rekap['benar'] }} Benar
+                                        </span>
+
+                                        {{-- SALAH TANPA BACKGROUND --}}
+                                        <span class="text-sm font-medium
+                                            {{ $rekap['salah'] > 0
+                                                ? 'text-red-600'
+                                                : 'text-gray-500' }}">
+                                            {{ $rekap['salah'] }} Salah
+                                        </span>
+
+                                    </div>
+
+                                </td>
+
+                            @endforeach
+
                         </tr>
-                    </thead>
 
-                    <tbody>
-                        @foreach ($analisisPengetahuan as $item)
+                    @endforeach
 
-                            <tr class="border-b border-gray-100">
-                                <td class="p-3 font-medium text-gray-800">
-                                    {{ $item['nama'] }}
-                                </td>
+                </tbody>
 
-                                <td class="p-3 text-center">
-                                    {{ number_format($item['maksimal'], 2) }}
-                                </td>
+            </table>
 
-                                <td class="p-3 text-center
-                                           font-bold text-[#2c4a3e]">
-                                    {{ number_format($item['peserta'], 2) }}
-                                </td>
+        </div>
 
-                                <td class="p-3 text-center font-semibold">
-                                    {{ number_format($item['persentase'], 2) }}%
-                                </td>
-                            </tr>
-
-                        @endforeach
-                    </tbody>
-
-                </table>
-            </div>
-        </section>
+    </section>
 
 
-        {{-- DETAIL KESALAHAN JAWABAN --}}
-        <section class="bg-white border border-gray-200
-                        rounded-xl shadow-sm p-4">
+    {{-- ======================================== --}}
+    {{-- ANALISIS POIN PENGETAHUAN --}}
+    {{-- ======================================== --}}
 
-            <h2 class="hasil-section-title">
-                Detail Kesalahan Jawaban
-            </h2>
+    <section class="hasil-no-print rounded-xl border
+                    border-[#dfe5df] bg-white p-5">
 
-            <p class="hasil-section-description">
-                Soal yang salah diurutkan dari Pilihan Ganda,
-                Multi Jawaban, lalu Benar/Salah.
-            </p>
+        <h2 class="rounded-l-md rounded-r-lg
+                   border-l-[5px] border-[#4c7b58]
+                   bg-[#f4f6f3] px-5 py-3
+                   text-base font-bold text-[#304c3f]">
+            Analisis Poin Pengetahuan
+        </h2>
+
+        <p class="mb-4 mt-3 text-sm text-gray-500">
+            Rincian pencapaian poin berdasarkan kategori pengetahuan.
+        </p>
+
+        <div class="w-full overflow-x-auto rounded-lg
+                    border border-[#e0e5df]">
+
+            <table class="w-full min-w-[650px]
+                          border-collapse text-sm">
+
+                <thead class="bg-[#f4f6f3] text-[#304c3f]">
+
+                    <tr>
+                        <th class="px-4 py-3 text-left font-bold">
+                            Kategori Pengetahuan
+                        </th>
+
+                        <th class="px-4 py-3 text-center font-bold">
+                            Poin Maksimal
+                        </th>
+
+                        <th class="px-4 py-3 text-center font-bold">
+                            Poin Peserta
+                        </th>
+
+                        <th class="px-4 py-3 text-center font-bold">
+                            Persentase
+                        </th>
+                    </tr>
+
+                </thead>
+
+                <tbody class="divide-y divide-[#e8ece8]">
+
+                    @foreach ($analisisPengetahuan as $item)
+
+                        <tr class="hover:bg-[#fafbf9]">
+
+                            <td class="px-4 py-4 font-medium text-gray-800">
+                                {{ $item['nama'] }}
+                            </td>
+
+                            <td class="px-4 py-4 text-center text-gray-700">
+                                {{ number_format($item['maksimal'], 2) }}
+                            </td>
+
+                            <td class="px-4 py-4 text-center
+                                       font-bold text-[#304c3f]">
+                                {{ number_format($item['peserta'], 2) }}
+                            </td>
+
+                            <td class="px-4 py-4 text-center
+                                       font-semibold text-gray-700">
+                                {{ number_format($item['persentase'], 2) }}%
+                            </td>
+
+                        </tr>
+
+                    @endforeach
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+
+    {{-- ======================================== --}}
+    {{-- DETAIL KESALAHAN JAWABAN --}}
+    {{-- ======================================== --}}
+
+    <section class="hasil-no-print rounded-xl border
+                    border-[#dfe5df] bg-white p-5">
+
+        <h2 class="rounded-l-md rounded-r-lg
+                   border-l-[5px] border-[#4c7b58]
+                   bg-[#f4f6f3] px-5 py-3
+                   text-base font-bold text-[#304c3f]">
+            Detail Kesalahan Jawaban
+        </h2>
+
+        <p class="mb-4 mt-3 text-sm text-gray-500">
+            Buka kategori untuk melihat soal yang dijawab salah.
+        </p>
+
+        <div class="space-y-3">
 
             @forelse ($detailKesalahan as $grup)
 
-                <details class="border border-gray-200
-                                rounded-lg mb-2 overflow-hidden">
+                <details class="group overflow-hidden rounded-lg
+                                border border-[#e0e5df]">
 
-                    <summary class="p-3 cursor-pointer
-                                    bg-[#f4f8f5] hover:bg-[#e8f1ea]
-                                    text-sm font-semibold text-[#2c4a3e]">
+                    <summary class="flex cursor-pointer
+                                    items-center justify-between gap-3
+                                    bg-[#fafbf9] px-4 py-3
+                                    hover:bg-[#f4f6f3]">
 
-                        {{ $grup['nama'] }}
+                        <div class="flex flex-wrap items-center gap-2">
 
-                        <span class="ml-2 text-xs font-medium text-red-700">
-                            ({{ count($grup['soal']) }} salah)
-                        </span>
+                            <span class="text-sm font-semibold
+                                         text-[#304c3f]">
+                                {{ $grup['nama'] }}
+                            </span>
+
+                            <span class="text-xs font-medium text-red-600">
+                                {{ count($grup['soal']) }} salah
+                            </span>
+
+                        </div>
+
+                        <svg class="h-4 w-4 shrink-0 text-gray-500
+                                    transition-transform
+                                    group-open:rotate-180"
+                             fill="none"
+                             stroke="currentColor"
+                             stroke-width="2"
+                             viewBox="0 0 24 24">
+                            <path d="m6 9 6 6 6-6"/>
+                        </svg>
 
                     </summary>
 
-                    <div class="p-3 space-y-3">
+                    <div class="space-y-3 border-t
+                                border-[#e0e5df] p-4">
 
                         @foreach ($grup['soal'] as $item)
 
-                            <div class="border border-gray-100
-                                        rounded-lg p-3">
+                            <div class="rounded-lg border
+                                        border-[#e0e5df] p-4">
 
-                                <p class="font-bold text-sm
-                                          text-gray-800 mb-2">
+                                <p class="text-sm font-bold text-[#304c3f]">
                                     Soal Nomor {{ $item['nomor'] }}
                                 </p>
 
-                                <p class="text-sm text-gray-700 mb-3">
+                                <p class="mt-2 text-sm leading-6 text-gray-700">
                                     {{ $item['pertanyaan'] }}
                                 </p>
 
-                                <div class="bg-red-50 rounded-lg p-3 mb-2">
+                                <div class="mt-4 grid grid-cols-1
+                                            gap-3 md:grid-cols-2">
 
-                                    <p class="text-xs font-bold
-                                              text-red-700 mb-2">
-                                        Jawaban Peserta
-                                    </p>
+                                    {{-- JAWABAN PESERTA --}}
+                                    <div class="rounded-lg border
+                                                border-red-200
+                                                bg-red-50 p-3">
 
-                                    @forelse ($item['dipilih'] as $jawaban)
-                                        <p class="text-sm text-red-800 mb-1">
-                                            {{ $jawaban }}
+                                        <p class="mb-2 text-xs
+                                                  font-bold text-red-700">
+                                            Jawaban Peserta
                                         </p>
-                                    @empty
-                                        <p class="text-sm text-red-700">
-                                            Tidak dijawab
+
+                                        @forelse ($item['dipilih'] as $jawaban)
+
+                                            <p class="mb-1 text-sm text-red-800">
+                                                {{ $jawaban }}
+                                            </p>
+
+                                        @empty
+
+                                            <p class="text-sm text-red-700">
+                                                Tidak dijawab
+                                            </p>
+
+                                        @endforelse
+
+                                    </div>
+
+
+                                    {{-- JAWABAN BENAR --}}
+                                    <div class="rounded-lg border
+                                                border-[#d7e6d9]
+                                                bg-[#f0f6f1] p-3">
+
+                                        <p class="mb-2 text-xs
+                                                  font-bold text-[#304c3f]">
+                                            Jawaban yang Benar
                                         </p>
-                                    @endforelse
 
-                                </div>
+                                        @forelse ($item['kunci'] as $jawaban)
 
-                                <div class="bg-green-50 rounded-lg p-3">
+                                            <p class="mb-1 text-sm text-[#304c3f]">
+                                                {{ $jawaban }}
+                                            </p>
 
-                                    <p class="text-xs font-bold
-                                              text-green-700 mb-2">
-                                        Jawaban yang Benar
-                                    </p>
+                                        @empty
 
-                                    @forelse ($item['kunci'] as $jawaban)
-                                        <p class="text-sm text-green-800 mb-1">
-                                            {{ $jawaban }}
-                                        </p>
-                                    @empty
-                                        <p class="text-sm text-gray-500">
-                                            Kunci jawaban belum tersedia.
-                                        </p>
-                                    @endforelse
+                                            <p class="text-sm text-gray-500">
+                                                Kunci jawaban tidak tersedia
+                                            </p>
+
+                                        @endforelse
+
+                                    </div>
 
                                 </div>
 
@@ -732,63 +806,74 @@
                         @endforeach
 
                     </div>
+
                 </details>
 
             @empty
-                <div class="bg-green-50 text-green-800
-                            rounded-lg p-4 text-sm">
-                    Tidak ditemukan jawaban salah
-                    pada soal yang dapat dianalisis.
+
+                <div class="rounded-lg border border-[#d7e6d9]
+                            bg-[#f0f6f1] p-4">
+
+                    <p class="text-sm text-[#304c3f]">
+                        Tidak ditemukan jawaban salah pada soal
+                        yang dapat dianalisis.
+                    </p>
+
                 </div>
+
             @endforelse
 
-        </section>
+        </div>
+
+    </section>
 
 
-        {{-- DETAIL SEMUA JAWABAN --}}
-        <section class="bg-white border border-gray-200
-                        rounded-xl shadow-sm p-4">
+    {{-- ======================================== --}}
+    {{-- DETAIL SELURUH JAWABAN --}}
+    {{-- ======================================== --}}
 
-            <h2 class="hasil-section-title">
-                Detail Jawaban
-            </h2>
+    <section class="hasil-no-print rounded-xl border
+                    border-[#dfe5df] bg-white p-5">
 
-            <p class="hasil-section-description">
-                Seluruh soal dan jawaban peserta berdasarkan tipe.
-            </p>
+        <h2 class="rounded-l-md rounded-r-lg
+                   border-l-[5px] border-[#4c7b58]
+                   bg-[#f4f6f3] px-5 py-3
+                   text-base font-bold text-[#304c3f]">
+            Detail Jawaban
+        </h2>
 
-            @foreach ($tipeLabels as $kodeTipe => $namaTipe)
+        <p class="mb-5 mt-3 text-sm text-gray-500">
+            Seluruh soal dan jawaban peserta berdasarkan tipe soal.
+        </p>
 
-                @php
-                    $soalTipe = $soalTerurut->filter(
-                        fn ($soal) =>
-                            $normalisasiTipe($soal->tipe_soal) === $kodeTipe
-                    );
-                @endphp
+        @foreach ($tipeLabels as $kodeTipe => $namaTipe)
 
-                @if ($soalTipe->isNotEmpty())
+            @php
+                $soalTipe = $soalTerurut->filter(
+                    fn ($soal) =>
+                        $normalisasiTipe($soal->tipe_soal) === $kodeTipe
+                );
+            @endphp
 
-                    <div class="mb-5">
+            @if ($soalTipe->isNotEmpty())
 
-                        <div class="flex items-center gap-2 mb-3">
+                <div class="mb-6 last:mb-0">
 
-                            <div class="w-8 h-8 bg-[#e8f1ea]
-                                        text-[#2c4a3e] rounded-lg
-                                        flex items-center justify-center
-                                        font-bold text-sm">
-                                {{ $loop->iteration }}
-                            </div>
+                    {{-- SUBJUDUL TIPE SOAL --}}
+                    <div class="mb-4 border-b
+                                border-[#e5e9e5] pb-3">
 
-                            <div>
-                                <h3 class="text-sm font-bold text-[#2c4a3e]">
-                                    {{ $namaTipe }}
-                                </h3>
+                        <h3 class="text-sm font-bold text-[#304c3f]">
+                            {{ $namaTipe }}
+                        </h3>
 
-                                <p class="text-xs text-gray-500">
-                                    {{ $soalTipe->count() }} soal
-                                </p>
-                            </div>
-                        </div>
+                        <p class="mt-1 text-xs text-gray-500">
+                            {{ $soalTipe->count() }} soal
+                        </p>
+
+                    </div>
+
+                    <div class="space-y-3">
 
                         @foreach ($soalTipe as $soal)
 
@@ -816,34 +901,36 @@
                                     && $pilihanDipilih === $pilihanBenar;
                             @endphp
 
-                            <div class="border border-gray-200
-                                        rounded-lg p-4 mb-3">
+                            <div class="rounded-lg border
+                                        border-[#e0e5df] p-4">
 
-                                <div class="flex flex-col sm:flex-row
-                                            sm:items-start justify-between
-                                            gap-2 mb-3">
+                                {{-- HEADER SOAL --}}
+                                <div class="mb-4 flex flex-col
+                                            justify-between gap-3
+                                            sm:flex-row sm:items-start">
 
                                     <div class="flex items-start gap-3">
 
-                                        <div class="w-8 h-8 flex-shrink-0
-                                                    rounded-full bg-[#e8f1ea]
-                                                    text-[#2c4a3e] flex
-                                                    items-center justify-center
-                                                    font-bold text-sm">
-
-                                            {{ $soal->pivot->nomor_soal }}
-
-                                        </div>
+                                        <span class="flex h-8 w-8
+                                                     shrink-0 items-center
+                                                     justify-center rounded-lg
+                                                     bg-[#e8eee9]
+                                                     text-sm font-bold
+                                                     text-[#304c3f]">
+                                            {{ $soal->pivot->nomor_soal ?? '-' }}
+                                        </span>
 
                                         <div>
 
-                                            <p class="text-xs font-semibold
-                                                      text-[#4a7c59] mb-1">
-                                                {{ $kategoriLabels[$soal->tipe_prosedur] ?? $soal->tipe_prosedur }}
+                                            <p class="mb-1 text-xs
+                                                      font-semibold
+                                                      text-[#4c7b58]">
+                                                {{ $kategoriLabels[$soal->tipe_prosedur]
+                                                    ?? $soal->tipe_prosedur }}
                                             </p>
 
                                             <p class="text-sm font-semibold
-                                                      text-gray-800">
+                                                      leading-6 text-gray-800">
                                                 {{ $soal->pertanyaan }}
                                             </p>
 
@@ -851,11 +938,13 @@
 
                                     </div>
 
-                                    <span class="flex-shrink-0 px-3 py-1
-                                        rounded-full text-xs font-bold
+                                    {{-- STATUS BENAR ATAU SALAH --}}
+                                    <span class="self-start rounded-md
+                                                 border px-3 py-1
+                                                 text-xs font-semibold
                                         {{ $jawabanBenar
-                                            ? 'bg-green-100 text-green-700'
-                                            : 'bg-red-100 text-red-700' }}">
+                                            ? 'border-[#d3e3d6] bg-[#f0f6f1] text-[#4c7b58]'
+                                            : 'border-red-200 bg-red-50 text-red-700' }}">
 
                                         {{ $jawabanBenar ? 'Benar' : 'Salah' }}
 
@@ -863,6 +952,8 @@
 
                                 </div>
 
+
+                                {{-- PILIHAN JAWABAN --}}
                                 <div class="space-y-2">
 
                                     @foreach ($soal->pilihanJawabans as $pilihan)
@@ -875,38 +966,37 @@
                                             );
                                         @endphp
 
-                                        <div class="flex items-start
-                                                    gap-3 p-3 rounded-lg border
+                                        <div class="flex items-start gap-3
+                                                    rounded-lg border p-3
                                             {{ $pilihan->is_benar
-                                                ? 'bg-green-50 border-green-200'
+                                                ? 'border-[#d3e3d6] bg-[#f0f6f1]'
                                                 : ($dipilih
-                                                    ? 'bg-red-50 border-red-200'
-                                                    : 'bg-gray-50 border-gray-100') }}">
+                                                    ? 'border-red-200 bg-red-50'
+                                                    : 'border-[#e0e5df] bg-white') }}">
 
-                                            <div class="font-semibold
-                                                        text-gray-700">
+                                            <span class="text-sm font-bold
+                                                         text-gray-700">
                                                 {{ $pilihan->kode }}.
-                                            </div>
+                                            </span>
 
-                                            <div class="flex-1 text-sm
-                                                        text-gray-700">
+                                            <p class="flex-1 text-sm
+                                                      leading-6 text-gray-700">
                                                 {{ $pilihan->teks_jawaban }}
-                                            </div>
+                                            </p>
 
                                             <div class="flex flex-col gap-1
-                                                        text-xs text-right
-                                                        flex-shrink-0">
+                                                        text-right text-xs">
 
                                                 @if ($dipilih)
                                                     <span class="font-semibold
-                                                                 text-blue-700">
+                                                                 text-[#304c3f]">
                                                         Dipilih
                                                     </span>
                                                 @endif
 
                                                 @if ($pilihan->is_benar)
                                                     <span class="font-semibold
-                                                                 text-green-700">
+                                                                 text-[#4c7b58]">
                                                         Jawaban Benar
                                                     </span>
                                                 @endif
@@ -918,9 +1008,11 @@
                                     @endforeach
 
                                     @if (empty($pilihanDipilih))
-                                        <p class="text-sm text-red-600">
+
+                                        <p class="pt-1 text-sm text-red-600">
                                             Peserta tidak memberikan jawaban.
                                         </p>
+
                                     @endif
 
                                 </div>
@@ -931,27 +1023,31 @@
 
                     </div>
 
-                @endif
+                </div>
 
-            @endforeach
+            @endif
 
-        </section>
+        @endforeach
+
+    </section>
 
 
-        {{-- KEMBALI --}}
-        <div class="pt-1">
+    {{-- ======================================== --}}
+    {{-- TOMBOL KEMBALI --}}
+    {{-- ======================================== --}}
 
-            <a href="{{ route('hrd.hasil-assessment.index') }}"
-               class="inline-flex items-center gap-2
-                      px-4 py-2.5 bg-gray-800
-                      hover:bg-gray-900 text-white
-                      rounded-lg text-sm font-medium transition">
+    <div class="hasil-no-print flex justify-end">
 
-                ← Kembali ke Hasil Penilaian
-
-            </a>
-
-        </div>
+        <a
+            href="{{ route('hrd.hasil-assessment.index') }}"
+            class="inline-flex h-10 items-center justify-center
+                   rounded-lg border border-[#ccd7ce]
+                   bg-[#f4f6f3] px-5
+                   text-sm font-semibold text-[#304c3f]
+                   transition hover:bg-[#e8eee9]"
+        >
+            Kembali ke Hasil Penilaian
+        </a>
 
     </div>
 
